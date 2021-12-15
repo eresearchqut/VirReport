@@ -1,0 +1,14 @@
+#!/bin/bash -l
+#PBS -N NextflowVSD
+#PBS -l select=1:ncpus=2:mem=6gb
+#PBS -l walltime=24:00:00
+
+
+cd $PBS_O_WORKDIR
+module load java
+NXF_OPTS='-Xms1g -Xmx4g'
+nextflow run $PBS_O_WORKDIR/main.nf -resume  --indexfile $PBS_O_WORKDIR/index_example.csv
+# run spades
+#run blast homology against user local database 
+#run flase positive predictor
+#nextflow run $PBS_O_WORKDIR/main.nf -resume  --indexfile $PBS_O_WORKDIR/index_example.csv --blastlocaldb --spades --contamination_detection 
