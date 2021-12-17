@@ -19,9 +19,9 @@ dependencies:
   - bowtie=1.3.0
   - samtools=1.12
   - picard==2.25.6
-  - bedtools
-  - bcftools
-  - pandas
+  - bedtools=2.30.0
+  - bcftools=1.12
+  - pandas=1.1.5
   - fastqc=0.11.9
   - fastp=0.20.1
   - cutadapt=3.5
