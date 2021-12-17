@@ -14,5 +14,5 @@ jobs:
         with:
           image: vsd
           registry: ghcr.io
-          username: ${{ secrets.GHCR_USERNAME }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GHCR_TOKEN }}
