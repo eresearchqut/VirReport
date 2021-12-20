@@ -1,6 +1,9 @@
 name: vsd docker image build
 # This builds the docker image and pushes it to GitHub packages
-on: [push]
+on:
+  push:
+    tags:
+      - *
 
 jobs:
   build_push:
