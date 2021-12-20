@@ -1,0 +1,25 @@
+name: vsd docker image build
+# This builds the docker image and pushes it to GitHub packages
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build_push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - uses: actions/checkout@v2
+        name: Check out code
+
+      - name: Docker Build & Push Action
+        uses: mr-smithers-excellent/docker-build-push@v5.6
+        with:
+          image: vsd
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
