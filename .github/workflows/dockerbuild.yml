@@ -3,7 +3,7 @@ name: vsd docker image build
 on:
   push:
     tags:
-      - *
+      - '*'
 
 jobs:
   build_push:
