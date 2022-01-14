@@ -118,25 +118,23 @@ if (params.indexfile) {
 } else { exit 1, "Input samplesheet file not specified!" }
 
 process readprocessing {
-memory '80 GB'
-cpus 4
-tag "$sample_name"
-publishDir "${params.outdir}/01_read_size_selection", mode: 'link'
+    tag "$sample_name"
+    publishDir "${params.outdir}/01_read_size_selection", mode: 'link'
 
-input:
-tuple val(sampleid), file(fastqfile), val(minlen), val(maxlen) from read_size_selection_ch
+    input:
+    tuple val(sampleid), file(fastqfile), val(minlen), val(maxlen) from read_size_selection_ch
 
-output:
-file "${sampleid}_${minlen}-${maxlen}nt_cutadapt.log"
-file "${sampleid}_${minlen}-${maxlen}nt.fastq"
-tuple val(sampleid), file("${sampleid}_${minlen}-${maxlen}nt.fastq"), val(minlen), val(maxlen) into velvet_ch, spades_ch
-tuple val(sampleid), file("${sampleid}_${minlen}-${maxlen}nt.fastq") into fastq_filt_by_size_ch
+    output:
+    file "${sampleid}_${minlen}-${maxlen}nt_cutadapt.log"
+    file "${sampleid}_${minlen}-${maxlen}nt.fastq"
+    tuple val(sampleid), file("${sampleid}_${minlen}-${maxlen}nt.fastq"), val(minlen), val(maxlen) into velvet_ch, spades_ch
+    tuple val(sampleid), file("${sampleid}_${minlen}-${maxlen}nt.fastq") into fastq_filt_by_size_ch
 
 
-script:
-"""
-cutadapt -j ${task.cpus} -m ${minlen} -M ${maxlen} -o ${sampleid}_${minlen}-${maxlen}nt.fastq ${fastqfile} > ${sampleid}_${minlen}-${maxlen}nt_cutadapt.log
-"""
+    script:
+    """
+    cutadapt -j ${task.cpus} -m ${minlen} -M ${maxlen} -o ${sampleid}_${minlen}-${maxlen}nt.fastq ${fastqfile} > ${sampleid}_${minlen}-${maxlen}nt_cutadapt.log
+    """
 }
 
 process velvet {
@@ -363,8 +361,6 @@ if (params.blastlocaldb) {
     }
 }
 process filter_n_cov {
-    memory '60 GB'
-    cpus 4
     publishDir "${params.outdir}/07_filternstats/${sampleid}", mode: 'link'
     
     input:
@@ -490,20 +486,20 @@ if (params.blastp) {
     }   
 
     process BlastToolsp {
-    label "local"
-    publishDir "${params.outdir}/05_blastoutputs/${sampleid}", mode: 'link'
-    tag "$sampleid"
+        label "local"
+        publishDir "${params.outdir}/05_blastoutputs/${sampleid}", mode: 'link'
+        tag "$sampleid"
 
-    input:
-    tuple val(sampleid), file(topHits_blastp_final) from BlastToolsp_ch
+        input:
+        tuple val(sampleid), file(topHits_blastp_final) from BlastToolsp_ch
 
-    output:
-    file "summary_${topHits_blastp_final}"
+        output:
+        file "summary_${topHits_blastp_final}"
 
-    script:
-    """
-    java -jar ${projectDir}/bin/BlastTools.jar -t blastp ${topHits_blastp_final}
-    """
+        script:
+        """
+        java -jar ${projectDir}/bin/BlastTools.jar -t blastp ${topHits_blastp_final}
+        """
     }
 }
 
@@ -535,25 +531,25 @@ if (params.spades) {
     }
 
     process cap3_spades {
-    label "local"
-    publishDir "${params.outdir}/03_cap3/${sampleid}", mode: 'link'
-    tag "$sampleid"
+        label "local"
+        publishDir "${params.outdir}/03_cap3/${sampleid}", mode: 'link'
+        tag "$sampleid"
 
-    input:
-    tuple val(sampleid), file(scaffolds_fasta), val(minlen), val(maxlen) from cap3_spades_ch
+        input:
+        tuple val(sampleid), file(scaffolds_fasta), val(minlen), val(maxlen) from cap3_spades_ch
 
-    output:
-    file "${sampleid}_spades_cap3_${minlen}-${maxlen}nt.rename.fasta"
-    tuple val(sampleid), file("${sampleid}_spades_cap3_${minlen}-${maxlen}nt.rename.fasta"), file("${sampleid}_spades_cap3_${minlen}-${maxlen}nt.rename.ids"), val(minlen), val(maxlen) into megablast_nt_spades_ch
+        output:
+        file "${sampleid}_spades_cap3_${minlen}-${maxlen}nt.rename.fasta"
+        tuple val(sampleid), file("${sampleid}_spades_cap3_${minlen}-${maxlen}nt.rename.fasta"), file("${sampleid}_spades_cap3_${minlen}-${maxlen}nt.rename.ids"), val(minlen), val(maxlen) into megablast_nt_spades_ch
 
-    script:
-    """
-    cap3 ${scaffolds_fasta} -s 300 -j 31 -i 30 -p 90 -o 16
-    cat ${scaffolds_fasta}.cap.singlets ${scaffolds_fasta}.cap.contigs > ${sampleid}_${minlen}-${maxlen}nt_spades_cap3.fasta
-    extract_seqs_rename.py ${sampleid}_${minlen}-${maxlen}nt_spades_cap3.fasta ${params.cap3_len} | sed "s/CONTIG/${sampleid}_${minlen}-${maxlen}_/" | sed 's/|>/ |/' | awk '{print \$1}' > ${sampleid}_spades_cap3_${minlen}-${maxlen}nt.rename.fasta
-    #fetch scaffold IDs
-    cat ${sampleid}_spades_cap3_${minlen}-${maxlen}nt.rename.fasta | grep ">" | sed 's/>//' > ${sampleid}_spades_cap3_${minlen}-${maxlen}nt.rename.ids
-    """
+        script:
+        """
+        cap3 ${scaffolds_fasta} -s 300 -j 31 -i 30 -p 90 -o 16
+        cat ${scaffolds_fasta}.cap.singlets ${scaffolds_fasta}.cap.contigs > ${sampleid}_${minlen}-${maxlen}nt_spades_cap3.fasta
+        extract_seqs_rename.py ${sampleid}_${minlen}-${maxlen}nt_spades_cap3.fasta ${params.cap3_len} | sed "s/CONTIG/${sampleid}_${minlen}-${maxlen}_/" | sed 's/|>/ |/' | awk '{print \$1}' > ${sampleid}_spades_cap3_${minlen}-${maxlen}nt.rename.fasta
+        #fetch scaffold IDs
+        cat ${sampleid}_spades_cap3_${minlen}-${maxlen}nt.rename.fasta | grep ">" | sed 's/>//' > ${sampleid}_spades_cap3_${minlen}-${maxlen}nt.rename.ids
+        """
     }
 
     process megablast_nt_spades {
@@ -591,19 +587,19 @@ if (params.spades) {
     }
 
     process BlastToolsn_megablast_spades {
-    label "local"
-    publishDir "${params.outdir}/05_blastoutputs/${sampleid}", mode: 'link'
-    tag "$sampleid"
+        label "local"
+        publishDir "${params.outdir}/05_blastoutputs/${sampleid}", mode: 'link'
+        tag "$sampleid"
 
-    input:
-    tuple val(sampleid), file(top5Hits_final) from BlastToolsn_megablast_spades_ch
+        input:
+        tuple val(sampleid), file(top5Hits_final) from BlastToolsn_megablast_spades_ch
 
-    output:
-    file "summary_${top5Hits_final}"
+        output:
+        file "summary_${top5Hits_final}"
 
-    script:
-    """
-    java -jar ${projectDir}/bin/BlastTools.jar -t blastn ${top5Hits_final}
-    """
+        script:
+        """
+        java -jar ${projectDir}/bin/BlastTools.jar -t blastn ${top5Hits_final}
+        """
     }
 }
