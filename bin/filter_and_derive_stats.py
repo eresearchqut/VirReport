@@ -39,10 +39,7 @@ def main():
 
     raw_data = pd.read_csv(results_path, header=0, sep="\t",index_col=None)
 
-    #load list of target viruses and viroids and matching official ICTV name
-    taxonomy_df = pd.read_csv(taxonomy, header=0, sep="\t")
-    taxonomy_df.columns =["sacc", "Targetted_sp_generic_name"]
-    #print(taxonomy_df)
+    
 
     if len(raw_data) == 0:
         print("DataFrame is empty!")
@@ -57,6 +54,18 @@ def main():
         csv_file3.close()
         exit ()
 
+    #load list of target viruses and viroids and matching official ICTV name
+    
+    if os.stat(taxonomy).st_size == 0:
+        print('Taxonomy description file is empty!')
+        exit ()
+    else:
+        taxonomy_df = pd.read_csv(taxonomy, header=None, sep="\t")
+        taxonomy_df.columns =["sacc", "Targetted_sp_generic_name"]
+    #print(taxonomy_df)
+  
+
+
     #print(raw_data).head(10)
     print("Cleaning up the data")
     print("Remove double spacing")
@@ -66,6 +75,7 @@ def main():
     raw_data["stitle"] = raw_data["stitle"].str.replace("-", " ")
 
     print("Remove underscores")
+    raw_data["stitle"] = raw_data["stitle"].str.replace(",_"," ")
     raw_data["stitle"] = raw_data["stitle"].str.replace("_"," ")
 
     print("Remove commas")
@@ -80,17 +90,12 @@ def main():
     raw_data["stitle"] =  raw_data["stitle"].str.replace("Rubus yellow net virus isolate Canadian 2 hypothetical protein genes  partial cds; hypothetical proteins  polyprotein  ORF 6  and hypothetical protein genes  complete cds; and hypothetical protein genes  partial cds","Rubus yellow net virus isolate Canadian 2 complete cds")
     #remove resistance genes from list of results
     raw_data = raw_data[~raw_data["stitle"].str.contains("resistance gene")]
+  
    
     raw_data = pd.merge(raw_data, taxonomy_df, on=["sacc"])
     raw_data["Targetted_sp_generic_name"] = raw_data["Targetted_sp_generic_name"].str.replace("_", " ")
 
     raw_data = raw_data.sort_values("stitle")
-
-    #This step will only extract viruses and viroids of interest
-    if targets:
-        colname = ["Targetted_sp_generic_name"]
-        targets_df = pd.read_csv(targetspath, names=colname, header=None, sep="\t", index_col=None)
-        raw_data = pd.merge(raw_data, targets_df, on=["Targetted_sp_generic_name"])
 
     print("If present in original nomenclature, add RNA type information to virus standardised species name")
 
@@ -99,15 +104,14 @@ def main():
                            np.where(raw_data.stitle.str.contains("RNA3|RNA 3|segment 3"), "RNA3", "NaN")))
     
     raw_data["Targetted_sp_generic_name_updated"] = raw_data[["Targetted_sp_generic_name", "RNA_type"]].agg(" ".join, axis=1)
-    raw_data["Targetted_sp_generic_name_updated"] = raw_data["Targetted_sp_generic_name_updated"].astype(str).str.strip("NaN")
+    raw_data["Targetted_sp_generic_name_updated"] = raw_data["Targetted_sp_generic_name_updated"].astype(str).str.replace("NaN", "")
     raw_data["Targetted_sp_generic_name_updated"] = raw_data["Targetted_sp_generic_name_updated"].astype(str).str.rstrip( )
- 
     raw_data = raw_data.reset_index(drop=True)
     print (len(raw_data.Targetted_sp_generic_name.value_counts()))
     if len(raw_data.Targetted_sp_generic_name.value_counts()) == 0:
         print ("Dataframe has no targetted viruses or viroids")
         csv_file1 = open(sample + "_" + read_size + "_all_targets_with_scores.txt", "w")
-        csv_file1.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tRNA_type\targetted_sp_generic_name\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score")
+        csv_file1.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tRNA_type\tTargetted_sp_generic_name\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score")
         csv_file1.close()
         csv_file2 = open(sample + "_" + read_size + "_top_scoring_targets.txt", "w")
         csv_file2.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tTargetted_sp_generic_name\tRNA_type\tTargetted_sp_generic_name\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score")       
@@ -150,6 +154,7 @@ def main():
             filtered_data = filtered_data.append(selected)
         #If contigs hit to multiple viruses and viroids, choose best hit
         elif len(selected)>1:
+            print(selected)
             # Extract list of spp for a given contig
             Targetted_sp_generic_name_updated_list = selected["Targetted_sp_generic_name_updated"].tolist()
             #This should accomodate several RNAs per virus spp.
@@ -174,7 +179,8 @@ def main():
     print("Only retain the top hits")
     idx = filtered_data.groupby(["Targetted_sp_generic_name_updated"])["total_score"].transform(max) == filtered_data["total_score"]
     filtered_data = filtered_data[idx]
-    print(filtered_data.dtypes)
+    #print(filtered_data)
+    #print(filtered_data.dtypes)
 
     #select one random hit if tie for top hits:
     print("If there is a tie, select a random sequence out of the top scoring hit")
@@ -300,10 +306,19 @@ def main():
             picard = ["picard", "CollectWgsMetrics", "-I", str(sortedbamoutput), "-O", str(picard_output), "-R", str(fastafile), "-READ_LENGTH","22", "-COUNT_UNPAIRED", "true"]
             subprocess.call(picard)
 
-            subprocess.call(["rm","-r", samoutput])
-            subprocess.call(["rm","-r", bamoutput])
-            for fl in glob.glob(index + "*ebwt"):
-                os.remove(fl)
+            # subprocess.call(["rm","-r", samoutput])
+            # subprocess.call(["rm","-r", bamoutput])
+            # subprocess.call(["rm","-r", bamindex])
+            # subprocess.call(["rm","-r", pileup])
+            # subprocess.call(["rm","-r", vcfout])
+            # subprocess.call(["rm","-r", genomecovbed])
+            # subprocess.call(["rm","-r", zerocovbed])
+            # subprocess.call(["rm","-r", maskedfasta])
+
+            # for fl in glob.glob(index + "*ebwt"):
+            #     os.remove(fl)
+            # for fl in glob.glob(index + ".vcf.gz*"):
+            #     os.remove(fl) 
 
             reflen = ()
             cov = ()
@@ -367,6 +382,15 @@ def main():
         print(full_table)
         full_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats.txt", index=None, sep="\t",float_format="%.2f")
 
+#This step will only extract viruses and viroids of interest
+    if targets:
+        #colname = ["Targetted_sp_generic_name"]
+        full_table["Targetted_sp_generic_name_lower"] = full_table["Targetted_sp_generic_name"].str.lower()
+        targets_df = pd.read_csv(targetspath, header=0, sep="\t", index_col=None)
+        targets_df["Targetted_sp_generic_name_lower"] = targets_df["Targetted_sp_generic_name"].str.lower()
+        filtered_table = pd.merge(full_table, targets_df, on=["Targetted_sp_generic_name_lower"])
+        filtered_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_filtered_with_cov_stats.txt", index=None, sep="\t",float_format="%.2f")
+
 def max_avpid(df):
     max_row = df["av-pident"].max()
     labels = np.where((df["av-pident"] == max_row),
@@ -403,6 +427,10 @@ def genome_score(x):
     elif "complete genome" in str(x):
         return 3
     elif "polyprotein gene complete cds" in str(x):
+        return 3
+    elif "polyprotein 1 gene complete cds" in str(x):
+        return 3
+    elif "polyprotein 2 gene complete cds" in str(x):
         return 3
     else:   
         return 0    
