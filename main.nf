@@ -23,76 +23,78 @@ def helpMessage () {
     Usage:
 
     Run the command
-    nextflow run vsd
+    nextflow run eresearch/vsd -profile ...
 
     Mandatory arguments:
+       -profile '[docker, singularity, conda]'      Profile to use. Choose docker, or singularity, or conda
 
     Optional arguments:
-      --indexfile '[path/to/file]'              Path to the csv file that contains the list of
-                                                samples to be analysed by this pipeline.
-                                                'index.csv'
+      --indexfile '[path/to/file]'                  Path to the csv file that contains the list of
+                                                    samples to be analysed by this pipeline.
+                                                    'index.csv'
       Contents of indexfile csv:
         sampleid,samplepath,minlen,maxlen
         MT019,MT019_sRNA.fastq,21,22
 
-      --blast_nt_db '[path/to/dir]'             Path to the blast NT database files
-                                                '/work/eresearch_bio/reference/blastDB/nt'
+      --blast_nt_db '[path/to/dir]'                 Path to the blast NT database files
+                                                    '/work/eresearch_bio/reference/blastDB/nt'
 
-      --blast_nr_db '[path/to/dir]'             Path to the blast NR database files
-                                                '/work/eresearch_bio/reference/blastDB/nr'
+      --blast_nr_db '[path/to/dir]'                 Path to the blast NR database files
+                                                    '/work/eresearch_bio/reference/blastDB/nr'
 
-      --targets_file '[path/to/dir]'            Path to the targets file
-                                                'Targetted_Viruses_Viroids_sorted.txt'
+      --targets_file '[path/to/dir]'                Path to the targets file
+                                                    'Targetted_Viruses_Viroids_sorted.txt'
 
-      --cap3_len '[value]'                      Trim value used in the CAP3 step.
-                                                '20'
+      --cap3_len '[value]'                          Trim value used in the CAP3 step.
+                                                    '20'
 
-      --orf_minsize '[value]'                   The value of minsize for getorf
-                                                '150'
+      --orf_minsize '[value]'                       The value of minsize for getorf
+                                                    '150'
 
-      --orf_circ_minsize '[value]'              The value of minsize for getorf -circular
-                                                '150'
+      --orf_circ_minsize '[value]'                  The value of minsize for getorf -circular
+                                                    '150'
 
-      --blastn_evalue '[value]'                 Blastn evalue.
-                                                '0.0001'
+      --blastn_evalue '[value]'                     Blastn evalue.
+                                                    '0.0001'
     
-      --targets [True/False]                    Filter the blastn results to viruses/viroids of interest
-                                                [False]
+      --targets [True/False]                        Filter the blastn results to viruses/viroids of interest
+                                                    [False]
 
-      --targets_file '[path/to/dir]'            File specifying the name of the viruses/viroids of interest to filter from the blast results output
-                                                ['/home/gauthiem/code/vsd-2.0/Targetted_Viruses_Viroids.txt']
+      --targets_file '[path/to/dir]'                File specifying the name of the viruses/viroids of interest to filter from the blast results output
+                                                    ['/home/gauthiem/code/vsd-2.0/Targetted_Viruses_Viroids.txt']
 
-      --blastn [True/False]                     Run blastn homology search on velvet de novo assembly againts NCBI NT
-                                                [False]
+      --blastn [True/False]                         Run blastn homology search on velvet de novo assembly againts NCBI NT
+                                                    [False]
 
-      --blastlocaldb                            Run blastn and megablast homology search on velvet de novo assembly against local virus and viroid database
-                                                [False]
+      --blastlocaldb                                Run blastn and megablast homology search on velvet de novo assembly against local virus and viroid database
+                                                    [False]
 
-      --blast_local_nt_db '[path/to/dir]'       Path to the local blast NT database files. Required if --blastlocaldb option is specified
-                                                '/work/hia_mt18005/databases/sequences/PVirDB_20210330'
+      --blast_local_nt_db '[path/to/dir]'           Path to the local blast NT database files. Required if --blastlocaldb option is specified
+                                                    '/work/hia_mt18005/databases/sequences/PVirDB_20210330'
 
-      --ictvinfo '[path/to/dir]'                Path to ICTV info file. Required if --blastlocaldb option is specified
-                                                ['ICTV_taxonomy_MinIdentity_Species.tsv']
+      --ictvinfo '[path/to/dir]'                    Path to ICTV info file. Required if --blastlocaldb option is specified
+                                                    ['ICTV_taxonomy_MinIdentity_Species.tsv']
 
-      --blastp [True/False]                     Predict ORF from de novo assembled contigs and run blastP againts NCBI NR
-                                                [False]
+      --blastp [True/False]                         Predict ORF from de novo assembled contigs and run blastP againts NCBI NR
+                                                    [False]
 
-      --blastp_evalue '[value]'                 Blastp's evalue. Required if --blastp option is specified
-                                                '0.0001'
+      --blastp_evalue '[value]'                     Blastp's evalue. Required if --blastp option is specified
+                                                    '0.0001'
                     
-      --spades [True/False]                     Run SPAdes 3.14 de novo assembler and perform blastn homology analysis on the derived de novo contigs
-                                                [False]
+      --spades [True/False]                         Run SPAdes 3.14 de novo assembler and perform blastn homology analysis on the derived de novo contigs
+                                                    [False]
 
-      --spadeskmer '[value]'                    K-mer range to use when running SPAdes. Required if --spades option is specified
-                                                ['K9-21']
+      --spadeskmer '[value]'                        K-mer range to use when running SPAdes. Required if --spades option is specified
+                                                    ['K9-21']
 
-      --contamination_detection [True/False]    Run false positive prediction due to cross-sample contamination
-                                                [False]
+      --contamination_detection [True/False]        Run false positive prediction due to cross-sample contamination
+                                                    [False]
 
-      --contamination_flag '[value]'            Threshold value to predict false positives due to cross-sample contamination. 
-                                                Required if --contamination_detection option is specified
-                                                '0.01'
-      --contamination_detection_method '[value]'Either use RPKM or Reads per million for cross-contamination detection 
+      --contamination_flag '[value]'                Threshold value to predict false positives due to cross-sample contamination. 
+                                                    Required if --contamination_detection option is specified
+                                                    '0.01'
+      --contamination_detection_method '[value]'    Either use RPKM or Reads per million for cross-contamination detection 
+
     Other options
 
     """.stripIndent()
