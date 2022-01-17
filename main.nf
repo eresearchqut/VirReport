@@ -200,31 +200,20 @@ process blastn_nt_velvet {
     tuple val(sampleid), file("${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt"), file("${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt") into blastTools_blastn_velvet_ch
     
     script:
+    def blast_task_param = params.blastn_method = "blastn" ? "-task blastn" : ''
     """
     #To extract the taxonomy, copy the taxonomy databases associated with your blast NT database
     cp ${params.blast_db}/taxdb.btd .
     cp ${params.blast_db}/taxdb.bti .
 
-    if [[ ${params.blastn_method} == "blastn" ]]; then
-        blastn -task blastn \
-                -query ${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta \
-                -db ${params.blast_db}/nt \
-                -out ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT.bls \
-                -evalue 0.0001 \
-                -num_threads 4 \
-                -outfmt '6 qseqid sgi sacc length pident mismatch gapopen qstart qend qlen sstart send slen sstrand evalue bitscore qcovhsp stitle staxids qseq sseq sseqid qcovs qframe sframe sscinames' \
-                -max_target_seqs 50
-
-
-    elif [[ ${params.blastn_method} == "megablast" ]]; then
-        blastn -query ${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta \
-                -db ${params.blast_db}/nt \
-                -out ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT.bls \
-                -evalue 0.0001 \
-                -num_threads 4 \
-                -outfmt '6 qseqid sgi sacc length pident mismatch gapopen qstart qend qlen sstart send slen sstrand evalue bitscore qcovhsp stitle staxids qseq sseq sseqid qcovs qframe sframe sscinames' \
-                -max_target_seqs 50
-    fi
+    blastn ${blast_task_param} \
+        -query ${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta \
+        -db ${params.blast_db}/nt \
+        -out ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT.bls \
+        -evalue 0.0001 \
+        -num_threads 4 \
+        -outfmt '6 qseqid sgi sacc length pident mismatch gapopen qstart qend qlen sstart send slen sstrand evalue bitscore qcovhsp stitle staxids qseq sseq sseqid qcovs qframe sframe sscinames' \
+        -max_target_seqs 50
 
     grep ">" ${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta | sed 's/>//' > ${sampleid}_velvet_assembly_${minlen}-${maxlen}nt.ids
     
