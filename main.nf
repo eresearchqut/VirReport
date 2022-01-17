@@ -189,6 +189,7 @@ process megablast_nt_velvet {
     label "blast_mem"
     publishDir "${params.outdir}/04_blastn/${sampleid}", mode: 'link'
     tag "$sampleid"
+    containerOptions "-B ${params.blast_db} -B ${params.blastn_local_db}"
 
     input:
     tuple val(sampleid), file("${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta"), val(minlen), val(maxlen) from megablast_nt_velvet_ch
@@ -250,6 +251,7 @@ if (params.blastn) {
         label "blast_mem"
         publishDir "${params.outdir}/04_blastn/${sampleid}", mode: 'link'
         tag "$sampleid"
+        containerOptions "-B ${params.blast_db} -B ${params.blastn_local_db}"
 
         input:
         tuple val(sampleid), file("${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta"), val(minlen), val(maxlen) from blastn_nt_velvet_ch
@@ -307,6 +309,7 @@ if (params.blastlocaldb) {
         label "blast_mem"
         publishDir "${params.outdir}/04_blastn/${sampleid}", mode: 'link'
         tag "$sampleid"
+        containerOptions "-B ${params.blast_db} -B ${params.blastn_local_db}"
 
         input:
         tuple val(sampleid), file("${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta"), val(minlen), val(maxlen) from blast_nt_localdb_velvet_ch
@@ -431,6 +434,7 @@ if (params.blastp) {
         label "xlarge"
         publishDir "${params.outdir}/06_blastp/${sampleid}", mode: 'link'
         tag "$sampleid"
+        containerOptions "-B ${params.blast_db} -B ${params.blastn_local_db}"
 
         input:
         tuple val(sampleid), file(fasta), file(fasta_ids), val(minlen), val(maxlen) from blastp_ch
@@ -457,6 +461,7 @@ if (params.blastp) {
         label "medium_mem"
         publishDir "${params.outdir}/06_blastp/${sampleid}", mode: 'link'
         tag "$sampleid"
+        containerOptions "-B ${params.blast_db} -B ${params.blastn_local_db}"
 
         input:
         tuple val(sampleid), file(blastp_nr_bls_ids), file(blastp_nr_bls), val(minlen), val(maxlen) from blastpdbcmd_ch
@@ -556,6 +561,7 @@ if (params.spades) {
         label "medium_mem"
         publishDir "${params.outdir}/04_blastn/${sampleid}", mode: 'link'
         tag "$sampleid"
+        containerOptions "-B ${params.blast_db} -B ${params.blastn_local_db}"
 
         input:
         tuple val(sampleid), file(spades_cap3_rename_fasta), file(spades_cap3_rename_fasta_ids), val(minlen), val(maxlen) from megablast_nt_spades_ch
