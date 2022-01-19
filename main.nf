@@ -138,7 +138,6 @@ process readprocessing {
 }
 
 process velvet {
-    label "velvet_mem_cpu"
     publishDir "${params.outdir}/02_velvet/${sampleid}", mode: 'link'
     tag "$sampleid"
 
@@ -229,7 +228,6 @@ process megablast_nt_velvet {
 }
 
 process BlastTools_megablast_velvet {
-    label "medium_mem"
     publishDir "${params.outdir}/05_blastoutputs/${sampleid}", mode: 'link'
     tag "$sampleid"
 
