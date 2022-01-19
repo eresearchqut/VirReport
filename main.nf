@@ -375,6 +375,7 @@ if (params.blastlocaldb) {
 process filter_n_cov {
     tag "$sampleid"
     publishDir "${params.outdir}/07_filternstats/${sampleid}", mode: 'link'
+    containerOptions "${bindOptions}"
     
     input:
     tuple val(sampleid), file(rawfastqfile), val(minlen), val(maxlen) from filter_n_cov_ch
