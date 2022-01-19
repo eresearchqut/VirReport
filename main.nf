@@ -107,13 +107,13 @@ if (params.help) {
 
 switch (workflow.containerEngine) {
     case "docker":
-        def bindOptions = "-v ${params.blast_db}:${params.blast_db} -v ${params.blastn_local_db}:${params.blastn_local_db}"
+        bindOptions = "-v ${params.blast_db}:${params.blast_db} -v ${params.blastn_local_db}:${params.blastn_local_db}"
         break;
     case "singularity":
-        def bindOptions = "-B ${params.blast_db} -B ${params.blastn_local_db}"
+        bindOptions = "-B ${params.blast_db} -B ${params.blastn_local_db}"
         break;
     default:
-        def bindOptions = ""
+        bindOptions = ""
 }
 
 if (params.indexfile) {
