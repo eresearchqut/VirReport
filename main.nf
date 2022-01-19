@@ -118,7 +118,7 @@ if (params.indexfile) {
 } else { exit 1, "Input samplesheet file not specified!" }
 
 process readprocessing {
-    tag "$sample_name"
+    tag "$sampleid"
     publishDir "${params.outdir}/01_read_size_selection", mode: 'link'
 
     input:
@@ -364,6 +364,7 @@ if (params.blastlocaldb) {
     }
 }
 process filter_n_cov {
+    tag "$sampleid"
     publishDir "${params.outdir}/07_filternstats/${sampleid}", mode: 'link'
     
     input:
