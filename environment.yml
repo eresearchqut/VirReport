@@ -26,4 +26,4 @@ dependencies:
   - fastp=0.20.1
   - cutadapt=3.5
   - umi_tools=1.1.2
-  - bioperl=1.7.2
+  - perl-bioperl=1.7.2
