@@ -13,7 +13,15 @@ It is designed to help phytosanitary diagnostics of viruses and viroid pathogens
 ## Run your own analysis
 
 Run the command:
-```nextflow run eresearch/vsd -profile ... --indexfile $PBS_O_WORKDIR/index_example.csv```
+```nextflow run eresearchqut/VirReport -profile {docker or singularity or conda} --indexfile $PBS_O_WORKDIR/index_example.csv```
+
+Set the profile parameter to one of
+```
+docker
+singularity
+conda
+```
+To suite your environment.
 
 The VSD workflow will perform the following steps by default:
 - Retain reads of a given length (e.g. 21-22 or 24 nt long) from fastq file(s) provided in index.csv file (readprocessing)  
@@ -49,7 +57,7 @@ A number of additional options are included:
 ```
 To enable these options, they can either be included in the nextflow run command provided in the PBS script: 
 ```
-nextflow run eresearch/vsd -profile  --indexfile index_example.csv --blastlocaldb --spades --contamination_detection
+nextflow run eresearchqut/VirReport -profile {docker or singularity or conda} --indexfile index_example.csv --blastlocaldb --spades --contamination_detection
 ```
 or update parameter to true in the nextflow.config file. For instance:
 ```
