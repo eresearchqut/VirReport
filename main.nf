@@ -63,13 +63,8 @@ def helpMessage () {
       --targets_file '[path/to/dir]'                File specifying the name of the viruses/viroids of interest to filter from the blast results output
                                                     ['/home/gauthiem/code/vsd-2.0/Targetted_Viruses_Viroids.txt']
 
-<<<<<<< HEAD
-      --blastn [True/False]                         Run blastn homology search on velvet de novo assembly againts NCBI NT
-                                                    [False]
-=======
       --blastn_method ['blastn/megablast']      Run blastn homology search on velvet de novo assembly againts NCBI NT
                                                 [default blastn]
->>>>>>> origin/new_edits_maely
 
       --blastlocaldb                                Run blastn and megablast homology search on velvet de novo assembly against local virus and viroid database
                                                     [False]
@@ -245,12 +240,8 @@ process blastn_nt_velvet {
     """
 }
 
-<<<<<<< HEAD
-process BlastTools_megablast_velvet {
-=======
 process BlastTools_blastn_velvet {
     label "medium_mem"
->>>>>>> origin/new_edits_maely
     publishDir "${params.outdir}/05_blastoutputs/${sampleid}", mode: 'link'
     tag "$sampleid"
 
@@ -267,66 +258,6 @@ process BlastTools_blastn_velvet {
     """
 }
 
-<<<<<<< HEAD
-if (params.blastn) {
-    process blastn_nt_velvet {
-        label "blast_mem"
-        publishDir "${params.outdir}/04_blastn/${sampleid}", mode: 'link'
-        tag "$sampleid"
-        containerOptions "${bindOptions}"
-
-        input:
-        tuple val(sampleid), file("${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta"), val(minlen), val(maxlen) from blastn_nt_velvet_ch
-
-        output:
-        file "${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT.bls"
-        file "${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits.txt"
-        file "${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt"
-        tuple val(sampleid), file("${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt") into blastTools_blastn_velvet_ch
-
-        script:
-        """
-        blastn -task blastn \
-            -query ${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta \
-            -db ${params.blast_db}/nt \
-            -out ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT.bls \
-            -evalue 0.0001 \
-            -num_threads 4 \
-            -outfmt '6 qseqid sgi sacc length pident mismatch gapopen qstart qend qlen sstart send slen sstrand evalue bitscore qcovhsp stitle staxids qseq sseq sseqid qcovs qframe sframe' \
-            -max_target_seqs 50
-
-        grep ">" ${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta | sed 's/>//' > ${sampleid}_velvet_assembly_${minlen}-${maxlen}nt.ids
-
-        #fetch top blastn hits
-        for i in `cat ${sampleid}_velvet_assembly_${minlen}-${maxlen}nt.ids`; do
-            grep \$i ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT.bls | head -n5 >> ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits.txt;
-        done
-        
-        grep -i "Virus" ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits.txt > ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids.txt  || [[ \$? == 1 ]]
-        grep -i "Viroid" ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits.txt >> ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids.txt || [[ \$? == 1 ]]
-        cat ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids.txt | sed 's/ /_/g' > ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt
-        """
-    }
-
-    process BlastTools_blastn_velvet {
-        label "medium_mem"
-        publishDir "${params.outdir}/05_blastoutputs/${sampleid}", mode: 'link'
-        tag "$sampleid"
-
-        input:
-        tuple val(sampleid), file(top5Hits_final) from blastTools_blastn_velvet_ch
-
-        output:
-        file "summary_${top5Hits_final}"
-
-        script:
-        """
-        java -jar ${projectDir}/bin/BlastTools.jar -t blastn ${top5Hits_final}
-        """
-    }
- }
-=======
->>>>>>> origin/new_edits_maely
 
 if (params.blastlocaldb) {
     process blast_nt_localdb_velvet {
