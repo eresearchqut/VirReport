@@ -63,8 +63,13 @@ def helpMessage () {
       --targets_file '[path/to/dir]'                File specifying the name of the viruses/viroids of interest to filter from the blast results output
                                                     ['/home/gauthiem/code/vsd-2.0/Targetted_Viruses_Viroids.txt']
 
+<<<<<<< HEAD
       --blastn [True/False]                         Run blastn homology search on velvet de novo assembly againts NCBI NT
                                                     [False]
+=======
+      --blastn_method ['blastn/megablast']      Run blastn homology search on velvet de novo assembly againts NCBI NT
+                                                [default blastn]
+>>>>>>> origin/new_edits_maely
 
       --blastlocaldb                                Run blastn and megablast homology search on velvet de novo assembly against local virus and viroid database
                                                     [False]
@@ -181,7 +186,7 @@ process cap3 {
     tuple val(sampleid), file(scaffolds_fasta), val(minlen), val(maxlen) from cap3_ch
 
     output:
-    tuple val(sampleid), file("${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta"), val(minlen), val(maxlen) into megablast_nt_velvet_ch, blast_nt_localdb_velvet_ch, blastn_nt_velvet_ch, getorf_ch
+    tuple val(sampleid), file("${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta"), val(minlen), val(maxlen) into blast_nt_localdb_velvet_ch, blastn_nt_velvet_ch, getorf_ch
    
     script:
     """
@@ -195,55 +200,62 @@ process cap3 {
     """
 }
 
-process megablast_nt_velvet {
-    label "blast_mem"
+process blastn_nt_velvet {
+    label "blastn_mem"
     publishDir "${params.outdir}/04_blastn/${sampleid}", mode: 'link'
     tag "$sampleid"
     containerOptions "${bindOptions}"
 
     input:
-    tuple val(sampleid), file("${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta"), val(minlen), val(maxlen) from megablast_nt_velvet_ch
+    tuple val(sampleid), file("${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta"), val(minlen), val(maxlen) from blastn_nt_velvet_ch
 
     output:
-    file "${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_NT.bls"
-    file "${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_NT_top5Hits.txt"
-    file "${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_NT_top5Hits_virus_viroids_final.txt"
-    tuple val(sampleid), file("${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_NT_top5Hits_virus_viroids_final.txt"), file("${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt") into blastTools_megablast_velvet_ch
-
+    file "${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT.bls"
+    file "${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits.txt"
+    file "${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt"
+    tuple val(sampleid), file("${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt"), file("${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt") into blastTools_blastn_velvet_ch
+    
     script:
+    def blast_task_param = params.blastn_method = "blastn" ? "-task blastn" : ''
     """
     #To extract the taxonomy, copy the taxonomy databases associated with your blast NT database
     cp ${params.blast_db}/taxdb.btd .
     cp ${params.blast_db}/taxdb.bti .
 
-    blastn -query ${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta \
-         -db ${params.blast_db}/nt \
-         -out ${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_NT.bls \
-         -evalue 0.0001 \
-         -num_threads 4 \
-         -outfmt '6 qseqid sgi sacc length pident mismatch gapopen qstart qend qlen sstart send slen sstrand evalue bitscore qcovhsp stitle staxids qseq sseq sseqid qcovs qframe sframe sscinames' \
-         -max_target_seqs 50
+    blastn ${blast_task_param} \
+        -query ${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta \
+        -db ${params.blast_db}/nt \
+        -out ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT.bls \
+        -evalue 0.0001 \
+        -num_threads 4 \
+        -outfmt '6 qseqid sgi sacc length pident mismatch gapopen qstart qend qlen sstart send slen sstrand evalue bitscore qcovhsp stitle staxids qseq sseq sseqid qcovs qframe sframe sscinames' \
+        -max_target_seqs 50
 
     grep ">" ${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta | sed 's/>//' > ${sampleid}_velvet_assembly_${minlen}-${maxlen}nt.ids
-
+    
     #fetch top blastn hits
     for i in `cat ${sampleid}_velvet_assembly_${minlen}-${maxlen}nt.ids`; do
-        grep \$i ${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_NT.bls | head -n5 >> ${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_NT_top5Hits.txt;
+        grep \$i ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT.bls | head -n5 >> ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits.txt;
     done
     
-    grep -i "Virus" ${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_NT_top5Hits.txt > ${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_NT_top5Hits_virus_viroids.txt  || [[ \$? == 1 ]]
-    grep -i "Viroid" ${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_NT_top5Hits.txt >> ${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_NT_top5Hits_virus_viroids.txt || [[ \$? == 1 ]]
-    cat ${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_NT_top5Hits_virus_viroids.txt | sed 's/ /_/g' > ${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_NT_top5Hits_virus_viroids_final.txt
-    cut -f3,26 ${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_NT_top5Hits_virus_viroids_final.txt | sort | uniq > ${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt
+    grep -i "Virus" ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits.txt > ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids.txt  || [[ \$? == 1 ]]
+    grep -i "Viroid" ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits.txt >> ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids.txt || [[ \$? == 1 ]]
+    cat ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids.txt | sed 's/ /_/g' > ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt
+    cut -f3,26 ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt | sort | uniq > ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt
     """
 }
 
+<<<<<<< HEAD
 process BlastTools_megablast_velvet {
+=======
+process BlastTools_blastn_velvet {
+    label "medium_mem"
+>>>>>>> origin/new_edits_maely
     publishDir "${params.outdir}/05_blastoutputs/${sampleid}", mode: 'link'
     tag "$sampleid"
 
     input:
-    tuple val(sampleid), file(top5Hits_final), file(taxonomy) from blastTools_megablast_velvet_ch
+    tuple val(sampleid), file(top5Hits_final), file(taxonomy) from blastTools_blastn_velvet_ch
 
     output:
     file "summary_${top5Hits_final}"
@@ -255,6 +267,7 @@ process BlastTools_megablast_velvet {
     """
 }
 
+<<<<<<< HEAD
 if (params.blastn) {
     process blastn_nt_velvet {
         label "blast_mem"
@@ -312,10 +325,12 @@ if (params.blastn) {
         """
     }
  }
+=======
+>>>>>>> origin/new_edits_maely
 
 if (params.blastlocaldb) {
     process blast_nt_localdb_velvet {
-        label "blast_mem"
+        label "blastn_mem"
         publishDir "${params.outdir}/04_blastn/${sampleid}", mode: 'link'
         tag "$sampleid"
         containerOptions "${bindOptions}"
@@ -330,7 +345,7 @@ if (params.blastlocaldb) {
 
         script:
         """
-        #1. blastnt search
+        #1. blastn search
         blastn -task blastn \
             -query ${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta \
             -db ${params.blastn_local_db} \
@@ -352,7 +367,7 @@ if (params.blastlocaldb) {
     }
 
     process filter_blast_nt_localdb_velvet {
-        label "blast_mem"
+        label "blastn_mem"
         publishDir "${params.outdir}/05_blastoutputs/${sampleid}", mode: 'link'
         tag "$sampleid"
 
@@ -383,16 +398,17 @@ process filter_n_cov {
     tuple val(sampleid), file(samplefile), file(taxonomy) from blastTools_results_ch
 
     output:
-    file "${sampleid}_${minlen}-${maxlen}nt*.vcf.gz*"
-    file "${sampleid}_${minlen}-${maxlen}nt*consensus.fasta"
-    file "${sampleid}_${minlen}-${maxlen}nt*.fa"
-    file "${sampleid}_${minlen}-${maxlen}*.txt"
+    //file "${sampleid}_${minlen}-${maxlen}nt*.vcf.gz*"
+    //file "${sampleid}_${minlen}-${maxlen}nt*consensus.fasta"
+    //file "${sampleid}_${minlen}-${maxlen}nt*.fa"
+    //file "${sampleid}_${minlen}-${maxlen}*.txt"
+    file "${sampleid}_${minlen}-${maxlen}*"
     file "${sampleid}_${minlen}-${maxlen}nt_top_scoring_targets_with_cov_stats.txt" into contamination_flag
-
+    
     script:
     """
     if [[ ${params.targets} == true ]]; then
-        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${rawfastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${minlen}-${maxlen}nt --cov --taxonomy ${taxonomy} --blastdbpath ${params.blast_db}/nt --targets --targetspath ${params.targets_file}
+        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${rawfastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${minlen}-${maxlen}nt --cov --taxonomy ${taxonomy} --blastdbpath ${params.blast_db}/nt --targets --targetspath ${projectDir}/bin/${params.targets_file}
     else
         filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${rawfastqfile} --fastqfiltbysize ${fastq_filt_by_size} --results ${samplefile} --read_size ${minlen}-${maxlen}nt --cov --taxonomy ${taxonomy} --blastdbpath ${params.blast_db}/nt
     fi

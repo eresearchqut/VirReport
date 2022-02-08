@@ -31,11 +31,13 @@ def main():
         run_data["count_max"] = run_data.groupby(["Targetted_sp_generic_name"])["RPKM"].transform(max)
         run_data["threshold_value"]=run_data["count_max"]*threshold
         run_data["contamination_flag"] = np.where(run_data["RPKM"] <= run_data["threshold_value"], True, False)
+        run_data["contamination_flag"] = np.where(run_data["count_max"] <= 10, "NA", run_data["contamination_flag"])
         
     elif method == "read_counts_normalised":
         run_data["count_max"] = run_data.groupby(["Targetted_sp_generic_name"])["read_counts_normalised"].transform(max)
         run_data["threshold_value"]=run_data["count_max"]*threshold
         run_data["contamination_flag"] = np.where(run_data["read_counts_normalised"] <= run_data["threshold_value"], True, False)
+        run_data["contamination_flag"] = np.where(run_data["count_max"] <= 10, "NA", run_data["contamination_flag"])
     
     run_data = run_data.sort_values(["Sample", "Targetted_sp_generic_name"], ascending = (True, True))
     run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + ".txt", index=None, sep="\t",float_format="%.2f")
