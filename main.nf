@@ -42,9 +42,6 @@ def helpMessage () {
       --blast_nr_db '[path/to/dir]'                 Path to the blast NR database files
                                                     '/work/eresearch_bio/reference/blastDB/nr'
 
-      --targets_file '[path/to/dir]'                Path to the targets file
-                                                    'Targetted_Viruses_Viroids_sorted.txt'
-
       --cap3_len '[value]'                          Trim value used in the CAP3 step.
                                                     '20'
 
@@ -105,12 +102,17 @@ if (params.help) {
     exit 0
 }
 
+blastn_db_name = "${params.blast_db_dir}/nt"
+blastp_db_name = "${params.blast_db_dir}/nr"
+blast_local_db_name = file(params.blast_local_db_path).name
+blast_local_db_dir = file(params.blast_local_db_path).parent
+
 switch (workflow.containerEngine) {
     case "docker":
-        bindOptions = "-v ${params.blast_db}:${params.blast_db} -v ${params.blastn_local_db}:${params.blastn_local_db}"
+        bindOptions = "-v ${params.blast_db_dir}:${params.blast_db_dir} -v ${blast_local_db_dir}:${blast_local_db_dir}"
         break;
     case "singularity":
-        bindOptions = "-B ${params.blast_db} -B ${params.blastn_local_db}"
+        bindOptions = "-B ${blast_local_db_dir} -B ${params.blast_db_dir}"
         break;
     default:
         bindOptions = ""
@@ -214,12 +216,11 @@ process blastn_nt_velvet {
     def blast_task_param = (params.blastn_method == "blastn") ? "-task blastn" : ''
     """
     #To extract the taxonomy, copy the taxonomy databases associated with your blast NT database
-    cp ${params.blast_db}/taxdb.btd .
-    cp ${params.blast_db}/taxdb.bti .
-
+    cp ${params.blast_db_dir}/taxdb.btd .
+    cp ${params.blast_db_dir}/taxdb.bti .
     blastn ${blast_task_param} \
         -query ${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta \
-        -db ${params.blast_db}/nt \
+        -db ${blastn_db_name} \
         -out ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT.bls \
         -evalue 0.0001 \
         -num_threads 4 \
@@ -279,7 +280,7 @@ if (params.blastlocaldb) {
         #1. blastn search
         blastn -task blastn \
             -query ${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta \
-            -db ${params.blastn_local_db} \
+            -db ${blast_local_db_dir}/${blast_local_db_name} \
             -out ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_localdb.bls \
             -evalue ${params.blastn_evalue} \
             -num_threads ${task.cpus} \
@@ -288,7 +289,7 @@ if (params.blastlocaldb) {
 
         #2. megablast search
         blastn -query ${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta \
-            -db ${params.blastn_local_db} \
+            -db ${blast_local_db_dir}/${blast_local_db_name} \
             -out ${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_localdb.bls \
             -evalue ${params.blastn_evalue} \
             -num_threads ${task.cpus} \
@@ -339,9 +340,9 @@ process filter_n_cov {
     script:
     """
     if [[ ${params.targets} == true ]]; then
-        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${rawfastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${minlen}-${maxlen}nt --cov --taxonomy ${taxonomy} --blastdbpath ${params.blast_db}/nt --targets --targetspath ${projectDir}/bin/${params.targets_file}
+        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${rawfastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${minlen}-${maxlen}nt --cov --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --targets --targetspath ${projectDir}/bin/${params.targets_file}
     else
-        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${rawfastqfile} --fastqfiltbysize ${fastq_filt_by_size} --results ${samplefile} --read_size ${minlen}-${maxlen}nt --cov --taxonomy ${taxonomy} --blastdbpath ${params.blast_db}/nt
+        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${rawfastqfile} --fastqfiltbysize ${fastq_filt_by_size} --results ${samplefile} --read_size ${minlen}-${maxlen}nt --cov --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name}
     fi
     """
 }
@@ -404,7 +405,7 @@ if (params.blastp) {
         script:
         """         
         blastp -query ${fasta} \
-            -db ${params.blast_db}/nr \
+            -db ${blastp_db_name} \
             -evalue ${params.blastp_evalue} \
             -out ${fasta.baseName}_blastp_vs_NR_out.bls \
             -num_threads ${task.cpus} \
@@ -430,7 +431,7 @@ if (params.blastp) {
 
         script:
         """
-        blastdbcmd  -db ${params.blast_db}/nr \
+        blastdbcmd  -db ${blastp_db_name} \
                     -dbtype prot \
                     -entry_batch ${blastp_nr_bls_ids} > ${blastp_nr_bls_ids.baseName}.out
 
@@ -503,7 +504,7 @@ if (params.spades) {
 
         output:
         file "${sampleid}_spades_cap3_${minlen}-${maxlen}nt.rename.fasta"
-        tuple val(sampleid), file("${sampleid}_spades_cap3_${minlen}-${maxlen}nt.rename.fasta"), file("${sampleid}_spades_cap3_${minlen}-${maxlen}nt.rename.ids"), val(minlen), val(maxlen) into megablast_nt_spades_ch
+        tuple val(sampleid), file("${sampleid}_spades_cap3_${minlen}-${maxlen}nt.rename.fasta"), file("${sampleid}_spades_cap3_${minlen}-${maxlen}nt.rename.ids"), val(minlen), val(maxlen) into blastn_nt_spades_ch
 
         script:
         """
@@ -515,24 +516,26 @@ if (params.spades) {
         """
     }
 
-    process megablast_nt_spades {
+    process blastn_nt_spades {
         label "medium_mem"
         publishDir "${params.outdir}/04_blastn/${sampleid}", mode: 'link'
         tag "$sampleid"
         containerOptions "${bindOptions}"
 
         input:
-        tuple val(sampleid), file(spades_cap3_rename_fasta), file(spades_cap3_rename_fasta_ids), val(minlen), val(maxlen) from megablast_nt_spades_ch
+        tuple val(sampleid), file(spades_cap3_rename_fasta), file(spades_cap3_rename_fasta_ids), val(minlen), val(maxlen) from blastn_nt_spades_ch
 
         output:
         file "${sampleid}_spades_${minlen}-${maxlen}nt_megablast_vs_NT.bls"
         file "${sampleid}_spades_${minlen}-${maxlen}nt_megablast_vs_NT_top5Hits.txt"
         file "${sampleid}_spades_${minlen}-${maxlen}nt_megablast_vs_NT_top5Hits_virus_viroids_final.txt"
-        tuple val(sampleid), file("${sampleid}_spades_${minlen}-${maxlen}nt_megablast_vs_NT_top5Hits_virus_viroids.txt") into BlastToolsn_megablast_spades_ch
+        tuple val(sampleid), file("${sampleid}_spades_${minlen}-${maxlen}nt_megablast_vs_NT_top5Hits_virus_viroids.txt") into BlastTools_blastn_spades_ch
         script:
+        def blast_task_param = (params.blastn_method == "blastn") ? "-task blastn" : ''
         """
-        blastn  -query ${spades_cap3_rename_fasta} \
-                -db ${params.blast_db}/nt \
+        blastn ${blast_task_param} \
+                -query ${spades_cap3_rename_fasta} \
+                -db ${blastn_db_name} \
                 -out ${sampleid}_spades_${minlen}-${maxlen}nt_megablast_vs_NT.bls \
                 -evalue ${params.blastn_evalue} \
                 -outfmt '6 qseqid sgi sacc length pident mismatch gapopen qstart qend qlen sstart send slen sstrand evalue bitscore qcovhsp stitle staxids qseq sseq sseqid qcovs qframe sframe' \
@@ -550,13 +553,13 @@ if (params.spades) {
         """
     }
 
-    process BlastToolsn_megablast_spades {
+    process BlastTools_blastn_spades {
         label "local"
         publishDir "${params.outdir}/05_blastoutputs/${sampleid}", mode: 'link'
         tag "$sampleid"
 
         input:
-        tuple val(sampleid), file(top5Hits_final) from BlastToolsn_megablast_spades_ch
+        tuple val(sampleid), file(top5Hits_final) from BlastTools_blastn_spades_ch
 
         output:
         file "summary_${top5Hits_final}"
