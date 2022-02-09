@@ -1,0 +1,8 @@
+.nextflow/*
+.nextflow.log*
+work/*
+results/*
+RefRun/*
+index.csv
+*.fastq
+
