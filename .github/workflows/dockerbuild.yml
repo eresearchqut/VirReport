@@ -19,7 +19,7 @@ jobs:
       - name: Docker Build & Push Action
         uses: mr-smithers-excellent/docker-build-push@v5.6
         with:
-          image: vsd
+          image: virreport
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
