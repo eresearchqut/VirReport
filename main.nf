@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 /*
-Virus Surveillance and Diagnosis (VSD) workflow
+VirReport workflow
 Roberto Barrero, 14/03/2019
 Desmond Schmidt, 2/7/2019
 Converted to Nextflow by Craig Windell, 11/2020
@@ -14,16 +14,16 @@ import java.util.stream.Collectors;
 def helpMessage () {
     log.info """
 
-    Virus Surveillance and Diagnosis (VSD) workflow
+    VirReport workflow
     Roberto Barrero, 14/03/2019
     Desmond Schmidt, 2/7/2019
     Converted to Nextflow by Craig Windell, 11/2020
-    Modified by Maely Gauthier 12/2021
+    Modified by Maely Gauthier, 12/2021
 
     Usage:
 
     Run the command
-    nextflow run eresearch/vsd -profile ...
+    nextflow run eresearchqut/virreport -profile ...
 
     Mandatory arguments:
        -profile '[docker, singularity, conda]'      Profile to use. Choose docker, or singularity, or conda
@@ -58,7 +58,7 @@ def helpMessage () {
                                                     [False]
 
       --targets_file '[path/to/dir]'                File specifying the name of the viruses/viroids of interest to filter from the blast results output
-                                                    ['/home/gauthiem/code/vsd-2.0/Targetted_Viruses_Viroids.txt']
+                                                    ['/home/Targetted_Viruses_Viroids.txt']
 
       --blastn_method ['blastn/megablast']      Run blastn homology search on velvet de novo assembly againts NCBI NT
                                                 [default blastn]
@@ -299,7 +299,7 @@ if (params.blastlocaldb) {
     }
 
     process filter_blast_nt_localdb_velvet {
-        label "blastn_mem"
+        label "local"
         publishDir "${params.outdir}/05_blastoutputs/${sampleid}", mode: 'link'
         tag "$sampleid"
 
@@ -314,8 +314,8 @@ if (params.blastlocaldb) {
 
         script:
         """
-        bash run_VSD_report.sh ${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_localdb.bls ${params.ictvinfo}
-        bash run_VSD_report.sh ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_localdb.bls ${params.ictvinfo}
+        bash run_report.sh ${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_localdb.bls ${params.ictvinfo}
+        bash run_report.sh ${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_localdb.bls ${params.ictvinfo}
         """
     }
 }
