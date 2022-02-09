@@ -211,7 +211,7 @@ process blastn_nt_velvet {
     tuple val(sampleid), file("${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt"), file("${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt") into blastTools_blastn_velvet_ch
     
     script:
-    def blast_task_param = params.blastn_method = "blastn" ? "-task blastn" : ''
+    def blast_task_param = (params.blastn_method == "blastn") ? "-task blastn" : ''
     """
     #To extract the taxonomy, copy the taxonomy databases associated with your blast NT database
     cp ${params.blast_db}/taxdb.btd .
