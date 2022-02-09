@@ -27,8 +27,8 @@ The VSD workflow will perform the following steps by default:
 - Retain reads of a given length (e.g. 21-22 or 24 nt long) from fastq file(s) provided in index.csv file (readprocessing)  
 - De novo assembly using kmer 15 and coverage 3 (velvet) - 
 - Collapse contigs into scaffolds (min length 20) (cap3)
-- Run megablast homology search against NCBI NT database (megablast_nt_velvet)
-- Summarise megablast results and restrict to virus and viroid matches (BlastTools_megablast_velvet)
+- Run megablast homology search against NCBI NT database (blastn_nt_velvet)
+- Summarise megablast results and restrict to virus and viroid matches (BlastTools_blastn_velvet)
 - Derive coverage statistics, consensus sequence and VCF matching to top blast hits (filter_n_cov)
 
 A number of additional optional steps can be run:
@@ -39,7 +39,7 @@ A number of additional optional steps can be run:
 
      --blastlocaldb: Run blastn and megablast homology search on de novo assembly (derived with Velvet) against local  virus and viroid database (blast_nt_localdb_velvet, filter_blast_nt_localdb_velvet)
 
-     --blastn: Run blastn homology search on de novo assembly (derived with Velvet) against local  virus and viroid database (blastn_nt_velvet)
+     --blastn_method: The blastn homology search can be specified as blastn instead of megablast (--blastn_method blastn)
 
      --spades: Run SPAdes 3.14 de novo assembler and perform blastn homology analysis on the derived de novo contigs (spades, cap3_spades, megablast_nt_spades , BlastToolsn_megablast_spades)
 ```
