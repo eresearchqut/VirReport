@@ -57,19 +57,19 @@ def helpMessage () {
       --targets [True/False]                        Filter the blastn results to viruses/viroids of interest
                                                     [False]
 
-      --targets_file '[path/to/dir]'                File specifying the name of the viruses/viroids of interest to filter from the blast results output
+      --targets_file '[path/to/dir/file]'           File specifying the name of the viruses/viroids of interest to filter from the blast results output
                                                     ['/home/Targetted_Viruses_Viroids.txt']
 
-      --blastn_method ['blastn/megablast']      Run blastn homology search on velvet de novo assembly againts NCBI NT
-                                                [default blastn]
+      --blastn_method ['blastn/megablast']          Run blastn homology search on velvet de novo assembly againts NCBI NT
+                                                    [blastn]
 
       --blastlocaldb                                Run blastn and megablast homology search on velvet de novo assembly against local virus and viroid database
                                                     [False]
 
-      --blast_local_nt_db '[path/to/dir]'           Path to the local blast NT database files. Required if --blastlocaldb option is specified
+      --blast_local_nt_db '[path/to/dir/prefix]'    Path to the local blast NT database files. Required if --blastlocaldb option is specified
                                                     '/work/hia_mt18005/databases/sequences/PVirDB_20210330'
 
-      --ictvinfo '[path/to/dir]'                    Path to ICTV info file. Required if --blastlocaldb option is specified
+      --ictvinfo '[path/to/dir/file]'               Path to ICTV info file. Required if --blastlocaldb option is specified
                                                     ['ICTV_taxonomy_MinIdentity_Species.tsv']
 
       --blastp [True/False]                         Predict ORF from de novo assembled contigs and run blastP againts NCBI NR
