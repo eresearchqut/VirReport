@@ -1,4 +1,5 @@
 # VirReport workflow
+## Authors
 Roberto Barrero, 14/03/2019  
 Desmond Schmidt, 2/7/2019  
 Converted to Nextflow by Craig Windell, 11/2020  
@@ -8,12 +9,14 @@ Modified by Maely Gauthier 12/2021
 VirReport pipeline based on the scientific workflow manager Nextflow.
 It is designed to help phytosanitary diagnostics of viruses and viroid pathogens in quarantine facilities. It takes small RNA-Seq samples as input.
 
-## Run the test
+# Run the Pipeline
 
-## Run your own analysis
+## Run with your own data
 
 Run the command:
-```nextflow run eresearchqut/VirReport -profile {docker or singularity or conda} --indexfile $PBS_O_WORKDIR/index_example.csv```
+```bash
+nextflow run eresearchqut/VirReport -profile {docker or singularity or conda} --indexfile $PBS_O_WORKDIR/index_example.csv
+```
 
 Set the profile parameter to one of
 ```
@@ -62,9 +65,9 @@ nextflow run eresearchqut/VirReport -profile {docker or singularity or conda} --
 or update parameter to true in the nextflow.config file. For instance:
 ```
 params {
-blastlocaldb = true
-spades = true
-contamination_detection = true
+  blastlocaldb = true
+  spades = true
+  contamination_detection = true
 }
 ```
 ## Preparing the data
@@ -86,11 +89,13 @@ You also need to provide the path of your NCBI blast directory in the nextflow.c
 ```
 params {
   blast_db = '/lustre/work-lustre/hia_mt18005/blastDB/30112021'
-  }
+}
 ```
-If you are interested to run a blast analysis against a local database, you also need to specify its path in the nextflow.config file. For example:
+If you want to run a blast analysis against a local database, please ensure you use NCBI BLAST+ makeblastdb to create the database. Then specify the path to the database files including the prefix the nextflow.config file. For example:
+```
 blastn_local_db = '/work/hia_mt18005/databases/PVirDB/PVriDB_ver2021_11_09/PVirDB_ver20211109.fasta'
-Running the pipeline
+```
+# Running the pipeline
 
 
 ## Outputs
