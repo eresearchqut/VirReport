@@ -50,7 +50,7 @@ def helpMessage () {
 
       --blastn_evalue '[value]'                     Blastn evalue.
                                                     '0.0001'
-    
+
       --blastn_method ['blastn/megablast']          Run blastn homology search on velvet de novo assembly againts NCBI NT
                                                     [default blastn]
 
