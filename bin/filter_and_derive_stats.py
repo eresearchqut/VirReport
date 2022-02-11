@@ -306,19 +306,19 @@ def main():
             picard = ["picard", "CollectWgsMetrics", "-I", str(sortedbamoutput), "-O", str(picard_output), "-R", str(fastafile), "-READ_LENGTH","22", "-COUNT_UNPAIRED", "true"]
             subprocess.call(picard)
 
-            # subprocess.call(["rm","-r", samoutput])
-            # subprocess.call(["rm","-r", bamoutput])
-            # subprocess.call(["rm","-r", bamindex])
-            # subprocess.call(["rm","-r", pileup])
-            # subprocess.call(["rm","-r", vcfout])
-            # subprocess.call(["rm","-r", genomecovbed])
-            # subprocess.call(["rm","-r", zerocovbed])
-            # subprocess.call(["rm","-r", maskedfasta])
+            subprocess.call(["rm","-r", samoutput])
+            subprocess.call(["rm","-r", bamoutput])
+            subprocess.call(["rm","-r", bamindex])
+            subprocess.call(["rm","-r", pileup])
+            subprocess.call(["rm","-r", vcfout])
+            subprocess.call(["rm","-r", genomecovbed])
+            subprocess.call(["rm","-r", zerocovbed])
+            subprocess.call(["rm","-r", maskedfasta])
 
-            # for fl in glob.glob(index + "*ebwt"):
-            #     os.remove(fl)
-            # for fl in glob.glob(index + ".vcf.gz*"):
-            #     os.remove(fl) 
+            for fl in glob.glob(index + "*ebwt"):
+                os.remove(fl)
+            for fl in glob.glob(index + ".vcf.gz*"):
+                os.remove(fl) 
 
             reflen = ()
             cov = ()

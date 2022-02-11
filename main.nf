@@ -36,41 +36,23 @@ def helpMessage () {
         sampleid,samplepath,minlen,maxlen
         MT019,MT019_sRNA.fastq,21,22
 
+      --blast_local_nt_db '[path/to/dir]'           Path to the local blast NT database files. Required if --blastlocaldb option is specified
+                                                    '/work/hia_mt18005/databases/sequences/PVirDB_20210330'
+
       --blast_nt_db '[path/to/dir]'                 Path to the blast NT database files
                                                     '/work/eresearch_bio/reference/blastDB/nt'
 
       --blast_nr_db '[path/to/dir]'                 Path to the blast NR database files
                                                     '/work/eresearch_bio/reference/blastDB/nr'
 
-      --cap3_len '[value]'                          Trim value used in the CAP3 step.
-                                                    '20'
-
-      --orf_minsize '[value]'                       The value of minsize for getorf
-                                                    '150'
-
-      --orf_circ_minsize '[value]'                  The value of minsize for getorf -circular
-                                                    '150'
+      --blastlocaldb                                Run blastn and megablast homology search on velvet de novo assembly against local virus and viroid database
+                                                    [False]
 
       --blastn_evalue '[value]'                     Blastn evalue.
                                                     '0.0001'
     
-      --targets [True/False]                        Filter the blastn results to viruses/viroids of interest
-                                                    [False]
-
-      --targets_file '[path/to/dir]'                File specifying the name of the viruses/viroids of interest to filter from the blast results output
-                                                    ['/home/Targetted_Viruses_Viroids.txt']
-
       --blastn_method ['blastn/megablast']      Run blastn homology search on velvet de novo assembly againts NCBI NT
                                                 [default blastn]
-
-      --blastlocaldb                                Run blastn and megablast homology search on velvet de novo assembly against local virus and viroid database
-                                                    [False]
-
-      --blast_local_nt_db '[path/to/dir]'           Path to the local blast NT database files. Required if --blastlocaldb option is specified
-                                                    '/work/hia_mt18005/databases/sequences/PVirDB_20210330'
-
-      --ictvinfo '[path/to/dir]'                    Path to ICTV info file. Required if --blastlocaldb option is specified
-                                                    ['ICTV_taxonomy_MinIdentity_Species.tsv']
 
       --blastp [True/False]                         Predict ORF from de novo assembled contigs and run blastP againts NCBI NR
                                                     [False]
@@ -78,22 +60,39 @@ def helpMessage () {
       --blastp_evalue '[value]'                     Blastp's evalue. Required if --blastp option is specified
                                                     '0.0001'
                     
+      --cap3_len '[value]'                          Trim value used in the CAP3 step.
+                                                    '20'
+
+      --contamination_detection [True/False]        Run false positive prediction due to cross-sample contamination
+                                                    [False]
+
+      --contamination_detection_method '[value]'    Either use RPKM or Reads per million for cross-contamination detection 
+
+      
+      --contamination_flag '[value]'                Threshold value to predict false positives due to cross-sample contamination. 
+                                                    Required if --contamination_detection option is specified
+                                                    '0.01'
+      --ictvinfo '[path/to/dir]'                    Path to ICTV info file. Required if --blastlocaldb option is specified
+                                                    ['ICTV_taxonomy_MinIdentity_Species.tsv']
+      
+      --orf_minsize '[value]'                       The value of minsize for getorf
+                                                    '150'
+
+      --orf_circ_minsize '[value]'                  The value of minsize for getorf -circular
+                                                    '150'
+
       --spades [True/False]                         Run SPAdes 3.14 de novo assembler and perform blastn homology analysis on the derived de novo contigs
                                                     [False]
 
       --spadeskmer '[value]'                        K-mer range to use when running SPAdes. Required if --spades option is specified
                                                     ['K9-21']
 
-      --contamination_detection [True/False]        Run false positive prediction due to cross-sample contamination
+      --targets [True/False]                        Filter the blastn results to viruses/viroids of interest
                                                     [False]
 
-      --contamination_flag '[value]'                Threshold value to predict false positives due to cross-sample contamination. 
-                                                    Required if --contamination_detection option is specified
-                                                    '0.01'
-      --contamination_detection_method '[value]'    Either use RPKM or Reads per million for cross-contamination detection 
-
-    Other options
-
+      --targets_file '[path/to/dir]'                File specifying the name of the viruses/viroids of interest to filter from the blast results output
+                                                    ['Targetted_Viruses_Viroids.txt']
+    
     """.stripIndent()
 }
 // Show help message
