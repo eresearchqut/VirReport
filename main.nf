@@ -52,7 +52,7 @@ def helpMessage () {
                                                     '0.0001'
 
       --blastn_method ['blastn/megablast']          Run blastn homology search on velvet de novo assembly againts NCBI NT
-                                                    [default blastn]
+                                                    [default megablast]
 
       --blastp [True/False]                         Predict ORF from de novo assembled contigs and run blastP againts NCBI NR
                                                     [False]
