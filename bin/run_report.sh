@@ -22,7 +22,7 @@ for i in `cat ${var}.top1.ids`; do echo "fetching top hits..." $i; grep $i $var 
 ######  namely: qseqid sgi sacc length pident mismatch gapopen qstart qend qlen sstart send slen sstrand evalue bitscore qcovhsp stitle staxids qseq sseq sseqid qcovs qframe sframe
 cat ${var}.top1Hits.txt | sed 's/ /_/g' > ${var}.txt
 #STEP2: summarise the GA blastN files
-java -jar /work/hia_mt18005/vsd/tools/BlastTools.jar -t blastn ${var}.txt
+java -jar BlastTools.jar -t blastn ${var}.txt
 
 #filter regulated/edemic/LandPlant
 cat summary_${var}.txt | grep "regulated" >> summary_${var}_filtered.txt

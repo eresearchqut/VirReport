@@ -139,9 +139,8 @@ process readprocessing {
     output:
     file "${sampleid}_${minlen}-${maxlen}nt_cutadapt.log"
     file "${sampleid}_${minlen}-${maxlen}nt.fastq"
-    tuple val(sampleid), file("${sampleid}_${minlen}-${maxlen}nt.fastq"), val(minlen), val(maxlen) into velvet_ch, spades_ch
-    tuple val(sampleid), file("${sampleid}_${minlen}-${maxlen}nt.fastq") into fastq_filt_by_size_ch
-
+    tuple val(sampleid), file(fastqfile), file("${sampleid}_${minlen}-${maxlen}nt.fastq"), val(minlen), val(maxlen) into velvet_ch
+    tuple val(sampleid), file("${sampleid}_${minlen}-${maxlen}nt.fastq"), val(minlen), val(maxlen) into spades_ch
 
     script:
     """
@@ -154,18 +153,18 @@ process velvet {
     tag "$sampleid"
 
     input:
-    tuple val(sampleid), file(samplefile), val(minlen), val(maxlen) from velvet_ch
+    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), val(minlen), val(maxlen) from velvet_ch
 
     output:
     file "${sampleid}_velvet_${minlen}-${maxlen}nt_k15/*"
-    tuple val(sampleid), file("${sampleid}_velvet_assembly_${minlen}-${maxlen}nt.fasta"), \
+    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_velvet_assembly_${minlen}-${maxlen}nt.fasta"), \
         val(minlen), val(maxlen) into cap3_ch
 
     script:
     """
     #run velvet de novo assembler
     echo 'Starting velvet de novo assembly';
-    velveth ${sampleid}_velvet_${minlen}-${maxlen}nt_k15 15 -short -fastq $samplefile
+    velveth ${sampleid}_velvet_${minlen}-${maxlen}nt_k15 15 -short -fastq ${fastq_filt_by_size}
     velvetg ${sampleid}_velvet_${minlen}-${maxlen}nt_k15 -exp_cov 2
 
     #edit contigs name and rename velvet assembly
@@ -179,11 +178,12 @@ process cap3 {
     tag "$sampleid"
 
     input:
-    tuple val(sampleid), file(scaffolds_fasta), val(minlen), val(maxlen) from cap3_ch
+    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file(scaffolds_fasta), val(minlen), val(maxlen) from cap3_ch
 
     output:
-    tuple val(sampleid), file("${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta"), val(minlen), val(maxlen) into blast_nt_localdb_velvet_ch, blastn_nt_velvet_ch, getorf_ch
-   
+    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta"), val(minlen), val(maxlen) into blastn_nt_velvet_ch
+    tuple val(sampleid), file("${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta"), val(minlen), val(maxlen) into blast_nt_localdb_velvet_ch, getorf_ch
+
     script:
     """
     #collapse velvet contigs
@@ -203,13 +203,13 @@ process blastn_nt_velvet {
     containerOptions "${bindOptions}"
 
     input:
-    tuple val(sampleid), file("${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta"), val(minlen), val(maxlen) from blastn_nt_velvet_ch
+    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta"), val(minlen), val(maxlen) from blastn_nt_velvet_ch
 
     output:
     file "${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT.bls"
     file "${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits.txt"
     file "${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt"
-    tuple val(sampleid), file("${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt"), file("${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt") into blastTools_blastn_velvet_ch
+    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt"), file("${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt"), val(minlen), val(maxlen) into blastTools_blastn_velvet_ch
     
     script:
     def blast_task_param = (params.blastn_method == "blastn") ? "-task blastn" : ''
@@ -246,18 +246,17 @@ process BlastTools_blastn_velvet {
     tag "$sampleid"
 
     input:
-    tuple val(sampleid), file(top5Hits_final), file(taxonomy) from blastTools_blastn_velvet_ch
+    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file(top5Hits_final), file(taxonomy), val(minlen), val(maxlen) from blastTools_blastn_velvet_ch
 
     output:
     file "summary_${top5Hits_final}"
-    tuple val(sampleid), "summary_${top5Hits_final}", "${taxonomy}" into blastTools_results_ch
+    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("summary_${top5Hits_final}"), file(taxonomy), val(minlen), val(maxlen) into blastTools_results_ch
 
     script:
     """
     java -jar ${projectDir}/bin/BlastTools.jar -t blastn ${top5Hits_final}
     """
 }
-
 
 if (params.blastlocaldb) {
     process blast_nt_localdb_velvet {
@@ -324,24 +323,18 @@ process filter_n_cov {
     containerOptions "${bindOptions}"
     
     input:
-    tuple val(sampleid), file(rawfastqfile), val(minlen), val(maxlen) from filter_n_cov_ch
-    tuple val(sampleid), file(fastq_filt_by_size) from fastq_filt_by_size_ch
-    tuple val(sampleid), file(samplefile), file(taxonomy) from blastTools_results_ch
+    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file(samplefile), file(taxonomy), val(minlen), val(maxlen) from blastTools_results_ch
 
     output:
-    //file "${sampleid}_${minlen}-${maxlen}nt*.vcf.gz*"
-    //file "${sampleid}_${minlen}-${maxlen}nt*consensus.fasta"
-    //file "${sampleid}_${minlen}-${maxlen}nt*.fa"
-    //file "${sampleid}_${minlen}-${maxlen}*.txt"
     file "${sampleid}_${minlen}-${maxlen}*"
-    file "${sampleid}_${minlen}-${maxlen}nt_top_scoring_targets_with_cov_stats.txt" into contamination_flag
+    file("${sampleid}_${minlen}-${maxlen}nt_top_scoring_targets_with_cov_stats.txt") into contamination_flag
     
     script:
     """
     if [[ ${params.targets} == true ]]; then
-        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${rawfastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${minlen}-${maxlen}nt --cov --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --targets --targetspath ${projectDir}/bin/${params.targets_file}
+        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${minlen}-${maxlen}nt --cov --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --targets --targetspath ${projectDir}/bin/${params.targets_file}
     else
-        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${rawfastqfile} --fastqfiltbysize ${fastq_filt_by_size} --results ${samplefile} --read_size ${minlen}-${maxlen}nt --cov --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name}
+        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize ${fastq_filt_by_size} --results ${samplefile} --read_size ${minlen}-${maxlen}nt --cov --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name}
     fi
     """
 }
