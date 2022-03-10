@@ -25,12 +25,12 @@ def main():
         sample_data = pd.read_csv(fl, header=0, sep="\t",index_col=None)
         run_data = run_data.append(sample_data)
 
-    run_data = run_data[["Sample","sacc","naccs","length","slen","cov","av-pident","qseqids","Targetted_sp_generic_name","Mean coverage","Read count","Read count norm", "RPKM", "PCT_1X", "PCT_10X", "PCT_20X"]]
+    run_data = run_data[["Sample","sacc","naccs","length","slen","cov","av-pident","qseqids","Targetted_sp_generic_name","Mean coverage","Read count","Dedup read count","Dup %","RPM","FPKM","PCT_1X","PCT_5X","PCT_10X","PCT_20X"]]
     run_data["read size"] = readsize
-    if method == "RPKM":
-        run_data["count_max"] = run_data.groupby(["Targetted_sp_generic_name"])["RPKM"].transform(max)
+    if method == "FPKM":
+        run_data["count_max"] = run_data.groupby(["Targetted_sp_generic_name"])["FPKM"].transform(max)
         run_data["threshold_value"]=run_data["count_max"]*threshold
-        run_data["contamination_flag"] = np.where(run_data["RPKM"] <= run_data["threshold_value"], True, False)
+        run_data["contamination_flag"] = np.where(run_data["FPKM"] <= run_data["threshold_value"], True, False)
         run_data["contamination_flag"] = np.where(run_data["count_max"] <= 10, "NA", run_data["contamination_flag"])
         
     elif method == "read_counts_normalised":
