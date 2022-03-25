@@ -64,6 +64,7 @@ def main():
     else:
         taxonomy_df = pd.read_csv(taxonomy, header=None, sep="\t")
         taxonomy_df.columns =["sacc", "Targetted_sp_generic_name"]
+        taxonomy_df["Targetted_sp_generic_name"] = taxonomy_df["Targetted_sp_generic_name"].str.replace("Hop_stunt_viroid_-_citrus","Hop_stunt_viroid")
     #print(taxonomy_df)
   
 
@@ -92,8 +93,9 @@ def main():
     raw_data["stitle"] =  raw_data["stitle"].str.replace("Rubus yellow net virus isolate Canadian 2 hypothetical protein genes  partial cds; hypothetical proteins  polyprotein  ORF 6  and hypothetical protein genes  complete cds; and hypothetical protein genes  partial cds","Rubus yellow net virus isolate Canadian 2 complete cds")
     #remove resistance genes from list of results
     raw_data = raw_data[~raw_data["stitle"].str.contains("resistance gene")]
-  
-   
+    raw_data = raw_data[~raw_data["stitle"].str.contains("resistance protein")]
+    raw_data = raw_data[~raw_data["stitle"].str.contains("pararetrovirus")]
+    
     raw_data = pd.merge(raw_data, taxonomy_df, on=["sacc"])
     raw_data["Targetted_sp_generic_name"] = raw_data["Targetted_sp_generic_name"].str.replace("_", " ")
 
