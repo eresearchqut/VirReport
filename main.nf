@@ -109,7 +109,7 @@ if (params.help) {
 
 blastn_db_name = "${params.blast_db_dir}/nt"
 blastp_db_name = "${params.blast_db_dir}/nr"
-negative_seqid_list = "${params.blast_db_dir}/negative_list.txt"
+negative_seqid_list = "${params.blast_db_dir}/negative_list_out.txt"
 blast_local_db_name = file(params.blast_local_db_path).name
 blast_local_db_dir = file(params.blast_local_db_path).parent
 blacklist_db_name = file(params.blacklist_db_path).name
@@ -131,8 +131,8 @@ if (params.indexfile) {
         Channel
           .fromPath(params.indexfile, checkIfExists: true)
           .splitCsv(header:true)
-          .map{ row-> tuple(row.samplepath.substring(row.samplepath.lastIndexOf('/') +1), file(row.samplepath)) }
-          .into{ fastqcraw_ch; filter_n_cov_ch; contamination_detection_ch}
+          .map{ row-> tuple(row.sampleid, row.samplepath.substring(row.samplepath.lastIndexOf('/') +1), file(row.samplepath)) }
+          .into{ fastqcraw_ch}
         Channel
           .fromPath(params.indexfile, checkIfExists: true)
           .splitCsv(header:true)
@@ -145,41 +145,37 @@ if (params.indexfile) {
           .fromPath(params.indexfile, checkIfExists: true)
           .splitCsv(header:true)
           .map{ row-> tuple(row.sampleid), file(row.samplepath) }
-          .into{ read_size_selection_ch; filter_n_cov_ch; contamination_detection_ch}
+          .into{ read_size_selection_ch}
         }
     }
     else { exit 1, "Input samplesheet file not specified!" }
 
 if (params.qualityfilter) {
     process fastqc_raw {
-        memory '60 GB'
-        cpus 4
+        label "setting_1"
         tag "$sampleid"
         publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link'
 
         input:
-        tuple val(sampleid), file(fastqfile) from fastqcraw_ch
+        tuple val(sampleid), file(fastqfile), file(fastqfile_path) from fastqcraw_ch
         
         output:
         file "*_fastqc.{zip,html}"
 
         script:
         """
-        fastqc --quiet --threads ${task.cpus} ${fastqfile}
+        fastqc --quiet --threads ${task.cpus} ${fastqfile_path}
         """
     }
 
     process merge_lanes {
-        memory '15 GB'
-        cpus 2
+        label "setting_1"
         tag "$sampleid"
-        publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link'
 
         input:
         tuple val(sampleid), file(samplepath) from samples_ch
         
         output:
-        //file "${sampleid}_R1.merged.fastq.gz"
         tuple val(sampleid), file("${sampleid}_R1.merged.fastq.gz") into umitools_ch
 
         script:
@@ -198,11 +194,9 @@ if (params.qualityfilter) {
     }
 
     process umiclean_cutadapt {
-        memory '80 GB'
-        cpus 8
-        time '2h'
+        label "setting_4"
         tag "$sampleid"
-        publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link'
+        publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{log,trimmed.fastq.gz}"
 
         input:
         tuple val(sampleid), file(fastqfile) from umitools_ch
@@ -211,11 +205,11 @@ if (params.qualityfilter) {
         file "${sampleid}_umi_tools.log"
         file "${sampleid}_truseq_adapter_cutadapt.log"
         file "${sampleid}_qual_filtering_cutadapt.log"
-        file "${sampleid}_quality_trimmed.fastq"
+        file "${sampleid}_quality_trimmed.fastq.gz"
         file "${sampleid}_umi_tools.log" into umi_tools_results
         file "${sampleid}_qual_filtering_cutadapt.log" into cutadapt_qual_filt_results
 
-        tuple val(sampleid), file("${sampleid}_quality_trimmed.fastq") into fastqc_filtered_ch, fastp_report_ch, read_size_distribution_ch, rna_source_distribution_ch, derive_usable_reads_ch, read_size_selection_ch
+        tuple val(sampleid), file("${sampleid}_quality_trimmed.fastq") into fastqc_filtered_ch, derive_usable_reads_ch
 
         script:
         """
@@ -236,12 +230,13 @@ if (params.qualityfilter) {
                 --trim-n --max-n 0 -m 5 -q 30 \
                 -o ${sampleid}_quality_trimmed.fastq \
                 ${sampleid}_umi_cleaned.fastq > ${sampleid}_qual_filtering_cutadapt.log
+
+        pigz --best --force -p ${task.cpus} -r ${sampleid}_quality_trimmed.fastq -c > ${sampleid}_quality_trimmed.fastq.gz
         """
     }
 
-    process fastqc_filtered {
-        memory '60 GB'
-        cpus 4
+    process qc_fastq_filtered {
+        label "setting_2"
         tag "$sampleid"
         publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link'
 
@@ -249,30 +244,22 @@ if (params.qualityfilter) {
         tuple val(sampleid), file(fastqfile) from fastqc_filtered_ch
         
         output:
-        file "*_fastqc.{zip,html}" into fastqc_qual_results
+        file "*_fastqc.{zip,html}"
+        file "${sampleid}_fastp.json"
+        file "${sampleid}_fastp.html"
+        file "${sampleid}_read_length_dist.pdf"
+        file "${sampleid}_read_length_dist.txt"
+        file "${sampleid}_bowtie.log"
+        //file "${sampleid}_UniVec_cleaned_sRNA.fq"
+        //file "${sampleid}_final_unaligned_sRNA.fq"
+        file "${sampleid}_fastp.json" into fastp_results
+        file "${sampleid}_bowtie.log" into rna_source_bowtie_results
+        file "${sampleid}_read_length_dist.txt" into read_length_dist_results
 
         script:
         """
         fastqc --quiet --threads ${task.cpus} ${fastqfile}
-        """
-    }
 
-    process fastp_report {
-        memory '60 GB'
-        cpus 4
-        tag "$sampleid"
-        publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link'
-
-        input:
-        tuple val(sampleid), file(fastqfile) from fastp_report_ch
-        
-        output:
-        file "${sampleid}_fastp.json"
-        file "${sampleid}_fastp.html"
-        file "${sampleid}_fastp.json" into fastp_results
-
-        script:
-        """
         fastp --in1=${fastqfile} --out1=${sampleid}_fastp_trimmed.fastq \
             --disable_adapter_trimming \
             --disable_quality_filtering \
@@ -280,51 +267,13 @@ if (params.qualityfilter) {
             --json=${sampleid}_fastp.json \
             --html=${sampleid}_fastp.html \
             --thread=${task.cpus}
-        """
-    }
 
-    process read_size_distribution {
-        memory '60 GB'
-        cpus 4
-        tag "$sampleid"
-        publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link'
-
-        input:
-        tuple val(sampleid), file(fastqfile) from read_size_distribution_ch
-  
-        output:
-        file "${sampleid}_read_length_dist.pdf"
-        file "${sampleid}_read_length_dist.txt"
-        file "${sampleid}_read_length_dist.txt" into read_length_dist_results
-
-  
-        script:
-        """
         #derive distribution for quality filtered reads > 5 bp long
         perl ${projectDir}/bin/fastq2fasta.pl ${fastqfile} > ${sampleid}_trimmed.fasta
         python ${projectDir}/bin/read_length_dist.py --input ${sampleid}_trimmed.fasta
         mv ${sampleid}_trimmed.fasta_read_length_dist.txt ${sampleid}_read_length_dist.txt
         mv ${sampleid}_trimmed.fasta_read_length_dist.pdf ${sampleid}_read_length_dist.pdf
-        """
-    }
-    process rna_source_distribution {
-        memory '60 GB'
-        cpus 4
-        tag "$sampleid"
-        publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link'
-
-        input:
-        tuple val(sampleid), file(fastqfile) from rna_source_distribution_ch
-
-        output:
-        file "${sampleid}_bowtie.log"
-        file "${sampleid}_UniVec_cleaned_sRNA.fq"
-        file "${sampleid}_final_unaligned_sRNA.fq"
-        file "${sampleid}_bowtie.log" into rna_source_bowtie_results
-
-        
-        script:
-        """
+    
         #derive distribution for quality filtered reads > 5 bp long
         echo ${sampleid} > ${sampleid}_bowtie.log;
 
@@ -430,10 +379,9 @@ if (params.qualityfilter) {
     }
 
     process derive_usable_reads {
-        memory '80 GB'
-        cpus 4
+        label "setting_2"
         tag "$sampleid"
-        publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link'
+        publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{.log,.fastq.gz}"
 
         input:
         tuple val(sampleid), file(fastqfile) from derive_usable_reads_ch
@@ -441,8 +389,9 @@ if (params.qualityfilter) {
         output:
         file "${sampleid}*_cutadapt.log"
         file "${sampleid}_blacklist_filter.log"
-        file "${sampleid}_${params.minlen}-${params.maxlen}nt.fastq"
+        file "${sampleid}_${params.minlen}-${params.maxlen}nt.fastq.gz"
         tuple val(sampleid), file(fastqfile), file("${sampleid}_${params.minlen}-${params.maxlen}nt.fastq") into velvet_ch
+        tuple val(sampleid), file("${sampleid}_${params.minlen}-${params.maxlen}nt.fastq") into virusdetect_ch
         tuple val(sampleid), file("${sampleid}_${params.minlen}-${params.maxlen}nt.fastq") into spades_ch
         file ("*_18-25nt_cutadapt.log") into cutadapt_18_25nt_results
         file ("*_21-22nt_cutadapt.log") into cutadapt_21_22nt_results
@@ -464,11 +413,12 @@ if (params.qualityfilter) {
         if [[ ${params.minlen} != 21 ]] || [[ ${params.maxlen} != 22 ]]; then
             cutadapt -j ${task.cpus} -m ${params.minlen} -M ${params.maxlen} -o ${sampleid}_${params.minlen}-${params.maxlen}nt.fastq ${sampleid}_cleaned.fastq > ${sampleid}_${params.minlen}-${params.maxlen}nt_cutadapt.log
         fi
+        pigz --best --force -p ${task.cpus} -r ${sampleid}_${params.minlen}-${params.maxlen}nt.fastq -c > ${sampleid}_${params.minlen}-${params.maxlen}nt.fastq.gz
         """
     }
 
     process qcreport {
-        publishDir "${params.outdir}/01_QC_report", mode: 'link'
+        publishDir "${params.outdir}/00_quality_filtering/qc_report", mode: 'link'
 
         input:
         file ('*') from cutadapt_qual_filt_results.collect().ifEmpty([])
@@ -482,26 +432,27 @@ if (params.qualityfilter) {
         file ('*') from rna_source_bowtie_results.collect().ifEmpty([]) 
 
         output:
-        file "run_report.txt"
+        file "run_qc_report.txt"
         file "run_read_size_distribution.pdf"
         file "read_origin_pc_summary.txt"
+        file "read_origin_counts.txt"
         file "read_RNA_source.pdf"
         file "read_origin_detailed_pc.txt"
 
 
         script:
         """
-        qc_report.py
+        seq_run_qc_report.py
         grouped_bar_chart.py
         rna_source_summary.py
         """
     }
-} 
+}
 // If user does not specify qualityfilter parameter, then only read size selection (using the minlen and maxlen params specified in the nextflow.config file) will be performed on the fastq file specified in the index file
 else {
     process readprocessing {
         tag "$sampleid"
-        publishDir "${params.outdir}/01_read_size_selection", mode: 'link'
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/assembly", mode: 'link'
 
         input:
         tuple val(sampleid), file(fastqfile) from read_size_selection_ch
@@ -520,14 +471,15 @@ else {
 }
 
 process velvet {
-    publishDir "${params.outdir}/02_velvet/${sampleid}", mode: 'link'
+    publishDir "${params.outdir}/01_VirReport/${sampleid}/assembly", mode: 'link', overwrite: true, pattern: "*{fasta,log}"
     tag "$sampleid"
 
     input:
     tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size) from velvet_ch
 
     output:
-    file "${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_k15/*"
+    file "${sampleid}_velvet_assembly_${params.minlen}-${params.maxlen}nt.fasta"
+    file "${sampleid}_velvet_log"
     tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_velvet_assembly_${params.minlen}-${params.maxlen}nt.fasta") into cap3_ch
 
     script:
@@ -539,18 +491,20 @@ process velvet {
 
     #edit contigs name and rename velvet assembly
     sed 's/>/>velvet_/' ${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_k15/contigs.fa > ${sampleid}_velvet_assembly_${params.minlen}-${params.maxlen}nt.fasta
+    cp ${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_k15/Log ${sampleid}_velvet_log
     """
 }
 
 process cap3 {
     label "local"
-    publishDir "${params.outdir}/03_cap3/${sampleid}", mode: 'link'
+    publishDir "${params.outdir}/01_VirReport/${sampleid}/assembly", mode: 'link', overwrite: true, pattern: "*{._rename.fasta}"
     tag "$sampleid"
 
     input:
     tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file(scaffolds_fasta) from cap3_ch
 
     output:
+    file "${sampleid}_velvet_cap3_${params.minlen}-${params.maxlen}nt_rename.fasta"
     tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_velvet_cap3_${params.minlen}-${params.maxlen}nt_rename.fasta") into blastn_nt_velvet_ch
     tuple val(sampleid), file("${sampleid}_velvet_cap3_${params.minlen}-${params.maxlen}nt_rename.fasta") into blast_nt_localdb_velvet_ch, getorf_ch
 
@@ -567,8 +521,8 @@ process cap3 {
 }
 
 process blastn_nt_velvet {
-    label "blastn_mem"
-    publishDir "${params.outdir}/04_blastn/${sampleid}", mode: 'link'
+    label "setting_6"
+    publishDir "${params.outdir}/01_VirReport/${sampleid}/blastn", mode: 'link', overwrite: true, pattern: "*{vs_NT.bls,_top5Hits.txt,_final.txt,taxonomy.txt}"
     tag "$sampleid"
     containerOptions "${bindOptions}"
 
@@ -579,7 +533,9 @@ process blastn_nt_velvet {
     file "${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_blastn_vs_NT.bls"
     file "${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_blastn_vs_NT_top5Hits.txt"
     file "${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt"
-    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt"), file("${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt") into blastTools_blastn_velvet_ch
+    file "summary_${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt"
+    //tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt"), file("${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt") into blastTools_blastn_velvet_ch
+    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("summary_${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt"), file("${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt") into blastTools_results_ch
     
     script:
     def blast_task_param = (params.blastn_method == "blastn") ? "-task blastn" : ''
@@ -608,31 +564,15 @@ process blastn_nt_velvet {
     grep -i "Viroid" ${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_blastn_vs_NT_top5Hits.txt >> ${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids.txt || [[ \$? == 1 ]]
     cat ${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids.txt | sed 's/ /_/g' > ${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt
     cut -f3,26 ${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt | sort | uniq > ${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt
-    """
-}
-
-process BlastTools_blastn_velvet {
-    label "medium_mem"
-    publishDir "${params.outdir}/05_blastoutputs/${sampleid}", mode: 'link'
-    tag "$sampleid"
-
-    input:
-    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file(top5Hits_final), file(taxonomy) from blastTools_blastn_velvet_ch
-
-    output:
-    file "summary_${top5Hits_final}"
-    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("summary_${top5Hits_final}"), file(taxonomy) into blastTools_results_ch
-
-    script:
-    """
-    java -jar ${projectDir}/bin/BlastTools.jar -t blastn ${top5Hits_final}
+    
+    java -jar ${projectDir}/bin/BlastTools.jar -t blastn ${sampleid}_velvet_${params.minlen}-${params.maxlen}nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt
     """
 }
 
 if (params.blastlocaldb) {
     process blast_nt_localdb_velvet {
-        label "blastn_mem"
-        publishDir "${params.outdir}/04_blastn/${sampleid}", mode: 'link'
+        label "setting_6"
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/blastn", mode: 'link'
         tag "$sampleid"
         containerOptions "${bindOptions}"
 
@@ -669,7 +609,7 @@ if (params.blastlocaldb) {
 
     process filter_blast_nt_localdb_velvet {
         label "local"
-        publishDir "${params.outdir}/05_blastoutputs/${sampleid}", mode: 'link'
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/blastn", mode: 'link'
         tag "$sampleid"
 
         input:
@@ -737,9 +677,12 @@ if (params.blastlocaldb) {
         """
     }
 }
+
+
 process filter_n_cov {
     tag "$sampleid"
-    publishDir "${params.outdir}/07_filternstats/${sampleid}", mode: 'link'
+    label "setting_6"
+    publishDir "${params.outdir}/01_VirReport/${sampleid}/alignments", mode: 'link'
     containerOptions "${bindOptions}"
     
     input:
@@ -762,10 +705,9 @@ process filter_n_cov {
 if (params.contamination_detection) {
     process contamination_detection {
         label "local"
-        publishDir "${params.outdir}/08_summary", mode: 'link'
+        publishDir "${params.outdir}/01_VirReport/summary", mode: 'link'
         
         input:
-        tuple val(sampleid), file(fastqfile) from contamination_detection_ch
         file ('*') from contamination_flag.collect().ifEmpty([])
 
         output:
@@ -781,7 +723,7 @@ if (params.contamination_detection) {
 if (params.blastp) {
     process getorf {
         label 'local'
-        publishDir "${params.outdir}/06_blastp/${sampleid}", mode: 'link'
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/blastp", mode: 'link'
         tag "$sampleid"
 
         input:
@@ -802,8 +744,8 @@ if (params.blastp) {
     }
 
     process blastp {
-        label "xlarge"
-        publishDir "${params.outdir}/06_blastp/${sampleid}", mode: 'link'
+        label "setting_3"
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/blastp", mode: 'link'
         tag "$sampleid"
         containerOptions "${bindOptions}"
 
@@ -829,8 +771,8 @@ if (params.blastp) {
     }
 
     process blastpdbcmd {
-        label "medium_mem"
-        publishDir "${params.outdir}/06_blastp/${sampleid}", mode: 'link'
+        label "setting_5"
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/blastp", mode: 'link'
         tag "$sampleid"
         containerOptions "${bindOptions}"
 
@@ -863,7 +805,7 @@ if (params.blastp) {
 
     process BlastToolsp {
         label "local"
-        publishDir "${params.outdir}/05_blastoutputs/${sampleid}", mode: 'link'
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/blastp", mode: 'link'
         tag "$sampleid"
 
         input:
@@ -885,8 +827,8 @@ If the parameter --spades is specified when running nextflow, these processes wi
 
 if (params.spades) {
     process spades { 
-        label "spades_mem_cpu"
-        publishDir "${params.outdir}/02a_spades/${sampleid}", mode: 'link'
+        label "setting_7"
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/assembly", mode: 'link'
         tag "$sampleid"
 
         input:
@@ -908,7 +850,7 @@ if (params.spades) {
 
     process cap3_spades {
         label "local"
-        publishDir "${params.outdir}/03_cap3/${sampleid}", mode: 'link'
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/assembly", mode: 'link'
         tag "$sampleid"
 
         input:
@@ -929,8 +871,8 @@ if (params.spades) {
     }
 
     process blastn_nt_spades {
-        label "medium_mem"
-        publishDir "${params.outdir}/04_blastn/${sampleid}", mode: 'link'
+        label "setting_5"
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/blast", mode: 'link'
         tag "$sampleid"
         containerOptions "${bindOptions}"
 
@@ -967,7 +909,7 @@ if (params.spades) {
 
     process BlastTools_blastn_spades {
         label "local"
-        publishDir "${params.outdir}/05_blastoutputs/${sampleid}", mode: 'link'
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/blast", mode: 'link'
         tag "$sampleid"
 
         input:
@@ -979,6 +921,68 @@ if (params.spades) {
         script:
         """
         java -jar ${projectDir}/bin/BlastTools.jar -t blastn ${top5Hits_final}
+        """
+    }
+}
+if (params.virusdetect) {
+    process virus_detect {
+        publishDir "${params.outdir}/02_virusdetect/${sampleid}", mode: 'link'
+        tag "$sampleid"
+        label "setting_3"
+
+        input:
+        tuple val(sampleid), file(samplefile) from virusdetect_ch
+
+        output:
+        file "${samplefile}_temp/*"
+
+        tuple val(sampleid), \
+            file(samplefile), \
+            file("${samplefile}.combined") into virus_identify_ch
+
+        script:
+        """
+        #virus_detect.pl --thread_num 4 --reference vrl_Plants_U97_20220119 ${samplefile} --depth_cutoff 2
+        virus_detect.pl --thread_num 4 --reference vrl_Plants_239_U97 ${samplefile} --depth_cutoff 2 
+        cp ${samplefile}_temp/${samplefile}.combined .
+        """
+    }
+
+    process virus_identify {
+        publishDir "${params.outdir}/02_virusdetect/${sampleid}", mode: 'link'
+        tag "$sampleid"
+        label "setting_3"
+
+        input:
+        tuple val(sampleid), \
+            file(samplefile), \
+            file("${samplefile}.combined") from virus_identify_ch
+        
+        output:
+        file "result_${samplefile}/*"
+
+        script:
+        """
+        virus_identify.pl --reference vrl_Plants_239_U97 \
+                        --word-size 11 \
+                        --exp-value 1e-05 \
+                        --exp-valuex 0.01 \
+                        --percent-identity 25 \
+                        --cpu-num 4 \
+                        --mis-penalty -3 \
+                        --gap-cost -1 \
+                        --gap-extension -1 \
+                        --hsp-cover 0.75 \
+                        --diff-ratio 0.25 \
+                        --diff-contig-cover 0.5 \
+                        --diff-contig-length 100 \
+                        --coverage-cutoff 0.1 \
+                        --depth-cutoff 2 \
+                        --siRNA-percent 0.5 \
+                        --novel-len-cutoff 100 \
+                        --debug \
+                        ${samplefile} \
+                        ${samplefile}.combined
         """
     }
 }

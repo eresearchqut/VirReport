@@ -153,7 +153,7 @@ def main():
     
     pc_df = read_origin_df.apply(lambda x: 100 * x / float(x.sum()), axis=1)
 
-    pc_df.to_csv('read_origin_detailed_pc.txt', sep="\t")
+    pc_df.to_csv('read_origin_detailed_pc.txt', sep="\t", float_format="%.2f")
 
     #print(pc_df)
 
@@ -201,7 +201,7 @@ def main():
     pc_df['rRNA/tRNA_flag'] = pc_df['rRNA_and_tRNA'].apply(lambda x: 'High % of rRNA/tRNA' if x >= 50 else '')
     pc_df['miRNA/vsiRNA_flag'] = pc_df['miRNA_total'].apply(lambda x: 'Low % of miRNA/vsiRNA' if x <= 10 else '')
     print(pc_df)
-    pc_df.to_csv('read_origin_pc_summary.txt', sep="\t")
+    pc_df.to_csv('read_origin_pc_summary.txt', sep="\t", float_format="%.2f")
 
 if __name__ == '__main__':
     main()
