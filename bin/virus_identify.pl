@@ -127,9 +127,10 @@ my $result_dir = $WORKING_DIR."/result";		# result folder
 my $tf = $WORKING_DIR."/temp";				# temp folder
 
 #my $DATABASE_DIR = ${FindBin::RealBin}."/../databases";	# database folder
-my $DATABASE_DIR  = ${FindBin::RealBin}."/databases";
+#my $DATABASE_DIR  = ${FindBin::RealBin}."/databases";
+my $DATABASE_DIR  = dirname($reference);
 my $seq_info  = $DATABASE_DIR."/vrl_genbank.info.gz";
-$reference = $DATABASE_DIR."/".$reference;	# virus sequence info
+#$reference = $DATABASE_DIR."/".$reference;	# virus sequence info
 #my $reference; # = $DATABASE_DIR."/vrl_plant";       	# virus sequence
 my $prot_tab  = $DATABASE_DIR."/vrl_idmapping.gz";	# virus protein table
 
@@ -152,7 +153,9 @@ main: {
 
 	Util::process_cmd("$BIN_DIR/formatdb -i $reference -p F") unless (-e "$reference.nhr");
 	# create result folder according to sample name, copy contig to result folder
-	my $sample_base = basename($sample);
+	#my $sample_base = basename($sample);
+	#my $sample_base = os.path.splitext(os.path.basename($sample))[0];
+	(my $sample_base,my $dir,my $ext) = fileparse($sample,'\..*');
 	my $sample_dir = $result_dir."_".$sample_base;
 	Util::process_cmd("mkdir $sample_dir", $debug) unless -e $sample_dir;
 	Util::process_cmd("cp $contig $sample_dir/contig_sequences.fa", $debug);

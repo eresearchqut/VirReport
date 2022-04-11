@@ -205,10 +205,11 @@ foreach my $sample (@ARGV) { print "[ERR]cat not find input file: $sample\n$usag
 
 # set path and folder
 my $WORKING_DIR   = cwd();									# set current folder as working folder
-my $DATABASE_DIR  = ${FindBin::RealBin}."/databases";		# set database folder
+#my $DATABASE_DIR  = ${FindBin::RealBin}."/databases";		# set database folder
+my $DATABASE_DIR  =  dirname($reference);
 #my $BIN_DIR       = ${FindBin::RealBin}."/bin";				# set script folder
 my $BIN_DIR       = ${FindBin::RealBin};
-$reference		  = $DATABASE_DIR."/".$reference;			# set reference
+#$reference		  = $DATABASE_DIR."/".$reference;		# set reference
 my $seq_info	  = $DATABASE_DIR."/vrl_genbank.info.gz";	# set vrl info
 
 # check host reference & format 
@@ -256,7 +257,9 @@ foreach my $sample (@ARGV)
 	my $seq_num = Util::detect_seqNum($sample);
 	#print "[ERR]no sequence find in $sample.\n" and exit if $seq_num < 5;
 	
-	my $sample_base = basename($sample);
+	#my $sample_base = basename($sample);
+	#my $sample_base = basename($sample).split /./, $str, 2;
+	(my $sample_base,my $dir,my $ext) = fileparse($sample,'\..*');
 	# set path and folder for sample
 	my $TEMP_DIR      = $WORKING_DIR."/".$sample_base."_temp";	# set temp folder
 	print "Working: $WORKING_DIR\nDatabase: $DATABASE_DIR\nBin: $BIN_DIR\nTemp: $TEMP_DIR\n" if $debug;

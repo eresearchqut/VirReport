@@ -112,15 +112,17 @@ blastp_db_name = "${params.blast_db_dir}/nr"
 negative_seqid_list = "${params.blast_db_dir}/negative_list_out.txt"
 blast_local_db_name = file(params.blast_local_db_path).name
 blast_local_db_dir = file(params.blast_local_db_path).parent
-blacklist_db_name = file(params.blacklist_db_path).name
-blacklist_db_dir = file(params.blacklist_db_path).parent
+//bowtie_db_dir = file(params.bowtie_db_dir).name
+//blacklist_db_name = file(params.blacklist_db_path).name
+//blacklist_db_dir = file(params.blacklist_db_path).parent
+virusdetect_db_dir = file(params.virusdetect_db_path).parent
 
 switch (workflow.containerEngine) {
     case "docker":
-        bindOptions = "-v ${params.blast_db_dir}:${params.blast_db_dir} -v ${blast_local_db_dir}:${blast_local_db_dir} -v ${blacklist_db_dir}:${blacklist_db_dir}"
+        bindOptions = "-v ${params.blast_db_dir}:${params.blast_db_dir} -v ${blast_local_db_dir}:${blast_local_db_dir} -v ${bowtie_db_dir}:${bowtie_db_dir} -v ${virusdetect_db_dir}:${virusdetect_db_dir}"
         break;
     case "singularity":
-        bindOptions = "-B ${blast_local_db_dir} -B ${params.blast_db_dir} -B ${blacklist_db_dir}"
+        bindOptions = "-B ${blast_local_db_dir} -B ${params.blast_db_dir} -B ${params.bowtie_db_dir}"
         break;
     default:
         bindOptions = ""
@@ -169,7 +171,6 @@ if (params.qualityfilter) {
     }
 
     process merge_lanes {
-        label "setting_1"
         tag "$sampleid"
 
         input:
@@ -239,6 +240,7 @@ if (params.qualityfilter) {
         label "setting_2"
         tag "$sampleid"
         publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link'
+        containerOptions "${bindOptions}"
 
         input:
         tuple val(sampleid), file(fastqfile) from fastqc_filtered_ch
@@ -280,7 +282,7 @@ if (params.qualityfilter) {
         echo 5S rRNA genes alignment: >> ${sampleid}_bowtie.log;
         bowtie -q -v 1 -k 1 -p ${task.cpus} \
             --un ${sampleid}_5S_rRNA_cleaned_sRNA.fq \
-            -x ${projectDir}/databases/5S_rRNA \
+            -x ${params.bowtie_db_dir}/5S_rRNA \
             ${fastqfile} \
             ${sampleid}_5S_rRNA_match 2>>${sampleid}_bowtie.log;
 
@@ -288,91 +290,91 @@ if (params.qualityfilter) {
         echo nc SSU and LSU rRNA genes alignment: >> ${sampleid}_bowtie.log;
         bowtie -q -v 1 -k 1 -p ${task.cpus} \
             --un ${sampleid}_nc_rRNA_cleaned_sRNA.fq \
-            -x ${projectDir}/databases/rRNA \
+            -x ${params.bowtie_db_dir}/rRNA \
             ${sampleid}_5S_rRNA_cleaned_sRNA.fq \
             ${sampleid}_rRNA_match 2>>${sampleid}_bowtie.log;
 
         echo mt rRNA genes alignment: >> ${sampleid}_bowtie.log;
         bowtie -q -v 1 -k 1 -p ${task.cpus} \
             --un ${sampleid}_mt_rRNA_cleaned_sRNA.fq \
-            -x ${projectDir}/databases/plant_mt_rRNA_genes \
+            -x ${params.bowtie_db_dir}/plant_mt_rRNA_genes \
             ${sampleid}_nc_rRNA_cleaned_sRNA.fq \
             ${sampleid}_mt_rRNA_match 2>>${sampleid}_bowtie.log;
 
         echo pt rRNA genes alignment: >> ${sampleid}_bowtie.log;
         bowtie -q -v 1 -k 1 -p ${task.cpus} \
             --un ${sampleid}_pt_rRNA_cleaned_sRNA.fq \
-            -x ${projectDir}/databases/plant_pt_rRNA_genes \
+            -x ${params.bowtie_db_dir}/plant_pt_rRNA_genes \
             ${sampleid}_mt_rRNA_cleaned_sRNA.fq \
             ${sampleid}_pt_rRNA_match 2>>${sampleid}_bowtie.log;
 
         echo mt other genes alignment: >> ${sampleid}_bowtie.log;
         bowtie -q -v 1 -k 1 -p ${task.cpus} \
             --un ${sampleid}_mt_other_cleaned_sRNA.fq \
-            -x ${projectDir}/databases/plant_mt_other_genes \
+            -x ${params.bowtie_db_dir}/plant_mt_other_genes \
             ${sampleid}_pt_rRNA_cleaned_sRNA.fq \
             ${sampleid}_mt_other_match 2>>${sampleid}_bowtie.log;
 
         echo pt other genes alignment: >> ${sampleid}_bowtie.log;
         bowtie -q -v 1 -k 1 -p ${task.cpus} \
             --un ${sampleid}_pt_other_cleaned_sRNA.fq \
-            -x ${projectDir}/databases/plant_pt_other_genes \
+            -x ${params.bowtie_db_dir}/plant_pt_other_genes \
             ${sampleid}_mt_other_cleaned_sRNA.fq \
             ${sampleid}_pt_other_match 2>>${sampleid}_bowtie.log;
 
         echo plant miRNA genes alignment: >> ${sampleid}_bowtie.log;
         bowtie -q -v 1 -k 1 -p ${task.cpus} \
             --un ${sampleid}_plant_miRNA_cleaned_sRNA.fq \
-            -x ${projectDir}/databases/plant_miRNA \
+            -x ${params.bowtie_db_dir}/plant_miRNA \
             ${sampleid}_pt_other_cleaned_sRNA.fq \
             ${sampleid}_plant_miRNA_match 2>>${sampleid}_bowtie.log;
 
         echo other miRNA genes alignment: >> ${sampleid}_bowtie.log;
         bowtie -q -v 1 -k 1 -p ${task.cpus} \
             --un ${sampleid}_other_miRNA_cleaned_sRNA.fq \
-            -x ${projectDir}/databases/miRBase \
+            -x ${params.bowtie_db_dir}/miRBase \
             ${sampleid}_plant_miRNA_cleaned_sRNA.fq \
             ${sampleid}_other_miRNA_match 2>>${sampleid}_bowtie.log;
 
         echo tRNA genes alignment: >> ${sampleid}_bowtie.log;
         bowtie -q -v 1 -k 1 -p ${task.cpus} \
             --un ${sampleid}_plant_tRNA_cleaned_sRNA.fq \
-            -x ${projectDir}/databases/plant_tRNA \
+            -x ${params.bowtie_db_dir}/plant_tRNA \
             ${sampleid}_other_miRNA_cleaned_sRNA.fq \
             ${sampleid}_tRNA_match 2>>${sampleid}_bowtie.log;
 
         echo plant nc genes alignment: >> ${sampleid}_bowtie.log;
         bowtie -q -v 1 -k 1 -p ${task.cpus} \
             --un ${sampleid}_plant_nc_cleaned_sRNA.fq \
-            -x ${projectDir}/databases/plant_nc_genes \
+            -x ${params.bowtie_db_dir}/plant_nc_genes \
             ${sampleid}_plant_tRNA_cleaned_sRNA.fq \
             ${sampleid}_plant_nc_match 2>>${sampleid}_bowtie.log;
 
         echo plant transposons alignment: >> ${sampleid}_bowtie.log;
         bowtie -q -v 1 -k 1 -p ${task.cpus} \
             --un ${sampleid}_transposon_cleaned_sRNA.fq \
-            -x ${projectDir}/databases/plant_transposons \
+            -x ${params.bowtie_db_dir}/plant_transposons \
             ${sampleid}_plant_nc_cleaned_sRNA.fq \
             ${sampleid}_transposon_match 2>>${sampleid}_bowtie.log;
 
         echo PhiX alignment: >> ${sampleid}_bowtie.log;
         bowtie -q -v 1 -k 1 -p ${task.cpus} \
             --un ${sampleid}_PhiX_cleaned_sRNA.fq \
-            -x ${projectDir}/databases/phiX174 \
+            -x ${params.bowtie_db_dir}/phiX174 \
             ${sampleid}_transposon_cleaned_sRNA.fq \
             ${sampleid}_PhiX_sRNA_match 2>>${sampleid}_bowtie.log;
 
         echo Vector alignment: >> ${sampleid}_bowtie.log;
         bowtie -q -v 1 -k 1 -p ${task.cpus} \
             --un ${sampleid}_UniVec_cleaned_sRNA.fq \
-            -x ${projectDir}/databases/UniVec \
+            -x ${params.bowtie_db_dir}/UniVec \
             ${sampleid}_PhiX_cleaned_sRNA.fq \
             ${sampleid}_UniVec_match 2>>${sampleid}_bowtie.log;
 
         echo Virus and viroid alignment: >> ${sampleid}_bowtie.log;
         bowtie -q -v 1 -k 1 -p ${task.cpus} \
             --un ${sampleid}_final_unaligned_sRNA.fq \
-            -x ${projectDir}/databases/virus \
+            -x ${params.bowtie_db_dir}/virus \
             ${sampleid}_UniVec_cleaned_sRNA.fq \
             ${sampleid}_viral_match 2>>${sampleid}_bowtie.log;
         """
@@ -382,7 +384,8 @@ if (params.qualityfilter) {
         label "setting_2"
         tag "$sampleid"
         publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{.log,.fastq.gz}"
-
+        containerOptions "${bindOptions}"
+        
         input:
         tuple val(sampleid), file(fastqfile) from derive_usable_reads_ch
         
@@ -402,7 +405,7 @@ if (params.qualityfilter) {
         """
         bowtie -q -v 1 \
             -k 1 --un ${sampleid}_cleaned.fastq -p ${task.cpus} \
-            -x ${projectDir}/databases/blacklist \
+            -x ${params.bowtie_db_dir}/blacklist \
             ${fastqfile} \
             ${sampleid}_blacklist_match 2>${sampleid}_blacklist_filter.log
 
@@ -497,7 +500,7 @@ process velvet {
 
 process cap3 {
     label "local"
-    publishDir "${params.outdir}/01_VirReport/${sampleid}/assembly", mode: 'link', overwrite: true, pattern: "*{._rename.fasta}"
+    publishDir "${params.outdir}/01_VirReport/${sampleid}/assembly", mode: 'link', overwrite: true, pattern: "*{_rename.fasta}"
     tag "$sampleid"
 
     input:
@@ -928,42 +931,26 @@ if (params.virusdetect) {
     process virus_detect {
         publishDir "${params.outdir}/02_virusdetect/${sampleid}", mode: 'link'
         tag "$sampleid"
-        label "setting_3"
+        label "setting_1"
+        containerOptions "${bindOptions}"
 
         input:
         tuple val(sampleid), file(samplefile) from virusdetect_ch
 
         output:
-        file "${samplefile}_temp/*"
-
-        tuple val(sampleid), \
-            file(samplefile), \
-            file("${samplefile}.combined") into virus_identify_ch
+        file "${sampleid}_${params.minlen}-${params.maxlen}nt_temp/*"
+        file "result_${sampleid}_${params.minlen}-${params.maxlen}nt/*"
 
         script:
         """
-        #virus_detect.pl --thread_num 4 --reference vrl_Plants_U97_20220119 ${samplefile} --depth_cutoff 2
-        virus_detect.pl --thread_num 4 --reference vrl_Plants_239_U97 ${samplefile} --depth_cutoff 2 
-        cp ${samplefile}_temp/${samplefile}.combined .
-        """
-    }
-
-    process virus_identify {
-        publishDir "${params.outdir}/02_virusdetect/${sampleid}", mode: 'link'
-        tag "$sampleid"
-        label "setting_3"
-
-        input:
-        tuple val(sampleid), \
-            file(samplefile), \
-            file("${samplefile}.combined") from virus_identify_ch
+        virus_detect.pl --thread_num 4 \
+                        --reference ${params.virusdetect_db_path} \
+                        ${samplefile} \
+                        --depth_cutoff 2 
         
-        output:
-        file "result_${samplefile}/*"
-
-        script:
-        """
-        virus_identify.pl --reference vrl_Plants_239_U97 \
+        cp ${sampleid}_${params.minlen}-${params.maxlen}nt_temp/${sampleid}_${params.minlen}-${params.maxlen}nt.combined .
+    
+        virus_identify.pl --reference ${params.virusdetect_db_path} \
                         --word-size 11 \
                         --exp-value 1e-05 \
                         --exp-valuex 0.01 \
@@ -982,7 +969,8 @@ if (params.virusdetect) {
                         --novel-len-cutoff 100 \
                         --debug \
                         ${samplefile} \
-                        ${samplefile}.combined
+                        ${sampleid}_${params.minlen}-${params.maxlen}nt.combined
         """
     }
 }
+   
