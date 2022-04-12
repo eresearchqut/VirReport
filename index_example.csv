@@ -1,3 +1,3 @@
-sampleid,samplepath,minlen,maxlen
-MT212,/work/hia_mt18005/diagnostics/2021/14_RAMACIOTTI_LEL9742-LEL9751/results/06_usable_reads/MT212_21-22bp.fastq,21,22
-MT213,/work/hia_mt18005/diagnostics/2021/14_RAMACIOTTI_LEL9742-LEL9751/results/06_usable_reads/MT213_21-22bp.fastq,21,22
+sampleid,samplepath
+MT212,/work/hia_mt18005/diagnostics/2021/14_RAMACIOTTI_LEL9742-LEL9751/results/06_usable_reads/MT212_21-22bp.fastq
+MT213,/work/hia_mt18005/diagnostics/2021/14_RAMACIOTTI_LEL9742-LEL9751/results/06_usable_reads/MT213_21-22bp.fastq
