@@ -28,7 +28,7 @@ To suite your environment.
 
 The VSD workflow will perform the following steps by default:
 - Retain reads of a given length (e.g. 21-22 or 24 nt long) from fastq file(s) provided in index.csv file (readprocessing)  
-- De novo assembly using kmer 15 and coverage 3 (velvet) - 
+- De novo assembly using kmer 15 and coverage 3 (velvet) 
 - Collapse contigs into scaffolds (min length 20) (cap3)
 - Run megablast homology search against NCBI NT database (blastn_nt_velvet)
 - Summarise megablast results and restrict to virus and viroid matches (BlastTools_blastn_velvet)
@@ -48,6 +48,8 @@ A number of additional optional steps can be run:
 ```
 A number of additional options are included:
 ```
+    --qualityfilter: performs a quality filtering on raw fastq files (currently specifically written for samples prepared using QIAGEN QIAseq miRNA library kit). The pipeline will also derive a qc report. 
+
     --targets: A text file with the taxonomy of the viruses/virioids of interest can be provided and only these will be retained in the megablast summary results derived at the filter_n_cov step.
 
     --spadeskmer specifies the range of kmers to use when running spades
@@ -57,59 +59,78 @@ A number of additional options are included:
     --blastn_evalue and --blastp_evalue specifies the evalue parameter to use during blast analyses
 
     --orf_minsize correspond to the minimal open reading frame getorf retains
+
+    --virusdetect: runs in parallel ViruDetect v1.7
 ```
 To enable these options, they can either be included in the nextflow run command provided in the PBS script: 
 ```
-nextflow run eresearchqut/VirReport -profile {docker or singularity or conda} --indexfile index_example.csv --blastlocaldb --spades --contamination_detection
+nextflow run eresearchqut/VirReport -profile {docker or singularity or conda} --indexfile index_example.csv --blastlocaldb --contamination_detection --virusdetect
 ```
 or update parameter to true in the nextflow.config file. For instance:
 ```
 params {
   blastlocaldb = true
-  spades = true
+  virusdetect = true
   contamination_detection = true
 }
 ```
 ## Preparing the data
 Preparing an index.csv file
 
-You need to create a TAB delimited text file that will be the input for the workflow. By default the pipeline will look for a file called “index.csv” in the base directory but you can specify any file name using the --indexfile [filename] in the nextflow run command. This text file requires the following columns (which needs to be included as a header): ```sampleid,samplepath,minlen,maxlen:```
+You need to create a TAB delimited text file that will be the input for the workflow. By default the pipeline will look for a file called “index.csv” in the base directory but you can specify any file name using the --indexfile [filename] in the nextflow run command. This text file requires the following columns (which needs to be included as a header): ```sampleid,samplepath,minlen,maxlen```
 
 - sampleid will be the sample name that will be given to the files created by the pipeline
-- samplepath is the full path to the quality filtered fastq files that the pipeline requires as starting input
-- minlen and maxlen correspond to the read size that will be retained for downstream analyses. 
+- samplepath is the full path to the fastq files that the pipeline requires as starting input
 
 An index_example.csv is included in the base directory:
 ```
-sampleid,samplepath,minlen,maxlen
-MT212,/work/hia_mt18005/diagnostics/2021/14_RAMACIOTTI_LEL9742-LEL9751/results/06_usable_reads/MT212_21-22bp.fastq,21,22
-MT213,/work/hia_mt18005/diagnostics/2021/14_RAMACIOTTI_LEL9742-LEL9751/results/06_usable_reads/MT213_21-22bp.fastq,21,22
+sampleid,samplepath
+MT212,/work/diagnostics/2021/MT212_21-22bp.fastq
+MT213,/work/diagnostics/2021/MT213_21-22bp.fastq
 ```
-You also need to provide the path of your NCBI blast directory in the nextflow.config file. For instance:
+By default the pipeline will only retain 21-22 nt sRNA reads for downstream analysis but you can change this range in the nextflow.config file. For instance:
 ```
 params {
-  blast_db = '/lustre/work-lustre/hia_mt18005/blastDB/30112021'
+  minlen = '18'
+  maxlen = '25'
 }
 ```
-If you want to run a blast analysis against a local database, please ensure you use NCBI BLAST+ makeblastdb to create the database. Then specify the path to the database files including the prefix the nextflow.config file. For example:
+You also need to provide the path of your NCBI blast nt and/or nr directory/ies in the nextflow.config file. For instance:
 ```
-blastn_local_db = '/work/hia_mt18005/databases/PVirDB/PVriDB_ver2021_11_09/PVirDB_ver20211109.fasta'
+params {
+  blast_db_dir = '/work/hia_mt18005_db/blastDB/20220408'
+}
 ```
+If you want to run a blast analysis against a local database, please ensure you use NCBI BLAST+ makeblastdb to create the database. Then specify the full path to the database files including the prefix in the nextflow.config file. For example:
+```
+params {
+  blast_local_db_path = '/work/hia_mt18005/databases/PVirDB/PVirDB_ver2022_02_09/dev/PVirDB_ver20220209.fasta'
+}
+```
+If you want to run the initial qualityfilter step, you will need to specify in the nextflow.config file the directory which holds the required bowtie indices to: 1) derive the origin of the filtered reads obtained and 2) filter non-informative reads (qc_fastq_filtered and derive_usable_reads processes). For example:
+params {
+  bowtie_db_dir = '/work/hia_mt18005_db/bowtie_idx'
+}
+```
+If you want to run VirusDetect, then specify the path to the viral database directory in nextflow.config file. These can be downloaded at http://bioinfo.bti.cornell.edu/ftp/program/VirusDetect/virus_database/. For example:
+```
+virusdetect_db_path = '/work/hia_mt18005_db/blastDB/VirusDetect/vrl_Plants_239_U97'
+```
+
 # Running the pipeline
 
 
 ## Outputs
-The folders are structures as follows (examples of outputs are provided in italics):
-- 01_read_size_selection (cutadapt log file and fastq file including reads only matching the size specified in the index.csv file) MT020_21-22nt_cutadapt.log & MT020_21-22nt.fastq
-- 02_velvet (velvet results and the fasta file which includes the velvet assembled contigs MT020_velvet_assembly_21-22nt.fasta
-- 02a_spades (if spades is additionally run)
-- 03_cap3 (fasta file of the scaffolds produced by CAP3 as well as the singletons) MT020_velvet_cap3_21-22nt_rename.fasta
-- 04_blastn (all blastn results, filtered results limited to only viruses and viroid top 5 hit matches and their taxonomy) MT020_velvet_21-22nt_megablast_vs_NT.bls, MT020_velvet_21-22nt_megablast_vs_NT_top5Hits.txt, MT020_velvet_21-22nt_megablast_vs_NT_top5Hits_virus_viroids_final.txt MT020_velvet_21-22nt_megablast_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt
-- 05_blastoutputs (BlastTools.jar summary output which clusters all the contigs matching to a specific hit. summary_MT029_velvet_21-22nt_megablast_vs_NT_top5Hits_virus_viroids_final.txt
-- 06_blastp (blastp outputs) MT020_velvet_21-22nt_getorf.min50aa.fasta, MT020_velvet_21-22nt_getorf.min50aa_blastp_vs_NR_out_virus_viroid.txt
-- 07_filternstats (filtered blast summary with various coverage statistics for each virus and viroid hit, and associated consensus fasta file and vcf file) MT020_21-22nt_top_scoring_targets_with_cov_stats.txt, MT020_21-22nt_MK929590_Peach_latent_mosaic_viroid.consensus.fasta, MT020_21-22nt_MK929590_Peach_latent_mosaic_viroid_sequence_variants.vcf.gz
-- 08_summary (summary of results for all samples included in the index.csv file. This includes a cross-contamination prediction) run_top_scoring_targets_with_cov_stats_with_cont_flag_21-22nt_0.01.txt
+The folders are structured as follows:
+- 00_quality_filtering/Sample_name: this folder will output FASTQC of raw and filtered fastq files, cutadapt and umi_tools log files, a quality_trimmed.fastq.gz file and by default a fastq.gz file including reads only matching the size specified in the nextflow.config file)
+- 00_quality_filter/qc_report: this folder contains summaries for all samples included in the index_example.csv file
 
-Future potential additional features:
-- Include a deduplication step for fastq files that have UMIs incorporated
-- Incorporate the fastq file initial filtering steps from sRNAqc as option
+- 01_VirReport/Sample_name/Assembly: fasta file which includes the assembled contigs before and after CAP3, for example MT020_velvet_assembly_21-22nt.fasta, MT001_velvet_cap3_21-22nt_rename.fasta
+- 01_VirReport/Sample_name/blastn: this folder contains all blastn results, filtered results limited to only viruses and viroid top 5 hit matches and the final BlastTools.jar summary output. For example: MT020_velvet_21-22nt_megablast_vs_NT.bls, MT020_velvet_21-22nt_megablast_vs_NT_top5Hits.txt, MT020_velvet_21-22nt_megablast_vs_NT_top5Hits_virus_viroids_final.txt, summary_MT029_velvet_21-22nt_megablast_vs_NT_top5Hits_virus_viroids_final.txt
+Analysis using the local db will also be saved in this folder, for example:
+MT001_velvet_21-22nt_blastn_vs_localdb.bls, summary_MT001_velvet_21-22nt_blastn_vs_localdb.bls_viruses_viroids_ICTV.txt
+- 01_VirReport/Sample_name/blastp: this folder contains getorf and blastp outputs. For example: MT020_velvet_21-22nt_getorf.min50aa.fasta, MT020_velvet_21-22nt_getorf.min50aa_blastp_vs_NR_out_virus_viroid.txt
+- 01_VirReport/Sample/Assembly: this folder ontains filtered blast summary with various coverage statistics for each virus and viroid hit, and associated consensus fasta file and vcf file. For example: MT020_21-22nt_top_scoring_targets_with_cov_stats.txt, MT020_21-22nt_MK929590_Peach_latent_mosaic_viroid.consensus.fasta, MT020_21-22nt_MK929590_Peach_latent_mosaic_viroid_sequence_variants.vcf.gz
+- 01_VirReport/summary: this folder contains a summary of results for all samples included in the index.csv file. This summay table includes a cross-contamination prediction flag. For example: run_top_scoring_targets_with_cov_stats_with_cont_flag_21-22nt_0.01.txt
+
+- 02_virusdetect/Sample_name: this folder includes a results folder with blastn and blastx summary. For example: MT016_21-22nt.blastn.summary.txt and MT016_21-22nt.blastx.summary.txt
