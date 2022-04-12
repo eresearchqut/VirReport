@@ -194,10 +194,10 @@ if (params.qualityfilter) {
         }
     }
 
-    process umiclean_cutadapt {
+    process adapter_trimming {
         label "setting_4"
         tag "$sampleid"
-        publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{log,trimmed.fastq.gz}"
+        publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{log,json,html,trimmed.fastq.gz,zip,html}"
 
         input:
         tuple val(sampleid), file(fastqfile) from umitools_ch
@@ -207,10 +207,15 @@ if (params.qualityfilter) {
         file "${sampleid}_truseq_adapter_cutadapt.log"
         file "${sampleid}_qual_filtering_cutadapt.log"
         file "${sampleid}_quality_trimmed.fastq.gz"
+        file "*_fastqc.{zip,html}"
+        file "${sampleid}_fastp.json"
+        file "${sampleid}_fastp.html"
+        file "${sampleid}_fastp.json" into fastp_results
         file "${sampleid}_umi_tools.log" into umi_tools_results
         file "${sampleid}_qual_filtering_cutadapt.log" into cutadapt_qual_filt_results
 
-        tuple val(sampleid), file("${sampleid}_quality_trimmed.fastq") into fastqc_filtered_ch, derive_usable_reads_ch
+        tuple val(sampleid), file("${sampleid}_quality_trimmed.fastq") into derive_usable_reads_ch
+        tuple val(sampleid), file("${sampleid}_umi_cleaned.fastq") into fastqc_filtered_ch
 
         script:
         """
@@ -228,38 +233,10 @@ if (params.qualityfilter) {
                             -S ${sampleid}_umi_cleaned.fastq > ${sampleid}_umi_tools.log
         
         cutadapt -j ${task.cpus} \
-                --trim-n --max-n 0 -m 5 -q 30 \
+                --trim-n --max-n 0 -m 18 -q 30 \
                 -o ${sampleid}_quality_trimmed.fastq \
                 ${sampleid}_umi_cleaned.fastq > ${sampleid}_qual_filtering_cutadapt.log
 
-        pigz --best --force -p ${task.cpus} -r ${sampleid}_quality_trimmed.fastq -c > ${sampleid}_quality_trimmed.fastq.gz
-        """
-    }
-
-    process qc_fastq_filtered {
-        label "setting_2"
-        tag "$sampleid"
-        publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link'
-        containerOptions "${bindOptions}"
-
-        input:
-        tuple val(sampleid), file(fastqfile) from fastqc_filtered_ch
-        
-        output:
-        file "*_fastqc.{zip,html}"
-        file "${sampleid}_fastp.json"
-        file "${sampleid}_fastp.html"
-        file "${sampleid}_read_length_dist.pdf"
-        file "${sampleid}_read_length_dist.txt"
-        file "${sampleid}_bowtie.log"
-        //file "${sampleid}_UniVec_cleaned_sRNA.fq"
-        //file "${sampleid}_final_unaligned_sRNA.fq"
-        file "${sampleid}_fastp.json" into fastp_results
-        file "${sampleid}_bowtie.log" into rna_source_bowtie_results
-        file "${sampleid}_read_length_dist.txt" into read_length_dist_results
-
-        script:
-        """
         fastqc --quiet --threads ${task.cpus} ${fastqfile}
 
         fastp --in1=${fastqfile} --out1=${sampleid}_fastp_trimmed.fastq \
@@ -270,20 +247,52 @@ if (params.qualityfilter) {
             --html=${sampleid}_fastp.html \
             --thread=${task.cpus}
 
+        pigz --best --force -p ${task.cpus} -r ${sampleid}_quality_trimmed.fastq -c > ${sampleid}_quality_trimmed.fastq.gz
+        """
+    }
+
+    process qc_fastq_filtered {
+        label "setting_2"
+        tag "$sampleid"
+        publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link',overwrite: true, pattern: "*{log,pdf,txt}"
+        containerOptions "${bindOptions}"
+
+        input:
+        tuple val(sampleid), file(fastqfile) from fastqc_filtered_ch
+        
+        output:
+        file "${sampleid}_read_length_dist.pdf"
+        file "${sampleid}_read_length_dist.txt"
+        file "${sampleid}_bowtie.log"
+        file "${sampleid}_bowtie.log" into rna_source_bowtie_results
+        file "${sampleid}_read_length_dist.txt" into read_length_dist_results
+
+        script:
+        """
+        cutadapt -j ${task.cpus} \
+                --trim-n --max-n 0 -m 5 -q 30 \
+                -o ${sampleid}_quality_trimmed_temp.fastq \
+                ${sampleid}_umi_cleaned.fastq
+        
         #derive distribution for quality filtered reads > 5 bp long
-        perl ${projectDir}/bin/fastq2fasta.pl ${fastqfile} > ${sampleid}_trimmed.fasta
-        python ${projectDir}/bin/read_length_dist.py --input ${sampleid}_trimmed.fasta
-        mv ${sampleid}_trimmed.fasta_read_length_dist.txt ${sampleid}_read_length_dist.txt
-        mv ${sampleid}_trimmed.fasta_read_length_dist.pdf ${sampleid}_read_length_dist.pdf
+        perl ${projectDir}/bin/fastq2fasta.pl ${sampleid}_quality_trimmed_temp.fastq > ${sampleid}_quality_trimmed.fasta
+        python ${projectDir}/bin/read_length_dist.py --input ${sampleid}_quality_trimmed.fasta
+        mv ${sampleid}_quality_trimmed.fasta_read_length_dist.txt ${sampleid}_read_length_dist.txt
+        mv ${sampleid}_quality_trimmed.fasta_read_length_dist.pdf ${sampleid}_read_length_dist.pdf
     
-        #derive distribution for quality filtered reads > 5 bp long
+        cutadapt -j ${task.cpus} \
+                --trim-n --max-n 0 -m 15 -q 30 \
+                -o ${sampleid}_quality_trimmed_temp2.fastq \
+                ${sampleid}_umi_cleaned.fastq
+
+        #derive distribution for quality filtered reads > 15 bp bp long
         echo ${sampleid} > ${sampleid}_bowtie.log;
 
         echo 5S rRNA genes alignment: >> ${sampleid}_bowtie.log;
         bowtie -q -v 1 -k 1 -p ${task.cpus} \
             --un ${sampleid}_5S_rRNA_cleaned_sRNA.fq \
             -x ${params.bowtie_db_dir}/5S_rRNA \
-            ${fastqfile} \
+            ${sampleid}_quality_trimmed_temp2.fastq \
             ${sampleid}_5S_rRNA_match 2>>${sampleid}_bowtie.log;
 
 
@@ -441,7 +450,6 @@ if (params.qualityfilter) {
         file "read_origin_counts.txt"
         file "read_RNA_source.pdf"
         file "read_origin_detailed_pc.txt"
-
 
         script:
         """

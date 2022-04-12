@@ -5,7 +5,7 @@ import glob
 import re
 import csv
 import os
-#from bs4 import BeautifulSoup
+import numpy as np
 
 def main():
 
@@ -133,10 +133,15 @@ def main():
         f.close()
         raw_read_counts_dict[sample].append(usable_reads_24) 
     
-    run_data_df = pd.DataFrame([([k] + v) for k, v in raw_read_counts_dict.items()], columns=['sample','raw_reads','umi_cleaned_reads', 'quality filtered reads', 'total filtered bases', 'q20 bases', 'q30 bases', 'gc content', 'usable reads type', 'usable reads 18-25 nt', 'usable reads 21-22nt', 'usable reads 24nt'])
-   
-    pd.options.display.float_format = '{:,.2f}'.format
-    run_data_df.loc[:, "gc content"] = run_data_df["gc content"].map('{:.2f}'.format)
+    run_data_df = pd.DataFrame([([k] + v) for k, v in raw_read_counts_dict.items()], columns=['sample','raw_reads','umi_cleaned_reads', 'quality filtered reads > 18bp', 'total filtered bases', 'q20 bases', 'q30 bases', 'gc content', 'usable reads type', 'usable reads 18-25 nt', 'usable reads 21-22nt', 'usable reads 24nt'])
+    print(run_data_df.dtypes)
+
+    run_data_df.set_index('sample')
+    #For all columns in the dataframe that are of dtype int64, add commas
+    run_data_df.update(run_data_df.select_dtypes(include=['int64']).applymap('{:,}'.format))
+    #Retain 2 decimal point format for GC content column
+    run_data_df.loc[:, 'gc content'] = run_data_df['gc content'].map('{:.2f}'.format)
+    run_data_df = run_data_df.sort_values("sample")
     run_data_df.to_csv('run_qc_report.txt', index = None, sep="\t")
 
 if __name__ == '__main__':
