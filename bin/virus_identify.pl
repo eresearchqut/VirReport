@@ -202,7 +202,10 @@ main: {
 	my $blast_param   = "-F $filter_query -a $cpu_num -W $word_size -q $mis_penalty -G $gap_cost -E $gap_extension -b $hits_return -e $exp_value";
 	#my $blast_param   = "-num_threads $cpu_num -word_size $word_size -penalty $mis_penalty -gapopen $gap_cost -gapextend $gap_extension -max_target_seqs $hits_return -evalue $exp_value";
 	Util::process_cmd("$blast_program -i $contig -d $reference -o $blast_output $blast_param", $debug) unless -s $blast_output;
+	Util::save_file("$contig.blastn.paired", "$sample_dir/$sample.raw_blast_out.txt");	# checking files
+	
 	my $blast_table  = Util::parse_blast_to_table($blast_output, $blast_program);
+	Util::save_file($blast_table, "$sample_dir/$sample.blast_parsed.txt");
 	my $raw_blast_table = $blast_table;
 
 	#Util::save_file($blast_table, "$sample.blastn.table1");	# checking files
@@ -216,6 +219,8 @@ main: {
 	Util::save_file($blast_table, "$sample_dir/$sample.blastn_temp_table2.txt");	# checking files
 
 	my ($known_contig, $known_blast_table) = Util::find_known_contig($blast_table, 60, 50);
+	Util::save_file($known_blast_table, "$sample_dir/$sample.known_blastn.txt");	# checking files
+	Util::save_file($known_contig, "$sample_dir/$sample.known_contigs.txt");	# checking files
 
 	unlink($blast_output) unless $debug;
 

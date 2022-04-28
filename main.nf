@@ -237,9 +237,9 @@ if (params.qualityfilter) {
                 -o ${sampleid}_quality_trimmed.fastq \
                 ${sampleid}_umi_cleaned.fastq > ${sampleid}_qual_filtering_cutadapt.log
 
-        fastqc --quiet --threads ${task.cpus} ${fastqfile}
+        fastqc --quiet --threads ${task.cpus} ${sampleid}_quality_trimmed.fastq
 
-        fastp --in1=${fastqfile} --out1=${sampleid}_fastp_trimmed.fastq \
+        fastp --in1=${sampleid}_quality_trimmed.fastq --out1=${sampleid}_fastp_trimmed.fastq \
             --disable_adapter_trimming \
             --disable_quality_filtering \
             --disable_length_filtering \
@@ -532,7 +532,7 @@ process cap3 {
 }
 
 process blastn_nt_velvet {
-    label "setting_6"
+    label "setting_2"
     publishDir "${params.outdir}/01_VirReport/${sampleid}/blastn", mode: 'link', overwrite: true, pattern: "*{vs_NT.bls,_top5Hits.txt,_final.txt,taxonomy.txt}"
     tag "$sampleid"
     containerOptions "${bindOptions}"
@@ -582,7 +582,7 @@ process blastn_nt_velvet {
 
 if (params.blastlocaldb) {
     process blast_nt_localdb_velvet {
-        label "setting_6"
+        label "setting_2"
         publishDir "${params.outdir}/01_VirReport/${sampleid}/blastn", mode: 'link'
         tag "$sampleid"
         containerOptions "${bindOptions}"
@@ -677,8 +677,8 @@ if (params.blastlocaldb) {
                     grep -w -F -f wanted.names ${projectDir}/bin/${params.ictvinfo} | sort > wanted.ICTV
 
                     #join reports with ICTV information
-                    #join -a 1 -1 1 -2 1 summary_\${var}_viruses_viroids.MOD  wanted.ICTV | tr ' ' '\\t' | awk '\$4>=70' >  summary_\${var}_viruses_viroids_ICTV
-                    join -a1 -1 1 -2 1 summary_\${var}_viruses_viroids.MOD  wanted.ICTV | tr ' ' '\\t' >  summary_\${var}_viruses_viroids_ICTV
+                    #join -a 1 -1 1 -2 1 summary_\${var}_viruses_viroids.MOD wanted.ICTV | tr ' ' '\\t' | awk '\$4>=70' >  summary_\${var}_viruses_viroids_ICTV
+                    join -a1 -1 1 -2 1 summary_\${var}_viruses_viroids.MOD wanted.ICTV | tr ' ' '\\t' >  summary_\${var}_viruses_viroids_ICTV
 
                     #report 2
                     awk '{print "Species" "\\t" \$0 "\\t" "ICTV_information"}' header > header2
@@ -692,7 +692,7 @@ if (params.blastlocaldb) {
 
 process filter_n_cov {
     tag "$sampleid"
-    label "setting_6"
+    label "setting_2"
     publishDir "${params.outdir}/01_VirReport/${sampleid}/alignments", mode: 'link'
     containerOptions "${bindOptions}"
     
@@ -939,7 +939,7 @@ if (params.virusdetect) {
     process virus_detect {
         publishDir "${params.outdir}/02_virusdetect/${sampleid}", mode: 'link'
         tag "$sampleid"
-        label "setting_1"
+        label "setting_6"
         containerOptions "${bindOptions}"
 
         input:

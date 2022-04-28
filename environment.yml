@@ -16,7 +16,7 @@ dependencies:
 ## bioconda packages
   - bioconda::bcftools=1.12
   - bioconda::bedtools=2.30.0
-  - bioconda::blast=2.11.0
+  - bioconda::blast=2.12.0
   - bioconda::bowtie=1.3.0
   - bioconda::cap3=10.2011
   - bioconda::cutadapt=3.5
@@ -29,3 +29,4 @@ dependencies:
   - bioconda::umi_tools=1.1.2
   - bioconda::velvet=1.2.10
   - bioconda::perl-bioperl=1.7.2
+  - bioconda::entrez-direct=16.2

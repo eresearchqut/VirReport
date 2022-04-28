@@ -54,5 +54,4 @@ plt.xticks(rotation='vertical')
 plt.title(sample)
 plt.xlabel('read length (bp)')
 plt.ylabel('# of reads')
-
 plt.savefig('%s_read_length_dist.pdf' % sample, format='pdf')
