@@ -182,7 +182,7 @@ process cap3 {
 
     output:
     tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta"), val(minlen), val(maxlen) into blastn_nt_velvet_ch
-    tuple val(sampleid), file("${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta"), val(minlen), val(maxlen) into blast_nt_localdb_velvet_ch, getorf_ch
+    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta"), val(minlen), val(maxlen) into blast_nt_localdb_velvet_ch, getorf_ch
 
     script:
     """
@@ -266,12 +266,12 @@ if (params.blastlocaldb) {
         containerOptions "${bindOptions}"
 
         input:
-        tuple val(sampleid), file("${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta"), val(minlen), val(maxlen) from blast_nt_localdb_velvet_ch
+        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_velvet_cap3_${minlen}-${maxlen}nt_rename.fasta"), val(minlen), val(maxlen) from blast_nt_localdb_velvet_ch
         
         output:
         file "${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_localdb.bls"
         file "${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_localdb.bls"
-        tuple val(sampleid), file("${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_localdb.bls"), file("${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_localdb.bls"), val(minlen), val(maxlen) into filter_blast_nt_localdb_velvet_ch
+        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_localdb.bls"), file("${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_localdb.bls"), val(minlen), val(maxlen) into filter_blast_nt_localdb_velvet_ch
 
         script:
         """
@@ -302,15 +302,14 @@ if (params.blastlocaldb) {
         tag "$sampleid"
 
         input:
-        tuple val(sampleid), file("${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_localdb.bls"), file("${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_localdb.bls"), val(minlen), val(maxlen) from filter_blast_nt_localdb_velvet_ch
+        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_localdb.bls"), file("${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_localdb.bls"), val(minlen), val(maxlen) from filter_blast_nt_localdb_velvet_ch
 
         output:
         //file "summary_${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_localdb.bls_ENDEMIC_viruses_viroids_ICTV.txt"
         //file "summary_${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_localdb.bls_REGULATED_viruses_viroids_ICTV.txt"
         //file "summary_${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_localdb.bls_ENDEMIC_viruses_viroids_ICTV.txt"
         file "summary_${sampleid}_velvet_${minlen}-${maxlen}nt_blastn_vs_localdb.bls_viruses_viroids_ICTV.txt"
-        file "summary_${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_localdb.bls_viruses_viroids_ICTV.txt"
-        
+        file "summary_${sampleid}_velvet_${minlen}-${maxlen}nt_megablast_vs_localdb.bls_viruses_viroids_ICTV.txt"        
         script:
         """
         #retain 1st blast hit
@@ -323,44 +322,54 @@ if (params.blastlocaldb) {
                 #summarise the blast files
                 java -jar ${projectDir}/bin/BlastTools.jar -t blastn \${var}.txt
 
-                #only retain hits to plant viruses (regulated/edemic/LandPlant)
-                cat summary_\${var}.txt | grep "regulated\\|endemic\\|higher_plant_viruses" > summary_\${var}_filtered.txt
+                #only retain hits to plant viruses
+                grep -v chloroplast summary_\${var}.txt > summary_\${var}_filtered.txt
 
-                #fetch unique virus/viroid species name from Blast summary reports
-                cat summary_\${var}_filtered.txt | awk '{print \$7}' | awk -F "|" '{print \$3}'| sort | uniq | sed 's/Species://' > \${var}_uniq.ids
+                if [[ ! -s summary_\${var}_filtered.txt ]]
+                then
+                    for FILE in summary_\${var}_viruses_viroids_ICTV.txt summary_\${var}_viruses_viroids_ICTV_endemic.txt summary_\${var}_viruses_viroids_ICTV_regulated.txt;
+                        do
+                            echo -e "Species\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information" > "\${FILE}"
+                        done
+                else
+                    #fetch unique virus/viroid species name from Blast summary reports
+                    cat summary_\${var}_filtered.txt | awk '{print \$7}' | awk -F "|" '{print \$3}'| sort | uniq | sed 's/Species://' > \${var}_uniq.ids
 
-                #retrieve the best hit for each unique virus/viroid species name by selecting longest alignment (column 3) and highest genome coverage (column 5)
-                for id in `cat \${var}_uniq.ids`;
-                    do
-                        grep \$id summary_\${var}.txt | sort -k3,3nr -k5,5nr | head -1 >> \${var}_filtered.txt
-                    done
+                    #retrieve the best hit for each unique virus/viroid species name by selecting longest alignment (column 3) and highest genome coverage (column 5)
+                    touch \${var}_filtered.txt
+                    for id in `cat \${var}_uniq.ids`;
+                        do
+                            grep \${id} summary_\${var}.txt | sort -k3,3nr -k5,5nr | head -1 >> \${var}_filtered.txt
+                        done
 
-                #print the header of the inital summary_blastn file
-                cat summary_\${var}.txt | head -1 > header
+                    #print the header of the inital summary_blastn file
+                    cat summary_\${var}.txt | head -1 > header
 
-                #report 1
-                cat header \${var}_filtered.txt > summary_\${var}_viruses_viroids.txt
+                    #report 1
+                    cat header \${var}_filtered.txt > summary_\${var}_viruses_viroids.txt
+                    
+                    #fetch genus names of identified hits
+                    awk '{print \$7}' summary_\${var}_viruses_viroids.txt | awk -F "|" '{print \$3}' | sed 's/Species://' | sed 1d > wanted.names
                 
-                #fetch genus names of identified hits
-                awk '{print \$7}' summary_\${var}_viruses_viroids.txt | awk -F "|" '{print \$3}' | sed 's/Species://' | sed 1d > wanted.names
-            
-                #add species to report
-                paste wanted.names \${var}_filtered.txt > summary_\${var}_viruses_viroids.MOD
+                    #add species to report
+                    paste wanted.names \${var}_filtered.txt | sort > summary_\${var}_viruses_viroids.MOD
 
-                #fecth ICTV information
-                grep -w -F -f wanted.names ${projectDir}/bin/${params.ictvinfo} > wanted.ICTV
+                    #fecth ICTV information
+                    grep -w -F -f wanted.names ${projectDir}/bin/${params.ictvinfo} | sort > wanted.ICTV
 
-                #join reports with ICTV information
-                #join -a 1 -1 1 -2 1 summary_\${var}_viruses_viroids.MOD  wanted.ICTV | tr ' ' '\\t' | awk '\$4>=70' >  summary_\${var}_viruses_viroids_ICTV
-                join -a 1 -1 1 -2 1 summary_\${var}_viruses_viroids.MOD  wanted.ICTV | tr ' ' '\\t' >  summary_\${var}_viruses_viroids_ICTV
+                    #join reports with ICTV information
+                    #join -a 1 -1 1 -2 1 summary_\${var}_viruses_viroids.MOD wanted.ICTV | tr ' ' '\\t' | awk '\$4>=70' >  summary_\${var}_viruses_viroids_ICTV
+                    join -a1 -1 1 -2 1 summary_\${var}_viruses_viroids.MOD wanted.ICTV | tr ' ' '\\t' >  summary_\${var}_viruses_viroids_ICTV
 
-                #report 2
-                awk '{print "Species" "\\t" \$0 "\\t" "ICTV_information"}' header > header2
-                cat header2 summary_\${var}_viruses_viroids_ICTV | awk -F"\\t" '\$1!=""&&\$2!=""&&\$3!=""' > summary_\${var}_viruses_viroids_ICTV.txt
+                    #report 2
+                    awk '{print "Species" "\\t" \$0 "\\t" "ICTV_information"}' header > header2
+                    cat header2 summary_\${var}_viruses_viroids_ICTV | awk -F"\\t" '\$1!=""&&\$2!=""&&\$3!=""' > summary_\${var}_viruses_viroids_ICTV.txt
+                fi
             done
         """
     }
 }
+
 process filter_n_cov {
     tag "$sampleid"
     publishDir "${params.outdir}/07_filternstats/${sampleid}", mode: 'link'

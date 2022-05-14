@@ -7,7 +7,7 @@ Modified by Maely Gauthier 12/2021
 
 ## About Pipeline
 VirReport pipeline based on the scientific workflow manager Nextflow.
-It is designed to help phytosanitary diagnostics of viruses and viroid pathogens in quarantine facilities. It takes small RNA-Seq samples as input.
+It is designed to help phytosanitary diagnostics of viruses and viroid pathogens in quarantine facilities. It takes quality filtered small RNA-Seq samples as input.
 
 # Run the Pipeline
 
@@ -24,9 +24,9 @@ docker
 singularity
 conda
 ```
-To suite your environment.
+To suit your environment.
 
-The VSD workflow will perform the following steps by default:
+The VirReport workflow will perform the following steps by default:
 - Retain reads of a given length (e.g. 21-22 or 24 nt long) from fastq file(s) provided in index.csv file (readprocessing)  
 - De novo assembly using kmer 15 and coverage 3 (velvet) - 
 - Collapse contigs into scaffolds (min length 20) (cap3)
@@ -77,7 +77,7 @@ You need to create a TAB delimited text file that will be the input for the work
 
 - sampleid will be the sample name that will be given to the files created by the pipeline
 - samplepath is the full path to the quality filtered fastq files that the pipeline requires as starting input
-- minlen and maxlen correspond to the read size that will be retained for downstream analyses. 
+- minlen and maxlen correspond to the read size that will be retained for downstream analyses
 
 An index_example.csv is included in the base directory:
 ```

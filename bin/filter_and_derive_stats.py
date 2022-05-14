@@ -52,7 +52,8 @@ def main():
         csv_file2.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tTargetted_sp_generic_name\tRNA_type\tTargetted_sp_generic_name\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score")       
         csv_file2.close()
         csv_file3 = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats.txt", "w")
-        csv_file3.write("Sample\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tTargetted_sp_generic_name\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score\tMean coverage\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_10X\tPCT_20X")
+        #csv_file3.write("Sample\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tTargetted_sp_generic_name\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score\tMean coverage\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_10X\tPCT_20X")
+        csv_file3.write("Sample\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tTargetted_sp_generic_name\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score\tMean coverage\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
         csv_file3.close()
         exit ()
 
@@ -119,7 +120,8 @@ def main():
         csv_file2.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tTargetted_sp_generic_name\tRNA_type\tTargetted_sp_generic_name\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score")       
         csv_file2.close()
         csv_file3 = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats.txt", "w")
-        csv_file3.write("Sample\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tTargetted_sp_generic_name\tRNA_type\tTargetted_sp_generic_name\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score\tMean coverage\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
+        #csv_file3.write("Sample\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tTargetted_sp_generic_name\tRNA_type\tTargetted_sp_generic_name\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score\tMean coverage\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
+        csv_file3.write("Sample\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tTargetted_sp_generic_name\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score\tMean coverage\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
         csv_file3.close()
         exit ()
 
@@ -209,8 +211,8 @@ def main():
         PCT_20X_dict = {}
         read_counts_dict = {}
         rpm_dict = {}
-        dedup_read_counts_dict = {}
-        dup_pc_dict = {}
+        #dedup_read_counts_dict = {}
+        #dup_pc_dict = {}
         fpkm_dict = {}
         for refid, refspname in target_dict.items():
             print (refid)
@@ -224,6 +226,15 @@ def main():
                          "-outfmt","'%f'"]
             subprocess.call(command_line, stdout=single_fasta_entry)
             single_fasta_entry.close()
+
+            filesize = os.path.getsize(fastafile)
+            if filesize == 0:
+                print("Retrieval from blast db failed")
+                single_fasta_entry = open(fastafile, "w")
+                p1 = subprocess.Popen(["esearch", "-db", "nucleotide", "-query", refid], stdout=subprocess.PIPE)
+                p2 = subprocess.run(["efetch", "-format", "fasta"], stdin=p1.stdout, stdout=single_fasta_entry)
+                single_fasta_entry.close()
+                
 
             print("Building a bowtie index")
             index=(sample + "_" + read_size + "_" + combinedid).replace(" ","_")
@@ -251,16 +262,16 @@ def main():
             indexing = ["samtools", "index", sortedbamoutput]
             subprocess.call(indexing, stdout=open(bamindex,"w"))
 
-            print("Deduping bam file")
-            dedupbamoutput = str(index + ".dedup.bam")
-            umi_dedup_log = str(index + "_umi_tools.log")
-            dedup = ["umi_tools", "dedup", "-I", sortedbamoutput, "-L", umi_dedup_log]
-            subprocess.call(dedup, stdout=open(dedupbamoutput,"w"))
+            #print("Deduping bam file")
+            #dedupbamoutput = str(index + ".dedup.bam")
+            #umi_dedup_log = str(index + "_umi_tools.log")
+            #dedup = ["umi_tools", "dedup", "-I", sortedbamoutput, "-L", umi_dedup_log]
+            #subprocess.call(dedup, stdout=open(dedupbamoutput,"w"))
 
-            print("Indexing dedup bam file")
-            dedupbamindex = str(index + ".dedup.bam.bai")
-            dedup_indexing = ["samtools", "index", dedupbamoutput]
-            subprocess.call(dedup_indexing, stdout=open(dedupbamindex,"w"))
+            #print("Indexing dedup bam file")
+            #dedupbamindex = str(index + ".dedup.bam.bai")
+            #dedup_indexing = ["samtools", "index", dedupbamoutput]
+            #subprocess.call(dedup_indexing, stdout=open(dedupbamindex,"w"))
 
             pileup = str(index + ".pileup")
             derivepileup= ["samtools", "mpileup", "-uf", fastafile, sortedbamoutput, "-o", pileup]
@@ -341,7 +352,7 @@ def main():
             PCT_5X = ()
             PCT_10X = ()
             PCT_20X = ()
-            dup_pc = ()
+            #dup_pc = ()
             with open(picard_output) as f:
                 a = " "
                 while(a):
@@ -357,15 +368,15 @@ def main():
             PCT_5X_dict[refspname] = PCT_5X
             PCT_10X_dict[refspname] = PCT_10X
             PCT_20X_dict[refspname] = PCT_20X
-            dup_pc_dict[refspname] = dup_pc
+            #dup_pc_dict[refspname] = dup_pc
             read_counts = ()
             rpm = ()
-            dedup_read_counts = ()
+            #dedup_read_counts = ()
             fpkm = ()
-            p = run(["samtools", "view", "-c", "-F", "260", dedupbamoutput], stdout=PIPE, encoding='ascii')
-            dedup_read_counts = p.stdout.replace("\n","")
-            dedup_read_counts_dict[refspname] = dedup_read_counts
-            print(dedup_read_counts_dict)
+            #p = run(["samtools", "view", "-c", "-F", "260", dedupbamoutput], stdout=PIPE, encoding='ascii')
+            #dedup_read_counts = p.stdout.replace("\n","")
+            #dedup_read_counts_dict[refspname] = dedup_read_counts
+            #print(dedup_read_counts_dict)
             
             with open(bowtie_output) as bo:
                 a = " "
@@ -379,18 +390,20 @@ def main():
                         #read_counts_normalised = round(int(read_counts)*1000000/int(rawfastq_read_counts))
             
             read_counts_dict[refspname] = read_counts
-            fpkm = round(int(dedup_read_counts)/(int(reflen)/1000*int(rawfastq_read_counts)/1000000))
-            rpm = round(int(dedup_read_counts)*1000000/int(rawfastq_read_counts))
+            #fpkm = round(int(dedup_read_counts)/(int(reflen)/1000*int(rawfastq_read_counts)/1000000))
+            #rpm = round(int(dedup_read_counts)*1000000/int(rawfastq_read_counts))
+            fpkm = round(int(read_counts)/(int(reflen)/1000*int(rawfastq_read_counts)/1000000))
+            rpm = round(int(read_counts)*1000000/int(rawfastq_read_counts))
             rpm_dict[refspname] = rpm
             fpkm_dict[refspname] = fpkm
-            dup_pc = round(100-(int(dedup_read_counts)*100/int(read_counts)))
-            dup_pc_dict[refspname] = dup_pc
+            #dup_pc = round(100-(int(dedup_read_counts)*100/int(read_counts)))
+            #dup_pc_dict[refspname] = dup_pc
 
         cov_df = pd.DataFrame(cov_dict.items(),columns=["Targetted_sp_generic_name", "Mean coverage"])
         read_counts_df = pd.DataFrame(read_counts_dict.items(),columns=["Targetted_sp_generic_name", "Read count"])
         rpm_df = pd.DataFrame(rpm_dict.items(),columns=["Targetted_sp_generic_name", "RPM"])
-        read_counts_dedup_df = pd.DataFrame(dedup_read_counts_dict.items(),columns=["Targetted_sp_generic_name", "Dedup read count"]) 
-        dup_pc_df = pd.DataFrame(dup_pc_dict.items(),columns=["Targetted_sp_generic_name", "Dup %"]) 
+        #read_counts_dedup_df = pd.DataFrame(dedup_read_counts_dict.items(),columns=["Targetted_sp_generic_name", "Dedup read count"]) 
+        #dup_pc_df = pd.DataFrame(dup_pc_dict.items(),columns=["Targetted_sp_generic_name", "Dup %"]) 
         fpkm_df = pd.DataFrame(fpkm_dict.items(),columns=["Targetted_sp_generic_name", "FPKM"])
         
         PCT_1X_df = pd.DataFrame(PCT_1X_dict.items(),columns=["Targetted_sp_generic_name", "PCT_1X"])
@@ -398,14 +411,15 @@ def main():
         PCT_10X_df = pd.DataFrame(PCT_10X_dict.items(),columns=["Targetted_sp_generic_name", "PCT_10X"])
         PCT_20X_df = pd.DataFrame(PCT_20X_dict.items(),columns=["Targetted_sp_generic_name", "PCT_20X"])
 
-        dfs = [final_data, cov_df, read_counts_df, read_counts_dedup_df, rpm_df, fpkm_df, PCT_1X_df, PCT_5X_df, PCT_10X_df, PCT_20X_df, dup_pc_df]
+        #dfs = [final_data, cov_df, read_counts_df, read_counts_dedup_df, rpm_df, fpkm_df, PCT_1X_df, PCT_5X_df, PCT_10X_df, PCT_20X_df, dup_pc_df]
+        dfs = [final_data, cov_df, read_counts_df, rpm_df, fpkm_df, PCT_1X_df, PCT_5X_df, PCT_10X_df, PCT_20X_df]
         full_table = reduce(lambda left,right: pd.merge(left,right,on="Targetted_sp_generic_name"), dfs)
         full_table["Mean coverage"] = full_table["Mean coverage"].astype(float)
         full_table["PCT_1X"] = full_table["PCT_1X"].astype(float)
         full_table["PCT_5X"] = full_table["PCT_5X"].astype(float)
         full_table["PCT_10X"] = full_table["PCT_10X"].astype(float)
         full_table["PCT_20X"] = full_table["PCT_20X"].astype(float)
-        full_table["Dup %"] = full_table["Dup %"].astype(float)
+        #full_table["Dup %"] = full_table["Dup %"].astype(float)
         
         full_table.insert(0, "Sample", sample)
         print(full_table)

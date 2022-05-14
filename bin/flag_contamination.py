@@ -25,7 +25,8 @@ def main():
         sample_data = pd.read_csv(fl, header=0, sep="\t",index_col=None)
         run_data = run_data.append(sample_data)
 
-    run_data = run_data[["Sample","sacc","naccs","length","slen","cov","av-pident","qseqids","Targetted_sp_generic_name","Mean coverage","Read count","Dedup read count","Dup %","RPM","FPKM","PCT_1X","PCT_5X","PCT_10X","PCT_20X"]]
+    #run_data = run_data[["Sample","sacc","naccs","length","slen","cov","av-pident","qseqids","Targetted_sp_generic_name","Mean coverage","Read count","Dedup read count","Dup %","RPM","FPKM","PCT_1X","PCT_5X","PCT_10X","PCT_20X"]]
+    run_data = run_data[["Sample","sacc","naccs","length","slen","cov","av-pident","qseqids","Targetted_sp_generic_name","Mean coverage","Read count","RPM","FPKM","PCT_1X","PCT_5X","PCT_10X","PCT_20X"]]
     run_data["read size"] = readsize
     if method == "FPKM":
         run_data["count_max"] = run_data.groupby(["Targetted_sp_generic_name"])["FPKM"].transform(max)
