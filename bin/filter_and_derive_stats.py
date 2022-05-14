@@ -227,14 +227,27 @@ def main():
             subprocess.call(command_line, stdout=single_fasta_entry)
             single_fasta_entry.close()
 
-            filesize = os.path.getsize(fastafile)
-            if filesize == 0:
-                print("Retrieval from blast db failed")
-                single_fasta_entry = open(fastafile, "w")
-                p1 = subprocess.Popen(["esearch", "-db", "nucleotide", "-query", refid], stdout=subprocess.PIPE)
-                p2 = subprocess.run(["efetch", "-format", "fasta"], stdin=p1.stdout, stdout=single_fasta_entry)
-                single_fasta_entry.close()
-                
+            #filesize = os.path.getsize(fastafile)
+            #if filesize == 0:
+            #    print("Retrieval from blast db failed")
+            #    single_fasta_entry = open(fastafile, "w")
+            #    p1 = subprocess.Popen(["esearch", "-db", "nucleotide", "-query", refid], stdout=subprocess.PIPE)
+            #    p2 = subprocess.run(["efetch", "-format", "fasta"], stdin=p1.stdout, stdout=single_fasta_entry)
+            #    single_fasta_entry.close()
+            
+            with open(fastafile,"r") as f:
+            #filesize = os.path.getsize(fastafile)
+                if len(f.readlines()) == 0:
+                    print("Retrieval from blast db failed")
+                    single_fasta_entry.close()
+
+                    #if filesize == 0:
+                    #print("Retrieval from blast db failed")
+                    single_fasta_entry = open(fastafile, "w")
+                    p1 = subprocess.Popen(["esearch", "-db", "nucleotide", "-query", refid], stdout=subprocess.PIPE)
+                    p2 = subprocess.run(["efetch", "-format", "fasta"], stdin=p1.stdout, stdout=single_fasta_entry)
+                    single_fasta_entry.close()
+
 
             print("Building a bowtie index")
             index=(sample + "_" + read_size + "_" + combinedid).replace(" ","_")
