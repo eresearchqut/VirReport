@@ -1,6 +1,6 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
-use strict;
+#use strict;
 
 my $file = $ARGV[0] or die "Usage: \n\n $0 fastq file > outputfile\n";;
 
