@@ -44,7 +44,8 @@ def main():
     mode = args.mode
     
 
-   
+    
+    
     if mode == "NT":
         raw_data = pd.read_csv(results_path, header=0, sep="\t",index_col=None)
         if len(raw_data) == 0:
@@ -106,6 +107,9 @@ def main():
         raw_data["Species"] = raw_data["Species"].str.replace("_", " ")
 
         raw_data = raw_data.sort_values("stitle")
+
+        print("If present in original nomenclature, add RNA type information to virus standardised species name")
+
         raw_data["RNA_type"] = np.where(raw_data.stitle.str.contains("RNA1|RNA 1|segment 1"), "RNA1",
                             np.where(raw_data.stitle.str.contains("RNA2|RNA 2|segment 2"), "RNA2",
                             np.where(raw_data.stitle.str.contains("RNA3|RNA 3|segment 3"), "RNA3", "NaN")))
@@ -225,9 +229,9 @@ def main():
             for ext in extension:
                 outfile = open(sample + "_" + read_size + ext, 'w')
                 if dedup == "true":
-                    outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tDedup read count\tRPM\tFPKM\tPCT_1X\tPCT_10X\tPCT_20X\tDup %")
+                    outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tDedup read count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X\tDup %")
                 else:
-                    outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_10X\tPCT_20X")
+                    outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
                 outfile.close()
             exit ()
             #csv_file1 = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_PVirDB.txt", "w")
@@ -245,7 +249,7 @@ def main():
             #exit ()
 
         target_dict = {}
-        target_dict = pd.Series(raw_data.Species.values,index=raw_data.sacc).to_dict()
+        target_dict = pd.Series(final_data.Species.values,index=final_data.sacc).to_dict()
         print (target_dict)
         
     cov_stats (blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, read_size, sample, target_dict, targets, mode)
@@ -303,7 +307,7 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
         print("Aligning original reads")
         samoutput = str(index + ".sam")
         bowtie_output = str(index + "_bowtie_log.txt")
-        aligning = ["bowtie", "-q", "-v", "2", "-k", "1", "-p",cpus , "-x", index, fastqfiltbysize, "-S", samoutput]
+        aligning = ["bowtie", "-q", "-v", "2", "-k", "1", "-p", cpus , "-x", index, fastqfiltbysize, "-S", samoutput]
         subprocess.call(aligning, stderr=open(bowtie_output,"w"))
 
         print("Derive a bam file")

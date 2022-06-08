@@ -692,7 +692,7 @@ if (params.blastlocaldb) {
                 java -jar ${projectDir}/bin/BlastTools.jar -t blastn \${var}.txt
 
                 #only retain hits to plant viruses (regulated/edemic/LandPlant)
-                c1grep "regulated\\|endemic\\|higher_plant_viruses" summary_\${var}.txt > summary_\${var}_filtered.txt
+                c1grep  "virus\\|viroid" summary_\${var}.txt > summary_\${var}_filtered.txt
 
                 if [[ ! -s summary_\${var}_filtered.txt ]]
                 then
@@ -756,9 +756,9 @@ if (params.blastlocaldb) {
     script:
     """
     if [[ ${params.dedup} == true ]]; then
-        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${params.minlen}-${params.maxlen}nt --blastdbpath ${blast_local_db_dir}/${blast_local_db_name} --dedup true
+        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${params.minlen}-${params.maxlen}nt --blastdbpath ${blast_local_db_dir}/${blast_local_db_name} --dedup true --mode local --cpu ${task.cpus}
     else
-        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize ${fastq_filt_by_size} --results ${samplefile} --read_size ${params.minlen}-${params.maxlen}nt --blastdbpath ${blast_local_db_dir}/${blast_local_db_name} --dedup false
+        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize ${fastq_filt_by_size} --results ${samplefile} --read_size ${params.minlen}-${params.maxlen}nt --blastdbpath ${blast_local_db_dir}/${blast_local_db_name} --dedup false --mode local --cpu ${task.cpus}
     fi
     """
     }

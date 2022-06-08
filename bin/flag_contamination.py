@@ -56,7 +56,7 @@ def main():
             run_data = run_data[["Sample","sacc","naccs","length","slen","cov","av-pident","qseqids","Species","Mean coverage","Read count","RPM","FPKM","PCT_1X","PCT_5X","PCT_10X","PCT_20X"]]
         #testing both FPKM and RPM
         if method == "FPKM":
-            run_data["count_max"] = run_data.groupby(["Targetted_sp_generic_name"])["FPKM"].transform(max)
+            run_data["count_max"] = run_data.groupby(["Species"])["FPKM"].transform(max)
             run_data["threshold_value"]=run_data["count_max"]*threshold
             run_data["contamination_flag"] = np.where(run_data["FPKM"] <= run_data["threshold_value"], True, False)
             run_data["contamination_flag"] = np.where(run_data["count_max"] <= 10, "NA", run_data["contamination_flag"])
