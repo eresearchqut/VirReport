@@ -751,7 +751,7 @@ if (params.blastlocaldb) {
 
     output:
     file "${sampleid}_${params.minlen}-${params.maxlen}*"
-    file("${sampleid}_${params.minlen}-${params.maxlen}nt_top_scoring_targets_with_cov_stats_PVirDB.txt") into contamination_flag_localdb
+    file("${sampleid}_${params.minlen}-${params.maxlen}nt_top_scoring_targets_with_cov_stats_localdb.txt") into contamination_flag_localdb
     
     script:
     """
@@ -806,8 +806,8 @@ if (params.contamination_detection) {
     }
 }
 
-if (params.contamination_detection_PVirDB) {
-    process contamination_detection_PVirDB {
+if (params.contamination_detection_localdb) {
+    process contamination_detection_localdb {
         label "local"
         publishDir "${params.outdir}/01_VirReport/summary", mode: 'link'
         
@@ -815,11 +815,11 @@ if (params.contamination_detection_PVirDB) {
         file ('*') from contamination_flag_localdb.collect().ifEmpty([])
 
         output:
-        file "run_top_scoring_targets_with_cov_stats_with_cont_flag*PVirDB.txt"
+        file "run_top_scoring_targets_with_cov_stats_with_cont_flag*localdb.txt"
 
         script:
         """
-        flag_contamination.py --read_size ${params.minlen}-${params.maxlen}nt --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --PVirDB true
+        flag_contamination.py --read_size ${params.minlen}-${params.maxlen}nt --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --localdb true
         """
     }
 }
