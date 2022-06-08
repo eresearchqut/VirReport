@@ -11,6 +11,7 @@ dependencies:
   - conda-forge::openjdk=11.0.9.1
   - conda-forge::pandas=1.1.5
   - conda-forge::libwebp=0.5.2
+  - conda-forge::pigz=2.6
 
 ## bioconda packages
   - bioconda::bcftools=1.12
@@ -24,6 +25,7 @@ dependencies:
   - bioconda::fastqc=0.11.9
   - bioconda::picard=2.25.6
   - bioconda::samtools=1.12
-  - bioconda::spades=3.14.0
+  - bioconda::spades=3.15.0
   - bioconda::umi_tools=1.1.2
   - bioconda::velvet=1.2.10
+  - bioconda::perl-bioperl=1.7.2
