@@ -11,6 +11,15 @@ It is designed to help phytosanitary diagnostics of viruses and viroid pathogens
 
 # Run the Pipeline
 
+
+## Test run
+Download the pipeline and test it on a minimal dataset with a single command:
+```bash
+nextflow -c conf/test.config run main.nf -profile test,conda --dedup -resume --contamination_detection
+```
+
+Running this dataset requires 2 cpus and 8 Gb mem and should take 2 mins to complete.
+
 ## Run with your own data
 
 Run the command:
@@ -26,7 +35,7 @@ conda
 ```
 To suite your environment.
 
-The VSD workflow will perform the following steps by default:
+The VirReport workflow will perform the following steps by default:
 - Retain reads of a given length (e.g. 21-22 or 24 nt long) from fastq file(s) provided in index.csv file (readprocessing)  
 - De novo assembly using kmer 15 and coverage 3 (velvet) 
 - Collapse contigs into scaffolds (min length 20) (cap3)
@@ -40,7 +49,7 @@ A number of additional optional steps can be run:
 
      --contamination_detection: Run cross-sample contamination prediction (contamination_detection) 
 
-     --blastlocaldb: Run blastn and megablast homology search on de novo assembly (derived with Velvet) against local  virus and viroid database (blast_nt_localdb_velvet, filter_blast_nt_localdb_velvet)
+     --blastlocaldb: Run blastn and megablast homology search on de novo assembly (derived with Velvet) against local  virus and viroid database (blast_nt_localdb_velvet, filter_blast_nt_localdb_velvet). An example of local virus database can be downloaded at wget https://data.researchdatafinder.qut.edu.au/dataset/60eed574-a745-4a0f-ab7c-fb8b3c711695/resource/a17dfa13-a093-407a-a047-27f134f92ac9/download/pvirdbv1.fasta.gz
 
      --blastn_method: The blastn homology search can be specified as blastn instead of megablast (--blastn_method blastn)
 
