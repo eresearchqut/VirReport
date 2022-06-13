@@ -1,2 +1,2 @@
-Targetted_sp_generic_name
+Species
 Citrus tristeza virus

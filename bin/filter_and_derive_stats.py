@@ -28,6 +28,7 @@ def main():
     parser.add_argument("--dedup", type=str)
     parser.add_argument("--cpu", type=str)
     parser.add_argument("--mode", type=str)
+    parser.add_argument("--diagno", type=str)
     args = parser.parse_args()
     
     results_path = args.results
@@ -42,9 +43,7 @@ def main():
     dedup = args.dedup
     cpus = args.cpu
     mode = args.mode
-    
-
-    
+    diagno = args.diagno
     
     if mode == "NT":
         raw_data = pd.read_csv(results_path, header=0, sep="\t",index_col=None)
@@ -205,26 +204,31 @@ def main():
 
         #select one random hit if tie for top hits:
         print("If there is a tie, select a random sequence out of the top scoring hit")
-        final_data = filtered_data.drop_duplicates(subset="Species_updated", keep="first")
+        filtered_data = filtered_data.drop_duplicates(subset="Species_updated", keep="first")
     
         #By setting keep on False, all duplicates are True
         #If there are duplicates in species name (ie RNA types present), then it will drop NaN
-        final_data = final_data[~((final_data["Species"].duplicated(keep=False))&(final_data["RNA_type"].str.contains("NaN")))]
-        final_data = final_data.drop(["Species"], axis=1)
+        filtered_data = filtered_data[~((filtered_data["Species"].duplicated(keep=False))&(filtered_data["RNA_type"].str.contains("NaN")))]
+        final_data = filtered_data.drop(["Species"], axis=1)
         final_data = final_data.rename(columns={"Species_updated": "Species"})
         final_data.to_csv(sample + "_" + read_size + "_top_scoring_targets.txt", index=None, sep="\t")
 
         target_dict = {}
-        target_dict = pd.Series(final_data.Species.values,index=final_data.sacc).to_dict()
+        target_dict = pd.Series(filtered_data.Species_updated.values,index=filtered_data.sacc).to_dict()
         print (target_dict)
-        final_data = final_data[["sacc","Species","naccs","length","slen","cov","av-pident","stitle","qseqids","total_score"]]
+        filtered_data = filtered_data[["sacc","Species","Species_updated","naccs","length","slen","cov","av-pident","stitle","qseqids","total_score"]]
+        cov_stats (blastdbpath, cpus, dedup, fastqfiltbysize, filtered_data, rawfastq, read_size, sample, target_dict, targets, targetspath, mode, diagno)
 
     elif mode == "local":
         final_data = pd.read_csv(results_path, header=0, sep="\t",index_col=None)
+        final_data = final_data.rename(columns={"Species": "Species_updated"})
         if len(final_data) == 0:
             print("DataFrame is empty!")
-            extension = ("_top_scoring_targets_with_cov_stats_PVirDB.txt", "_top_scoring_targets_with_cov_stats_PVirDB_regulated.txt", "_top_scoring_targets_with_cov_stats_PVirDB_endemic.txt")
-            
+            if diagno == "true":
+                extension = ("_top_scoring_targets_with_cov_stats_localdb.txt", "_top_scoring_targets_with_cov_stats_localdb_regulated.txt", "_top_scoring_targets_with_cov_stats_localdb_endemic.txt")
+            else:
+                extension = ("_top_scoring_targets_with_cov_stats_localdb.txt")
+
             #if dedup == "true":
             for ext in extension:
                 outfile = open(sample + "_" + read_size + ext, 'w')
@@ -234,29 +238,14 @@ def main():
                     outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
                 outfile.close()
             exit ()
-            #csv_file1 = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_PVirDB.txt", "w")
-            #csv_file1.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tDedup read count\tRPM\tFPKM\tPCT_1X\tPCT_10X\tPCT_20X\tDup %")
-            ##csv_file1.close()
-            #csv_file2 = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_PVirDB_regulated.txt", "w")
-            #csv_file2.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tDedup read count\tRPM\tFPKM\tPCT_1X\tPCT_10X\tPCT_20X\tDup %")       
-            #csv_file2.close()
-            #csv_file3 = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_PVirDB_endemic.txt", "w")
-            #if dedup == "true": 
-            #    csv_file3.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tDedup read count\tRPM\tFPKM\tPCT_1X\tPCT_10X\tPCT_20X\tDup %")
-            #else:
-            #    csv_file3.write("Sample\Species\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_10X\tPCT_20X")
-            #csv_file3.close()
-            #exit ()
 
         target_dict = {}
-        target_dict = pd.Series(final_data.Species.values,index=final_data.sacc).to_dict()
+        target_dict = pd.Series(final_data.Species_updated.values,index=final_data.sacc).to_dict()
         print (target_dict)
-        
-    cov_stats (blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, read_size, sample, target_dict, targets, mode)
     
+        cov_stats (blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, read_size, sample, target_dict, targets, targetspath, mode, diagno)
 
-
-def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, read_size, sample, target_dict, targets, mode):
+def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, read_size, sample, target_dict, targets, targetspath, mode, diagno):
     print("Align reads and derive coverage and depth for best hit")
     rawfastq_read_counts = (len(open(rawfastq).readlines(  ))/4)
     cov_dict = {}
@@ -296,8 +285,6 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
             p1 = subprocess.Popen(["esearch", "-db", "nucleotide", "-query", refid], stdout=subprocess.PIPE)
             p2 = subprocess.run(["efetch", "-format", "fasta"], stdin=p1.stdout, stdout=single_fasta_entry)
             single_fasta_entry.close()
-
-        
 
         print("Building a bowtie index")
         index=(sample + "_" + read_size + "_" + combinedid).replace(" ","_")
@@ -462,82 +449,64 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
             dup_pc = round(100-(int(dedup_read_counts)*100/int(read_counts)))
             dup_pc_dict[refspname] = dup_pc
 
-        cov_df = pd.DataFrame(cov_dict.items(),columns=["Species", "Mean coverage"])
-        read_counts_df = pd.DataFrame(read_counts_dict.items(),columns=["Species", "Read count"])
-        rpm_df = pd.DataFrame(rpm_dict.items(),columns=["Species", "RPM"])
-        fpkm_df = pd.DataFrame(fpkm_dict.items(),columns=["Species", "FPKM"])
-        PCT_1X_df = pd.DataFrame(PCT_1X_dict.items(),columns=["Species", "PCT_1X"])
-        PCT_5X_df = pd.DataFrame(PCT_5X_dict.items(),columns=["Species", "PCT_5X"])
-        PCT_10X_df = pd.DataFrame(PCT_10X_dict.items(),columns=["Species", "PCT_10X"])
-        PCT_20X_df = pd.DataFrame(PCT_20X_dict.items(),columns=["Species", "PCT_20X"])
+        cov_df = pd.DataFrame(cov_dict.items(),columns=["Species_updated", "Mean coverage"])
+        read_counts_df = pd.DataFrame(read_counts_dict.items(),columns=["Species_updated", "Read count"])
+        rpm_df = pd.DataFrame(rpm_dict.items(),columns=["Species_updated", "RPM"])
+        fpkm_df = pd.DataFrame(fpkm_dict.items(),columns=["Species_updated", "FPKM"])
+        PCT_1X_df = pd.DataFrame(PCT_1X_dict.items(),columns=["Species_updated", "PCT_1X"])
+        PCT_5X_df = pd.DataFrame(PCT_5X_dict.items(),columns=["Species_updated", "PCT_5X"])
+        PCT_10X_df = pd.DataFrame(PCT_10X_dict.items(),columns=["Species_updated", "PCT_10X"])
+        PCT_20X_df = pd.DataFrame(PCT_20X_dict.items(),columns=["Species_updated", "PCT_20X"])
         
         if dedup == "true":
-            read_counts_dedup_df = pd.DataFrame(dedup_read_counts_dict.items(),columns=["Species", "Dedup read count"]) 
-            dup_pc_df = pd.DataFrame(dup_pc_dict.items(),columns=["Species", "Dup %"])
-            dfs = [final_data, cov_df, read_counts_df, read_counts_dedup_df, rpm_df, fpkm_df, PCT_1X_df, PCT_5X_df, PCT_10X_df, PCT_20X_df, dup_pc_df]
-        else:
-            dfs = [final_data, cov_df, read_counts_df, rpm_df, fpkm_df, PCT_1X_df, PCT_5X_df, PCT_10X_df, PCT_20X_df]
+            read_counts_dedup_df = pd.DataFrame(dedup_read_counts_dict.items(),columns=["Species_updated", "Dedup read count"]) 
+            dup_pc_df = pd.DataFrame(dup_pc_dict.items(),columns=["Species_updated", "Dup %"])
+    
+    if dedup == "true":     
+        dfs = [final_data, cov_df, read_counts_df, read_counts_dedup_df, rpm_df, fpkm_df, PCT_1X_df, PCT_5X_df, PCT_10X_df, PCT_20X_df, dup_pc_df]
+    else:
+        dfs = [final_data, cov_df, read_counts_df, rpm_df, fpkm_df, PCT_1X_df, PCT_5X_df, PCT_10X_df, PCT_20X_df]
         
-        full_table = reduce(lambda left,right: pd.merge(left,right,on="Species"), dfs)
-        full_table["Mean coverage"] = full_table["Mean coverage"].astype(float)
-        full_table["PCT_1X"] = full_table["PCT_1X"].astype(float)
-        full_table["PCT_5X"] = full_table["PCT_5X"].astype(float)
-        full_table["PCT_10X"] = full_table["PCT_10X"].astype(float)
-        full_table["PCT_20X"] = full_table["PCT_20X"].astype(float)
-        if dedup == "true":
-            full_table["Dup %"] = full_table["Dup %"].astype(float)
-        
-        full_table.insert(0, "Sample", sample)
+    full_table = reduce(lambda left,right: pd.merge(left,right,on="Species_updated"), dfs)
+    full_table["Mean coverage"] = full_table["Mean coverage"].astype(float)
+    full_table["PCT_1X"] = full_table["PCT_1X"].astype(float)
+    full_table["PCT_5X"] = full_table["PCT_5X"].astype(float)
+    full_table["PCT_10X"] = full_table["PCT_10X"].astype(float)
+    full_table["PCT_20X"] = full_table["PCT_20X"].astype(float)
+    if dedup == "true":
+        full_table["Dup %"] = full_table["Dup %"].astype(float)
+    
+    full_table.insert(0, "Sample", sample)
 
-        # Final number of columns should be 28 if dedup
-        # Sample	
-        # sacc
-        # naccs	
-        # length	
-        # slen	
-        # cov	
-        # av-pident	
-        # stitle	
-        # qseqids	
-        # RNA_type	
-        # Species	
-        # naccs_score	
-        # length_score	
-        # avpid_score	
-        # cov_score
-        # genome_score	
-        # completeness_score	
-        # total_score	
-        # Mean coverage	
-        # Read count	
-        # Dedup read count	
-        # RPM	
-        # FPKM	
-        # PCT_1X	
-        # PCT_5X	
-        # PCT_10X	
-        # PCT_20X	
-        # Dup %
+    print(full_table)
 
-        print(full_table)
-
-        if mode == 'NT':
-            full_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats.txt", index=None, sep="\t",float_format="%.2f")
-
+    if mode == 'NT':
+        full_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats.txt", index=None, sep="\t",float_format="%.2f")
         #This step will only extract viruses and viroids of interest
         if targets:
-            full_table["Species_lower"] = full_table["Species"].str.lower()
+            full_table["Species"] = full_table["Species"].astype(str)
+            full_table["Species"] = full_table["Species"].str.lower()
+            #full_table = full_table.drop(["Species"], axis=1)
             targets_df = pd.read_csv(targetspath, header=0, sep="\t", index_col=None)
-            targets_df["Species_lower"] = targets_df["Species"].str.lower()
-            filtered_table = pd.merge(full_table, targets_df, on=["Species_lower"])
+            targets_df["Species"] = targets_df["Species"].astype(str)
+            targets_df["Species"] = targets_df["Species"].str.lower()
+            #targets_df = targets_df.drop(["Species"], axis=1)
+            filtered_table = pd.merge(full_table,targets_df,on='Species',how='inner')
+            filtered_table = filtered_table.drop(["Species"], axis=1)
+            filtered_table = filtered_table.drop(["Species_Long"], axis=1)
+            filtered_table = filtered_table.rename(columns={"Species_updated": "Species"})
             filtered_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_filtered_with_cov_stats.txt", index=None, sep="\t",float_format="%.2f")
-    
-        elif mode == 'local':
-            full_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_PVirDB.txt", index=None, sep="\t",float_format="%.2f")
-            regulated_table = full_table[full_table['stitle'].str.contains('regulated')]
-            regulated_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_PVirDB_regulated.txt", index=None, sep="\t",float_format="%.2f")
-            endemic_table = full_table[full_table['stitle'].str.contains('endemic')]
-            endemic_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_PVirDB_endemic.txt", index=None, sep="\t",float_format="%.2f")
+
+    elif mode == 'local':
+        full_table = full_table.rename(columns={"Species_updated": "Species"})
+        full_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_localdb.txt", index=None, sep="\t",float_format="%.2f")
+        if diagno == true:
+            if [full_table['stitle'].str.contains('regulated')]:
+                regulated_table = full_table[full_table['stitle'].str.contains('regulated')]
+                regulated_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_localdb_regulated.txt", index=None, sep="\t",float_format="%.2f")
+            if [full_table['stitle'].str.contains('endemic')]:
+                endemic_table = full_table[full_table['stitle'].str.contains('endemic')]
+                endemic_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_localdb_endemic.txt", index=None, sep="\t",float_format="%.2f")
 
 def max_avpid(df):
     max_row = df["av-pident"].max()
