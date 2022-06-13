@@ -69,7 +69,7 @@ A number of additional options are included:
 
     --orf_minsize correspond to the minimal open reading frame getorf retains
 
-    --virusdetect: runs in parallel ViruDetect v1.7
+    --virusdetect: runs in parallel ViruDetect v1.8
 ```
 To enable these options, they can either be included in the nextflow run command provided in the PBS script: 
 ```
@@ -116,14 +116,17 @@ params {
   blast_local_db_path = '/work/hia_mt18005/databases/PVirDB/PVirDB_ver2022_02_09/dev/PVirDB_ver20220209.fasta'
 }
 ```
-If you want to run the initial qualityfilter step, you will need to specify in the nextflow.config file the directory which holds the required bowtie indices to: 1) derive the origin of the filtered reads obtained and 2) filter non-informative reads (qc_fastq_filtered and derive_usable_reads processes). For example:
+If you want to run the initial qualityfilter step, you will need to specify in the nextflow.config file the directory which holds the required bowtie indices to: 1) derive the origin of the filtered reads obtained and 2) filter non-informative reads (qc_fastq_filtered and derive_usable_reads processes). Examples of fasta files are available at https://github.com/maelyg/bowtie_indices.git and bowtie indices can be built from these using the command:
+bowtie-build -f [fasta file] [name of index]
+
+For example:
 params {
   bowtie_db_dir = '/work/hia_mt18005_db/bowtie_idx'
 }
 ```
-If you want to run VirusDetect, then specify the path to the viral database directory in nextflow.config file. These can be downloaded at http://bioinfo.bti.cornell.edu/ftp/program/VirusDetect/virus_database/. For example:
+If you want to run VirusDetect, then specify the path to the viral database directory in nextflow.config file. These can be downloaded at http://bioinfo.bti.cornell.edu/ftp/program/VirusDetect/virus_database/v248. For example:
 ```
-virusdetect_db_path = '/work/hia_mt18005_db/blastDB/VirusDetect/vrl_Plants_239_U97'
+virusdetect_db_path = '/home/gauthiem/code/VirusDetect_v1.8/databases/vrl_plant'
 ```
 
 # Running the pipeline
@@ -140,6 +143,6 @@ Analysis using the local db will also be saved in this folder, for example:
 MT001_velvet_21-22nt_blastn_vs_localdb.bls, summary_MT001_velvet_21-22nt_blastn_vs_localdb.bls_viruses_viroids_ICTV.txt
 - 01_VirReport/Sample_name/blastp: this folder contains getorf and blastp outputs. For example: MT020_velvet_21-22nt_getorf.min50aa.fasta, MT020_velvet_21-22nt_getorf.min50aa_blastp_vs_NR_out_virus_viroid.txt
 - 01_VirReport/Sample/Assembly: this folder ontains filtered blast summary with various coverage statistics for each virus and viroid hit, and associated consensus fasta file and vcf file. For example: MT020_21-22nt_top_scoring_targets_with_cov_stats.txt, MT020_21-22nt_MK929590_Peach_latent_mosaic_viroid.consensus.fasta, MT020_21-22nt_MK929590_Peach_latent_mosaic_viroid_sequence_variants.vcf.gz
-- 01_VirReport/summary: this folder contains a summary of results for all samples included in the index.csv file. This summay table includes a cross-contamination prediction flag. For example: run_top_scoring_targets_with_cov_stats_with_cont_flag_21-22nt_0.01.txt
+- 01_VirReport/Summary: this folder contains a summary of results for all samples included in the index.csv file. This summay table includes a cross-contamination prediction flag. For example: run_top_scoring_targets_with_cov_stats_with_cont_flag_21-22nt_0.01.txt
 
 - 02_virusdetect/Sample_name: this folder includes a results folder with blastn and blastx summary. For example: MT016_21-22nt.blastn.summary.txt and MT016_21-22nt.blastx.summary.txt
