@@ -5,9 +5,9 @@ import numpy as np
 import os
 import subprocess
 from functools import reduce
-import glob
+from glob import glob
 from subprocess import run, PIPE
-
+import sys
 
 def main():
     ################################################################################
@@ -44,6 +44,10 @@ def main():
     cpus = args.cpu
     mode = args.mode
     diagno = args.diagno
+
+
+    #log = open(sample + "filter_and_derive_stats.log", "a")
+    #sys.stdout = log
     
     if mode == "NT":
         raw_data = pd.read_csv(results_path, header=0, sep="\t",index_col=None)
@@ -64,7 +68,7 @@ def main():
             exit ()
 
         #load list of target viruses and viroids and matching official ICTV name
-        
+
         if os.stat(taxonomy).st_size == 0:
             print('Taxonomy description file is empty!')
             exit ()
@@ -73,7 +77,7 @@ def main():
             taxonomy_df.columns =["sacc", "Species"]
             taxonomy_df["Species"] = taxonomy_df["Species"].str.replace("Hop_stunt_viroid_-_citrus","Hop_stunt_viroid")
         #print(taxonomy_df)
-    
+
         #print(raw_data).head(10)
         print("Cleaning up the data")
         print("Remove double spacing")
@@ -137,7 +141,10 @@ def main():
             csv_file2.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tSpecies\tRNA_type\tSpecies\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score")       
             csv_file2.close()
             csv_file3 = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats.txt", "w")
-            csv_file3.write("Sample\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tSpecies\tRNA_type\tSpecies_updated\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score\tMean coverage\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
+            if dedup == "true":
+                csv_file3.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
+            else:
+                csv_file3.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
             csv_file3.close()
             exit ()
 
@@ -226,23 +233,27 @@ def main():
             print("DataFrame is empty!")
             if diagno == "true":
                 extension = ("_top_scoring_targets_with_cov_stats_localdb.txt", "_top_scoring_targets_with_cov_stats_localdb_regulated.txt", "_top_scoring_targets_with_cov_stats_localdb_endemic.txt")
+                for ext in extension:
+                    outfile = open(sample + "_" + read_size + ext, 'w')
+                    if dedup == "true":
+                        outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
+                    else:
+                        outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
+                    outfile.close()
             else:
-                extension = ("_top_scoring_targets_with_cov_stats_localdb.txt")
-
-            #if dedup == "true":
-            for ext in extension:
-                outfile = open(sample + "_" + read_size + ext, 'w')
+                outfile = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_localdb.txt", "w")
                 if dedup == "true":
-                    outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tDedup read count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X\tDup %")
+                    outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
                 else:
                     outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
                 outfile.close()
+            
             exit ()
 
         target_dict = {}
         target_dict = pd.Series(final_data.Species_updated.values,index=final_data.sacc).to_dict()
         print (target_dict)
-    
+
         cov_stats (blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, read_size, sample, target_dict, targets, targetspath, mode, diagno)
 
 def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, read_size, sample, target_dict, targets, targetspath, mode, diagno):
@@ -258,10 +269,24 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
     dedup_read_counts_dict = {}
     dup_pc_dict = {}
     fpkm_dict = {}
+
+    read_counts_dedup_df = pd.DataFrame()
+    dup_pc_df = pd.DataFrame()
+    cov_df = pd.DataFrame()
+    read_counts_df = pd.DataFrame()
+    read_counts_dedup_df = pd.DataFrame()
+    rpm_df = pd.DataFrame()
+    fpkm_df = pd.DataFrame()
+    PCT_1X_df = pd.DataFrame()
+    PCT_5X_df = pd.DataFrame()
+    PCT_10X_df = pd.DataFrame()
+    PCT_20X_df = pd.DataFrame()
+    dup_pc_df = pd.DataFrame()
+
     for refid, refspname in target_dict.items():
         print (refid)
         print (refspname)
-        combinedid = str(refid + " " + refspname).replace(" ","_")
+        combinedid = str(refid + " " + refspname).replace("sp.","sp").replace(" ","_")
 
         print("Extract sequence from blast database")
         fastafile = (sample + "_" + read_size + "_" + combinedid + ".fa").replace(" ","_")
@@ -271,7 +296,7 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
                             "-outfmt","'%f'"]
             subprocess.call(command_line, stdout=single_fasta_entry)
             single_fasta_entry.close()
-            
+
             filesize = os.path.getsize(fastafile)
 
             if filesize == 0:
@@ -280,7 +305,7 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
                 p1 = subprocess.Popen(["esearch", "-db", "nucleotide", "-query", refid], stdout=subprocess.PIPE)
                 p2 = subprocess.run(["efetch", "-format", "fasta"], stdin=p1.stdout, stdout=single_fasta_entry)
                 single_fasta_entry.close()
-            
+
         elif mode == "local":
             p1 = subprocess.Popen(["esearch", "-db", "nucleotide", "-query", refid], stdout=subprocess.PIPE)
             p2 = subprocess.run(["efetch", "-format", "fasta"], stdin=p1.stdout, stdout=single_fasta_entry)
@@ -311,18 +336,6 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
         bamindex = str(index + ".sorted.bam.bai")
         indexing = ["samtools", "index", sortedbamoutput]
         subprocess.call(indexing, stdout=open(bamindex,"w"))
-        
-        if dedup == "true":
-            print("Deduping bam file")
-            dedupbamoutput = str(index + ".dedup.bam")
-            umi_dedup_log = str(index + "_umi_tools.log")
-            dedup = ["umi_tools", "dedup", "-I", sortedbamoutput, "-L", umi_dedup_log]
-            subprocess.call(dedup, stdout=open(dedupbamoutput,"w"))
-
-            print("Indexing dedup bam file")
-            dedupbamindex = str(index + ".dedup.bam.bai")
-            dedup_indexing = ["samtools", "index", dedupbamoutput]
-            subprocess.call(dedup_indexing, stdout=open(dedupbamindex,"w"))
 
         pileup = str(index + ".pileup")
         derivepileup= ["samtools", "mpileup", "-uf", fastafile, sortedbamoutput, "-o", pileup]
@@ -382,21 +395,6 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
         picard = ["picard", "CollectWgsMetrics", "-I", str(sortedbamoutput), "-O", str(picard_output), "-R", str(fastafile), "-READ_LENGTH","22", "-COUNT_UNPAIRED", "true"]
         subprocess.call(picard)
 
-        subprocess.call(["rm","-r", samoutput])
-        subprocess.call(["rm","-r", bamoutput])
-        subprocess.call(["rm","-r", pileup])
-        subprocess.call(["rm","-r", vcfout])
-        subprocess.call(["rm","-r", genomecovbed])
-        subprocess.call(["rm","-r", zerocovbed])
-        subprocess.call(["rm","-r", maskedfasta])
-        subprocess.call(["rm","-r", sortedbamoutput])
-        subprocess.call(["rm","-r", bamindex])
-
-        for fl in glob.glob(index + "*ebwt"):
-            os.remove(fl)
-        for fl in glob.glob(index + ".vcf.gz*"):
-            os.remove(fl) 
-
         reflen = ()
         cov = ()
         PCT_1X = ()
@@ -439,16 +437,6 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
         rpm_dict[refspname] = rpm
         fpkm_dict[refspname] = fpkm
 
-        if dedup == "true":
-            dedup_read_counts = ()
-            p = run(["samtools", "view", "-c", "-F", "260", dedupbamoutput], stdout=PIPE, encoding='ascii')
-            dedup_read_counts = p.stdout.replace("\n","")
-            dedup_read_counts_dict[refspname] = dedup_read_counts
-            print(dedup_read_counts_dict)
-            dup_pc = ()
-            dup_pc = round(100-(int(dedup_read_counts)*100/int(read_counts)))
-            dup_pc_dict[refspname] = dup_pc
-
         cov_df = pd.DataFrame(cov_dict.items(),columns=["Species_updated", "Mean coverage"])
         read_counts_df = pd.DataFrame(read_counts_dict.items(),columns=["Species_updated", "Read count"])
         rpm_df = pd.DataFrame(rpm_dict.items(),columns=["Species_updated", "RPM"])
@@ -458,26 +446,68 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
         PCT_10X_df = pd.DataFrame(PCT_10X_dict.items(),columns=["Species_updated", "PCT_10X"])
         PCT_20X_df = pd.DataFrame(PCT_20X_dict.items(),columns=["Species_updated", "PCT_20X"])
         
+        #If data needs to be deduplicated
+        dedupbamoutput = str(index + ".dedup.bam")
+        umi_dedup_log = str(index + "_umi_tools.log")
+        dedupbamindex = str(index + ".dedup.bam.bai")
+        dedup_read_counts = ()
+        dup_pc = ()
+
         if dedup == "true":
+            print("Deduping bam file")
+            dedup = ["umi_tools", "dedup", "-I", sortedbamoutput, "-L", umi_dedup_log]
+            subprocess.call(dedup, stdout=open(dedupbamoutput,"w"))
+            
+            print("Indexing dedup bam file")
+            dedup_indexing = ["samtools", "index", dedupbamoutput]
+            subprocess.call(dedup_indexing, stdout=open(dedupbamindex,"w"))
+            p = run(["samtools", "view", "-c", "-F", "260", dedupbamoutput], stdout=PIPE, encoding='ascii')
+            
+            dedup_read_counts = p.stdout.replace("\n","")
+            dedup_read_counts_dict[refspname] = dedup_read_counts
+            print(dedup_read_counts_dict)
+            
+            dup_pc = round(100-(int(dedup_read_counts)*100/int(read_counts)))
+            dup_pc_dict[refspname] = dup_pc
+            
             read_counts_dedup_df = pd.DataFrame(dedup_read_counts_dict.items(),columns=["Species_updated", "Dedup read count"]) 
             dup_pc_df = pd.DataFrame(dup_pc_dict.items(),columns=["Species_updated", "Dup %"])
+            subprocess.call(["rm","-r", sortedbamoutput])
+            subprocess.call(["rm","-r", bamindex])
     
-    if dedup == "true":     
-        dfs = [final_data, cov_df, read_counts_df, read_counts_dedup_df, rpm_df, fpkm_df, PCT_1X_df, PCT_5X_df, PCT_10X_df, PCT_20X_df, dup_pc_df]
-    else:
-        dfs = [final_data, cov_df, read_counts_df, rpm_df, fpkm_df, PCT_1X_df, PCT_5X_df, PCT_10X_df, PCT_20X_df]
+        elif dedup == "false":
+            subprocess.call(["rm","-r", dedupbamoutput])
+            subprocess.call(["rm","-r", umi_dedup_log])
+            subprocess.call(["rm","-r", dedupbamindex])
+
+        subprocess.call(["rm","-r", samoutput])
+        subprocess.call(["rm","-r", bamoutput])
+        subprocess.call(["rm","-r", pileup])
+        subprocess.call(["rm","-r", vcfout])
+        subprocess.call(["rm","-r", genomecovbed])
+        subprocess.call(["rm","-r", zerocovbed])
+        subprocess.call(["rm","-r", maskedfasta])
+        project_files = glob(index + "*ebwt") + glob(index + ".vcf.gz*")
+        for fl in project_files:
+            subprocess.call(["rm","-r", fl])
         
+    print("Deriving summary table with coverage statistics")
+    print(dedup)
+
+    if read_counts_dedup_df.empty:
+        dfs = [final_data, cov_df, read_counts_df, rpm_df, fpkm_df, PCT_1X_df, PCT_5X_df, PCT_10X_df, PCT_20X_df]
+    else:
+        dfs = [final_data, cov_df, read_counts_df, read_counts_dedup_df, dup_pc_df, rpm_df, fpkm_df, PCT_1X_df, PCT_5X_df, PCT_10X_df, PCT_20X_df]
+
     full_table = reduce(lambda left,right: pd.merge(left,right,on="Species_updated"), dfs)
     full_table["Mean coverage"] = full_table["Mean coverage"].astype(float)
     full_table["PCT_1X"] = full_table["PCT_1X"].astype(float)
     full_table["PCT_5X"] = full_table["PCT_5X"].astype(float)
     full_table["PCT_10X"] = full_table["PCT_10X"].astype(float)
     full_table["PCT_20X"] = full_table["PCT_20X"].astype(float)
-    if dedup == "true":
+    if "Dup %" in full_table.columns:
         full_table["Dup %"] = full_table["Dup %"].astype(float)
-    
     full_table.insert(0, "Sample", sample)
-
     print(full_table)
 
     if mode == 'NT':
@@ -500,7 +530,7 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
     elif mode == 'local':
         full_table = full_table.rename(columns={"Species_updated": "Species"})
         full_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_localdb.txt", index=None, sep="\t",float_format="%.2f")
-        if diagno == true:
+        if diagno == "true":
             if [full_table['stitle'].str.contains('regulated')]:
                 regulated_table = full_table[full_table['stitle'].str.contains('regulated')]
                 regulated_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_localdb_regulated.txt", index=None, sep="\t",float_format="%.2f")
