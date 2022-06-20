@@ -573,7 +573,7 @@ process BLATN_NT_CAP3 {
     grep ">" ${cap3_fasta.baseName}.fasta | sed 's/>//' > ${cap3_fasta.baseName}.ids
     
     #fetch top blastn hits
-    for i in `cat ${cap3_fasta.baseName}}.ids`; do
+    for i in `cat ${cap3_fasta.baseName}.ids`; do
         grep \$i ${cap3_fasta.baseName}_blastn_vs_NT.bls | head -n5 >> ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits.txt;
     done
     
