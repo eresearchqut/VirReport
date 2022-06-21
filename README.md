@@ -36,16 +36,20 @@ To suit your environment.
 
 The VirReport workflow will perform the following steps by default:
 - Retain reads of a given length (21-22 nt long by default) from fastq file(s) provided in index.csv file (readprocessing)  
-- De novo assembly using Velvet and SPades. Collapse contigs into scaffolds using cap3. By default, only contigs > 30 bp will be retained (denovo) 
-- Run megablast homology search against NCBI NT database. Summarise megablast results and restrict to virus and viroid matches (blastn_nt_cap3)
+- De novo assembly using Velvet and SPades. Collapse contigs into scaffolds using cap3. By default, only contigs > 30 bp will be retained (denovo)
+- Run megablast homology search against either NCBI NT or a local virus database:
+
+Searches against NCBI NT:
+- Summarise megablast results and restrict to virus and viroid matches (blastn_nt_cap3)
 - Derive coverage statistics, consensus sequence and VCF matching to top blast hits (covstats_nt)
-- Run blastx on contigs > 75 bp long for which no match was obtained in the blastn search. Summarise the blastx results and restrict to virus and viroid matches (blastx).
+- Run blastx on contigs > 100 bp long for which no match was obtained in the blastn search. Summarise the blastx results and restrict to virus and viroid matches (blastx).
+
+Searches against a local virus database:
+- Run blastn and megablast homology search on de novo assembly (derived with Velvet) against local  virus and viroid database (blast_nt_localdb_velvet, filter_blast_nt_localdb_velvet). An example of local virus database can be downloaded at wget https://data.researchdatafinder.qut.edu.au/dataset/60eed574-a745-4a0f-ab7c-fb8b3c711695/resource/a17dfa13-a093-407a-a047-27f134f92ac9/download/pvirdbv1.fasta.gz
 
 A number of additional optional steps can be run:
 ```
      --contamination_detection: Run cross-sample contamination prediction (contamination_detection) 
-
-     --blastlocaldb: Run blastn and megablast homology search on de novo assembly (derived with Velvet) against local  virus and viroid database (blast_nt_localdb_velvet, filter_blast_nt_localdb_velvet). An example of local virus database can be downloaded at wget https://data.researchdatafinder.qut.edu.au/dataset/60eed574-a745-4a0f-ab7c-fb8b3c711695/resource/a17dfa13-a093-407a-a047-27f134f92ac9/download/pvirdbv1.fasta.gz
 
      --blastn_method: The blastn homology search can be specified as blastn instead of megablast (--blastn_method blastn)
 

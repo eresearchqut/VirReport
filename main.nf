@@ -337,19 +337,25 @@ if (params.qualityfilter) {
             #derive distribution for quality filtered reads > 15 bp bp long
             echo ${sampleid} > ${sampleid}_bowtie.log;
 
-            fastqfile=${sampleid}_quality_trimmed_temp2.fastq
-            echo ${fastqfile}
-
+            count=1
             for rnatype in rRNA plant_pt_mt_other_genes plant_miRNA plant_tRNA plant_noncoding artefacts virus; do
+                if [[ \${count} == 1 ]]; then
+                    fastqfile=${sampleid}_quality_trimmed_temp2.fastq
+                fi
                 echo \${rnatype} alignment: >> ${sampleid}_bowtie.log;
                 bowtie -q -v 1 -k 1 -p ${task.cpus} \
                     --un ${sampleid}_\${rnatype}_cleaned_sRNA.fq \
                     -x ${params.bowtie_db_dir}/\${rnatype} \
                     \${fastqfile} \
-                    ${sampleid}_\${rnatype}_match 2>>${sampleid}_bowtie.log;
-                fasqfile=${sampleid}_\${rnatype}_cleaned_sRNA.fq
-                done
-            rm ${sampleid}_\${rnatype}_match;
+                    ${sampleid}_\${rnatype}_match 2>>${sampleid}_bowtie.log
+                count=\$((count+1))
+
+                if [[ \${count}  > 1 ]]; then
+                    fastqfile=${sampleid}_\${rnatype}_cleaned_sRNA.fq
+                fi
+                rm ${sampleid}_\${rnatype}_match;
+            done
+            
             rm *cleaned_sRNA.fq
         """
         }
@@ -530,177 +536,10 @@ process DENOVO_ASSEMBLY {
     """
 }
 
-process BLATN_NT_CAP3 {
-    label "setting_2"
-    publishDir "${params.outdir}/01_VirReport/${sampleid}/blastn/NT", mode: 'link', overwrite: true, pattern: "*{vs_NT.bls,_top5Hits.txt,_final.txt,taxonomy.txt}"
-    tag "$sampleid"
-    containerOptions "${bindOptions}"
-
-    input:
-    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file(cap3_fasta) from blastn_nt_cap3_ch
-
-    output:
-    file "${cap3_fasta.baseName}_blastn_vs_NT.bls"
-    file "${cap3_fasta.baseName}_blastn_vs_NT_top5Hits.txt"
-    file "${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt"
-    file "summary_${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt"
-    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("summary_${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt"), file("${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt") into blastTools_results_ch
-    tuple val(sampleid), file(cap3_fasta), file("${cap3_fasta.baseName}_blastn_vs_NT_top5Hits.txt") into blastx_nt_cap3_ch
-    
-    script:
-    def blast_task_param = (params.blastn_method == "blastn") ? "-task blastn" : ''
-    """
-    #To extract the taxonomy, copy the taxonomy databases associated with your blast NT database
-    if [[ ! -f ${params.blast_db_dir}/taxdb.btd || ! -f ${params.blast_db_dir}/taxdb.bti ]]; then
-        perl ${projectDir}/bin/update_blastdb.pl taxdb
-        tar -xzf taxdb.tar.gz
-    else
-        cp ${params.blast_db_dir}/taxdb.btd .
-        cp ${params.blast_db_dir}/taxdb.bti .
-    fi
-
-    blastn ${blast_task_param} \
-        -query ${cap3_fasta} \
-        -db ${blastn_db_name} \
-        -negative_seqidlist ${params.negative_seqid_list} \
-        -out ${cap3_fasta.baseName}_blastn_vs_NT.bls \
-        -evalue 0.0001 \
-        -num_threads ${task.cpus} \
-        -outfmt '6 qseqid sgi sacc length pident mismatch gapopen qstart qend qlen sstart send slen sstrand evalue bitscore qcovhsp stitle staxids qseq sseq sseqid qcovs qframe sframe sscinames' \
-        -max_target_seqs 50 \
-        -word_size 20
-
-    grep ">" ${cap3_fasta.baseName}.fasta | sed 's/>//' > ${cap3_fasta.baseName}.ids
-    
-    #fetch top blastn hits
-    for i in `cat ${cap3_fasta.baseName}.ids`; do
-        grep \$i ${cap3_fasta.baseName}_blastn_vs_NT.bls | head -n5 >> ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits.txt;
-    done
-    
-    grep -i "Virus" ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits.txt > ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids.txt  || [[ \$? == 1 ]]
-    grep -i "Viroid" ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits.txt >> ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids.txt || [[ \$? == 1 ]]
-    cat ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids.txt | sed 's/ /_/g' > ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt
-    cut -f3,26 ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt | sort | uniq > ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt
-    
-    java -jar ${projectDir}/bin/BlastTools.jar -t blastn ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt
-
-    rm taxdb.btd
-    rm taxdb.bti
-    """
-}
-
-process COVSTATS_NT {
-    tag "$sampleid"
-    label "setting_6"
-    publishDir "${params.outdir}/01_VirReport/${sampleid}/alignments/NT", mode: 'link', overwrite: true
-    containerOptions "${bindOptions}"
-    
-    input:
-    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file(samplefile), file(taxonomy) from blastTools_results_ch
-
-    output:
-    file "${sampleid}_${size_range}*"
-    file("${sampleid}_${size_range}_top_scoring_targets_*with_cov_stats.txt") into contamination_flag
-    
-    script:
-    """
-    if [[ ${params.targets} == true ]]; then
-        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --dedup ${params.dedup} --cpu ${task.cpus} --targets --targetspath ${params.targets_file} --mode NT  --diagno ${params.diagno}
-    else
-        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --dedup ${params.dedup} --cpu ${task.cpus} --mode NT --diagno ${params.diagno}
-    fi
-    """
-}
-
-if (params.contamination_detection) {
-    process CONTAMINATION_DETECTION {
-        label "local"
-        publishDir "${params.outdir}/01_VirReport/Summary", mode: 'link', overwrite: true
-        
-        input:
-        file ('*') from contamination_flag.collect().ifEmpty([])
-
-        output:
-        file "run_top_scoring_targets_with_cov_stats_with_cont_flag*.txt"
-
-        script:
-        """
-        flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method}
-        """
-    }
-}
-//blastx jobs runs out of memory if only given 64Gb
-if (params.blastx) {process BLASTX {
-        label "setting_2"
-        publishDir "${params.outdir}/01_VirReport/${sampleid}/blastx/NT", mode: 'link', overwrite: true
-        tag "$sampleid"
-        containerOptions "${bindOptions}"
-
-        input:
-        tuple val(sampleid), file(cap3_fasta), file(top5Hits) from blastx_nt_cap3_ch
-        
-        output:
-        file "${cap3_fasta.baseName}_blastx_vs_NT.bls"
-        file "${cap3_fasta.baseName}_blastx_vs_NT_top5Hits.txt"
-        file "${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids_final.txt"
-        file "summary_${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids_final.txt"
-        
-        script:
-        """
-        #To extract the taxonomy, copy the taxonomy databases associated with your blast NT database
-        if [[ ! -f ${params.blast_db_dir}/taxdb.btd || ! -f ${params.blast_db_dir}/taxdb.bti ]]; then
-            perl ${projectDir}/bin/update_blastdb.pl taxdb
-            tar -xzf taxdb.tar.gz
-        else
-            cp ${params.blast_db_dir}/taxdb.btd .
-            cp ${params.blast_db_dir}/taxdb.bti .
-        fi
-        #extract contigs with blastn results
-        cut -f1 ${top5Hits} | sort | uniq > denovo_contig_name_ids_with_blastn_hits.txt
-
-        #extract all contigs names from de novo assembly
-        grep ">" ${cap3_fasta.baseName}.fasta | sed 's/>//' | sort | uniq > denovo_contig_name_ids.txt
-
-        #extract contigs with no blastn results
-        grep -v -F -f denovo_contig_name_ids_with_blastn_hits.txt denovo_contig_name_ids.txt | sort  > denovo_contig_name_ids_unassigned.txt || [[ \$? == 1 ]]
-        
-        perl ${projectDir}/bin/faSomeRecords.pl -f ${cap3_fasta.baseName}.fasta -l denovo_contig_name_ids_unassigned.txt -o ${cap3_fasta.baseName}_no_blastn_hits.fasta
-
-        extract_seqs_rename.py ${cap3_fasta.baseName}_no_blastn_hits.fasta ${params.blastx_len} \
-                                | sed "s/CONTIG/${sampleid}_${params.minlen}-${params.maxlen}_/" \
-                                > ${cap3_fasta.baseName}_no_blastn_hits_${params.blastx_len}nt.fasta
-
-        blastx -query ${cap3_fasta.baseName}_no_blastn_hits_${params.blastx_len}nt.fasta \
-            -db ${blastp_db_name} \
-            -out ${cap3_fasta.baseName}_blastx_vs_NT.bls \
-            -evalue ${params.blastx_evalue} \
-            -num_threads ${task.cpus} \
-            -outfmt '6 qseqid sseqid pident nident length mismatch gapopen gaps qstart qend qlen qframe sstart send slen evalue bitscore qcovhsp sallseqid sscinames' \
-            -max_target_seqs 1
-
-        #grep ">" ${cap3_fasta} | sed 's/>//' > ${cap3_fasta.baseName}.ids
-        cut -f1 ${cap3_fasta.baseName}_blastx_vs_NT.bls  | sed 's/ //' | sort | uniq > ${cap3_fasta.baseName}.ids
-        
-        #fetch top blastn hits
-        touch  ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits.txt
-        for i in `cat ${cap3_fasta.baseName}.ids`; do
-            grep \$i ${cap3_fasta.baseName}}_blastx_vs_NT.bls | head -n5 >> ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits.txt;
-        done
-        grep -i "Virus" ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits.txt > ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids.txt  || [[ \$? == 1 ]]
-        grep -i "Viroid" ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits.txt >> ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids.txt  || [[ \$? == 1 ]]
-        sed 's/ /_/g' ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids.txt  |  awk -v OFS='\\t' '{ print \$2,\$1,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10,\$11,\$12,\$13,\$14,\$15,\$16,\$17,\$18,\$19,\$20}' > ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids_final.txt
-        
-        java -jar ${projectDir}/bin/BlastTools.jar -t blastp ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids_final.txt
-        rm taxdb.btd
-        rm taxdb.bti
-        """
-    }
-}
-
-if (params.blastlocaldb) {
+if (params.virreport_blastlocaldb) {
     process BLAST_NT_LOCALDB_CAP3 {
         label "setting_4"
-        publishDir "${params.outdir}/01_VirReport/${sampleid}/blastn/localdb", mode: 'link', overwrite: true, pattern: "*{vs_NT.bls,.txt}"
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/blastn/localdb", mode: 'link', overwrite: true, pattern: "*{vs_localdb.bls,.txt}"
         tag "$sampleid"
         containerOptions "${bindOptions}"
 
@@ -744,6 +583,7 @@ if (params.blastlocaldb) {
 
         output:
         file "summary_${sampleid}_cap3_${size_range}_*_vs_localdb.bls_viruses_viroids_ICTV*.txt"
+        file "summary_${sampleid}_cap3_${size_range}_*_vs_localdb.bls_filtered.txt"
         tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("summary_${sampleid}_cap3_${size_range}_megablast_vs_localdb.bls_viruses_viroids_ICTV.txt") into cov_stats_blast_nt_localdb_ch
         
         script:
@@ -836,6 +676,23 @@ if (params.blastlocaldb) {
     fi
     """
     }
+    if (params.contamination_detection_localdb) {
+        process CONTAMINATION_DETECTION_LOCALDB {
+            label "local"
+            publishDir "${params.outdir}/01_VirReport/Summary", mode: 'link', overwrite: true
+            
+            input:
+            file ('*') from contamination_flag_localdb.collect().ifEmpty([])
+
+            output:
+            file "run_top_scoring_targets_with_cov_stats_with_cont_flag*localdb*.txt"
+
+            script:
+            """
+            flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --localdb true
+            """
+        }
+    }
 
     process TBLASTN_LOCALDB {
         label "setting_4"
@@ -882,22 +739,172 @@ if (params.blastlocaldb) {
         """
     }
 }
+if (params.virreport_ncbi) {
+    process BLATN_NT_CAP3 {
+        label "setting_2"
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/blastn/NT", mode: 'link', overwrite: true, pattern: "*{vs_NT.bls,_top5Hits.txt,_final.txt,taxonomy.txt}"
+        tag "$sampleid"
+        containerOptions "${bindOptions}"
 
-if (params.contamination_detection_localdb) {
-    process CONTAMINATION_DETECTION_LOCALDB {
-        label "local"
-        publishDir "${params.outdir}/01_VirReport/Summary", mode: 'link', overwrite: true
-        
         input:
-        file ('*') from contamination_flag_localdb.collect().ifEmpty([])
+        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file(cap3_fasta) from blastn_nt_cap3_ch
 
         output:
-        file "run_top_scoring_targets_with_cov_stats_with_cont_flag*localdb*.txt"
+        file "${cap3_fasta.baseName}_blastn_vs_NT.bls"
+        file "${cap3_fasta.baseName}_blastn_vs_NT_top5Hits.txt"
+        file "${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt"
+        file "summary_${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt"
+        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("summary_${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt"), file("${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt") into blastTools_results_ch
+        tuple val(sampleid), file(cap3_fasta), file("${cap3_fasta.baseName}_blastn_vs_NT_top5Hits.txt") into blastx_nt_cap3_ch
+        
+        script:
+        def blast_task_param = (params.blastn_method == "blastn") ? "-task blastn" : ''
+        """
+        #To extract the taxonomy, copy the taxonomy databases associated with your blast NT database
+        if [[ ! -f ${params.blast_db_dir}/taxdb.btd || ! -f ${params.blast_db_dir}/taxdb.bti ]]; then
+            perl ${projectDir}/bin/update_blastdb.pl taxdb
+            tar -xzf taxdb.tar.gz
+        else
+            cp ${params.blast_db_dir}/taxdb.btd .
+            cp ${params.blast_db_dir}/taxdb.bti .
+        fi
 
+        blastn ${blast_task_param} \
+            -query ${cap3_fasta} \
+            -db ${blastn_db_name} \
+            -negative_seqidlist ${params.negative_seqid_list} \
+            -out ${cap3_fasta.baseName}_blastn_vs_NT.bls \
+            -evalue 0.0001 \
+            -num_threads ${task.cpus} \
+            -outfmt '6 qseqid sgi sacc length pident mismatch gapopen qstart qend qlen sstart send slen sstrand evalue bitscore qcovhsp stitle staxids qseq sseq sseqid qcovs qframe sframe sscinames' \
+            -max_target_seqs 50 \
+            -word_size 20
+
+        grep ">" ${cap3_fasta.baseName}.fasta | sed 's/>//' > ${cap3_fasta.baseName}.ids
+        
+        #fetch top blastn hits
+        for i in `cat ${cap3_fasta.baseName}.ids`; do
+            grep \$i ${cap3_fasta.baseName}_blastn_vs_NT.bls | head -n5 >> ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits.txt;
+        done
+        
+        grep -i "Virus" ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits.txt > ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids.txt  || [[ \$? == 1 ]]
+        grep -i "Viroid" ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits.txt >> ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids.txt || [[ \$? == 1 ]]
+        cat ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids.txt | sed 's/ /_/g' > ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt
+        cut -f3,26 ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt | sort | uniq > ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt
+        
+        java -jar ${projectDir}/bin/BlastTools.jar -t blastn ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt
+
+        rm taxdb.btd
+        rm taxdb.bti
+        """
+    }
+
+    process COVSTATS_NT {
+        tag "$sampleid"
+        label "setting_6"
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/alignments/NT", mode: 'link', overwrite: true
+        containerOptions "${bindOptions}"
+        
+        input:
+        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file(samplefile), file(taxonomy) from blastTools_results_ch
+
+        output:
+        file "${sampleid}_${size_range}*"
+        file("${sampleid}_${size_range}_top_scoring_targets_*with_cov_stats.txt") into contamination_flag
+        
         script:
         """
-        flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --localdb true
+        if [[ ${params.targets} == true ]]; then
+            filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --dedup ${params.dedup} --cpu ${task.cpus} --targets --targetspath ${params.targets_file} --mode NT  --diagno ${params.diagno}
+        else
+            filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --dedup ${params.dedup} --cpu ${task.cpus} --mode NT --diagno ${params.diagno}
+        fi
         """
+    }
+
+    if (params.contamination_detection) {
+        process CONTAMINATION_DETECTION {
+            label "local"
+            publishDir "${params.outdir}/01_VirReport/Summary", mode: 'link', overwrite: true
+            
+            input:
+            file ('*') from contamination_flag.collect().ifEmpty([])
+
+            output:
+            file "run_top_scoring_targets_with_cov_stats_with_cont_flag*.txt"
+
+            script:
+            """
+            flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method}
+            """
+        }
+    }
+    //blastx jobs runs out of memory if only given 64Gb
+    if (params.blastx) {process BLASTX {
+            label "setting_2"
+            publishDir "${params.outdir}/01_VirReport/${sampleid}/blastx/NT", mode: 'link', overwrite: true
+            tag "$sampleid"
+            containerOptions "${bindOptions}"
+
+            input:
+            tuple val(sampleid), file(cap3_fasta), file(top5Hits) from blastx_nt_cap3_ch
+            
+            output:
+            file "${cap3_fasta.baseName}_blastx_vs_NT.bls"
+            file "${cap3_fasta.baseName}_blastx_vs_NT_top5Hits.txt"
+            file "${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids_final.txt"
+            file "summary_${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids_final.txt"
+            
+            script:
+            """
+            #To extract the taxonomy, copy the taxonomy databases associated with your blast NT database
+            if [[ ! -f ${params.blast_db_dir}/taxdb.btd || ! -f ${params.blast_db_dir}/taxdb.bti ]]; then
+                perl ${projectDir}/bin/update_blastdb.pl taxdb
+                tar -xzf taxdb.tar.gz
+            else
+                cp ${params.blast_db_dir}/taxdb.btd .
+                cp ${params.blast_db_dir}/taxdb.bti .
+            fi
+            #extract contigs with blastn results
+            cut -f1 ${top5Hits} | sort | uniq > denovo_contig_name_ids_with_blastn_hits.txt
+
+            #extract all contigs names from de novo assembly
+            grep ">" ${cap3_fasta.baseName}.fasta | sed 's/>//' | sort | uniq > denovo_contig_name_ids.txt
+
+            #extract contigs with no blastn results
+            grep -v -F -f denovo_contig_name_ids_with_blastn_hits.txt denovo_contig_name_ids.txt | sort  > denovo_contig_name_ids_unassigned.txt || [[ \$? == 1 ]]
+            
+            perl ${projectDir}/bin/faSomeRecords.pl -f ${cap3_fasta.baseName}.fasta -l denovo_contig_name_ids_unassigned.txt -o ${cap3_fasta.baseName}_no_blastn_hits.fasta
+
+            extract_seqs_rename.py ${cap3_fasta.baseName}_no_blastn_hits.fasta ${params.blastx_len} \
+                                    | sed "s/CONTIG/${sampleid}_${params.minlen}-${params.maxlen}_/" \
+                                    > ${cap3_fasta.baseName}_no_blastn_hits_${params.blastx_len}nt.fasta
+
+            blastx -query ${cap3_fasta.baseName}_no_blastn_hits_${params.blastx_len}nt.fasta \
+                -db ${blastp_db_name} \
+                -out ${cap3_fasta.baseName}_blastx_vs_NT.bls \
+                -evalue ${params.blastx_evalue} \
+                -num_threads ${task.cpus} \
+                -outfmt '6 qseqid sseqid pident nident length mismatch gapopen gaps qstart qend qlen qframe sstart send slen evalue bitscore qcovhsp sallseqid sscinames' \
+                -max_target_seqs 1
+
+            #grep ">" ${cap3_fasta} | sed 's/>//' > ${cap3_fasta.baseName}.ids
+            cut -f1 ${cap3_fasta.baseName}_blastx_vs_NT.bls  | sed 's/ //' | sort | uniq > ${cap3_fasta.baseName}.ids
+            
+            #fetch top blastn hits
+            touch  ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits.txt
+            for i in `cat ${cap3_fasta.baseName}.ids`; do
+                grep \$i ${cap3_fasta.baseName}}_blastx_vs_NT.bls | head -n5 >> ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits.txt;
+            done
+            grep -i "Virus" ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits.txt > ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids.txt  || [[ \$? == 1 ]]
+            grep -i "Viroid" ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits.txt >> ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids.txt  || [[ \$? == 1 ]]
+            sed 's/ /_/g' ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids.txt  |  awk -v OFS='\\t' '{ print \$2,\$1,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10,\$11,\$12,\$13,\$14,\$15,\$16,\$17,\$18,\$19,\$20}' > ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids_final.txt
+            
+            java -jar ${projectDir}/bin/BlastTools.jar -t blastp ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids_final.txt
+            rm taxdb.btd
+            rm taxdb.bti
+            """
+        }
     }
 }
 
