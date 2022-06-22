@@ -21,7 +21,7 @@ Download the pipeline and test it on a minimal dataset with a single command:
 nextflow -c conf/test.config run eresearchqut/VirReport -profile test,conda --dedup --contamination_detection
 ```
 
-Running this dataset requires 2 cpus and 8 Gb mem and should take 2 mins to complete.
+Running this dataset requires 2 cpus and 12 Gb mem and should take 2 mins to complete.
 
 ## Run with your own data
 
