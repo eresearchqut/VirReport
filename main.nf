@@ -40,10 +40,10 @@ def helpMessage () {
                                                         '/work/eresearch_bio/reference/blastDB'
 
       
-      --blastlocaldb                                    Run blastn and megablast homology search on cap3 de novo assembly against local virus and viroid database
+      --blast_viral_db                                    Run blastn and megablast homology search on cap3 de novo assembly against a virus and viroid database
                                                         [False]
 
-      --blast_local_nt_db '[path/to/file]'              Path to the local blast NT database file base name. Required if --blastlocaldb option is specified
+      --blast_viral_nt_db '[path/to/file]'              Path to the viral nucleotide database file base name. Required if --blast_viral_db option is specified
                                                         '/work/hia_mt18005/databases/PVirDB/PVirDB_ver2022_06_03/PVirDB_ver20220603pub.fasta'
       
       --blastn_evalue '[value]'                         Blastn evalue.
@@ -71,8 +71,8 @@ def helpMessage () {
                                                         obtained via blastn search against NT
                                                         [False]
 
-      --contamination_detection_localdb                 Run false positive prediction due to cross-sample contamination for detections 
-                                                        obtained via blastn search against a local database
+      --contamination_detection_viral_db                 Run false positive prediction due to cross-sample contamination for detections 
+                                                        obtained via blastn search against a viral database
                                                         [False]
 
       --contamination_detection_method '[value]'        Either use FPKM or RPM for cross-contamination detection 
@@ -84,7 +84,7 @@ def helpMessage () {
 
       --dedup                                           Use UMI-tools dedup to remove duplicate reads  
       
-      --ictvinfo '[path/to/dir]'                        Path to ICTV info file. Required if --blastlocaldb option is specified
+      --ictvinfo '[path/to/dir]'                        Path to ICTV info file. Required if --blast_viral_db option is specified
                                                         ['ICTV_taxonomy_MinIdentity_Species.tsv']
 
       --maxlen '[value]'                                Maximum read length to extract
@@ -113,7 +113,7 @@ def helpMessage () {
       --targets_file '[path/to/folder]'                 File specifying the name of the viruses/viroids of interest to filter from the blast results output
                                                         ['Targetted_Viruses_Viroids.txt']
       
-      --tblastn                                         tblastn homology search on predicted ORFs from getorf against to local database
+      --tblastn                                         tblastn homology search on predicted ORFs from getorf against to a viral database
                                                         [False]
       
       --tblastn_evalue                                  tblastn evalue. Required if --tblatsn option is specified
@@ -136,17 +136,17 @@ if (params.help) {
 blastn_db_name = "${params.blast_db_dir}/nt"
 blastp_db_name = "${params.blast_db_dir}/nr"
 //negative_seqid_list = "${params.blast_db_dir}/negative_list_out.txt"
-blast_local_db_name = file(params.blast_local_db_path).name
-blast_local_db_dir = file(params.blast_local_db_path).parent
+blast_viral_db_name = file(params.blast_viral_db_path).name
+blast_viral_db_dir = file(params.blast_viral_db_path).parent
 virusdetect_db_dir = file(params.virusdetect_db_path).parent
 size_range = "${params.minlen}-${params.maxlen}nt"
 
 switch (workflow.containerEngine) {
     case "docker":
-        bindOptions = "-v ${params.blast_db_dir}:${params.blast_db_dir} -v ${blast_local_db_dir}:${blast_local_db_dir} -v ${bowtie_db_dir}:${bowtie_db_dir} -v ${virusdetect_db_dir}:${virusdetect_db_dir}"
+        bindOptions = "-v ${params.blast_db_dir}:${params.blast_db_dir} -v ${blast_viral_db_dir}:${blast_viral_db_dir} -v ${bowtie_db_dir}:${bowtie_db_dir} -v ${virusdetect_db_dir}:${virusdetect_db_dir}"
         break;
     case "singularity":
-        bindOptions = "-B ${blast_local_db_dir} -B ${params.blast_db_dir} -B ${params.bowtie_db_dir}"
+        bindOptions = "-B ${blast_viral_db_dir} -B ${params.blast_db_dir} -B ${params.bowtie_db_dir}"
         break;
     default:
         bindOptions = ""
@@ -313,7 +313,7 @@ if (params.qualityfilter) {
         """
     }
 
-    if (params.rna_profile) {
+    if (params.rna_source_profile) {
         process RNA_SOURCE_PROFILE {
             label "setting_2"
             tag "$sampleid"
@@ -494,7 +494,7 @@ process DENOVO_ASSEMBLY {
     file "${sampleid}_spades_log"
     file "${sampleid}_cap3_${size_range}.fasta"
 
-    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}.fasta") into blastn_nt_cap3_ch, blast_nt_localdb_cap3_ch
+    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}.fasta") into blastn_nt_cap3_ch, blast_nt_viral_db_cap3_ch
     tuple val(sampleid), file("${sampleid}_cap3_${size_range}.fasta") into getorf_ch
     
     script:
@@ -536,28 +536,28 @@ process DENOVO_ASSEMBLY {
     """
 }
 
-if (params.virreport_blastlocaldb) {
-    process BLAST_NT_LOCALDB_CAP3 {
+if (params.virreport_viral_db) {
+    process BLAST_NT_VIRAL_DB_CAP3 {
         label "setting_4"
-        publishDir "${params.outdir}/01_VirReport/${sampleid}/blastn/localdb", mode: 'link', overwrite: true, pattern: "*{vs_localdb.bls,.txt}"
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/blastn/viral_db", mode: 'link', overwrite: true, pattern: "*{vs_viral_db.bls,.txt}"
         tag "$sampleid"
         containerOptions "${bindOptions}"
 
         input:
-        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}.fasta") from blast_nt_localdb_cap3_ch
+        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}.fasta") from blast_nt_viral_db_cap3_ch
         
         output:
-        file "${sampleid}_cap3_${size_range}_blastn_vs_localdb.bls"
-        file "${sampleid}_cap3_${size_range}_megablast_vs_localdb.bls"
-        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}_blastn_vs_localdb.bls"), file("${sampleid}_cap3_${size_range}_megablast_vs_localdb.bls") into filter_blast_nt_localdb_cap3_ch
+        file "${sampleid}_cap3_${size_range}_blastn_vs_viral_db.bls"
+        file "${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls"
+        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}_blastn_vs_viral_db.bls"), file("${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls") into filter_blast_nt_viral_db_cap3_ch
 
         script:
         """
         #1. blastn search
         blastn -task blastn \
             -query ${sampleid}_cap3_${size_range}.fasta \
-            -db ${blast_local_db_dir}/${blast_local_db_name} \
-            -out ${sampleid}_cap3_${size_range}_blastn_vs_localdb.bls \
+            -db ${blast_viral_db_dir}/${blast_viral_db_name} \
+            -out ${sampleid}_cap3_${size_range}_blastn_vs_viral_db.bls \
             -evalue ${params.blastn_evalue} \
             -num_threads ${task.cpus} \
             -outfmt '6 qseqid sgi sacc length pident mismatch gapopen qstart qend qlen sstart send slen sstrand evalue bitscore qcovhsp stitle staxids qseq sseq sseqid qcovs qframe sframe' \
@@ -565,8 +565,8 @@ if (params.virreport_blastlocaldb) {
 
         #2. megablast search
         blastn -query ${sampleid}_cap3_${size_range}.fasta \
-            -db ${blast_local_db_dir}/${blast_local_db_name} \
-            -out ${sampleid}_cap3_${size_range}_megablast_vs_localdb.bls \
+            -db ${blast_viral_db_dir}/${blast_viral_db_name} \
+            -out ${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls \
             -evalue ${params.blastn_evalue} \
             -num_threads ${task.cpus} \
             -outfmt '6 qseqid sgi sacc length pident mismatch gapopen qstart qend qlen sstart send slen sstrand evalue bitscore qcovhsp stitle staxids qseq sseq sseqid qcovs qframe sframe' \
@@ -574,23 +574,23 @@ if (params.virreport_blastlocaldb) {
         """
     }
 
-    process FILTER_BLAST_NT_LOCALDB_CAP3 {
-        publishDir "${params.outdir}/01_VirReport/${sampleid}/blastn/localdb", mode: 'link', overwrite: true, pattern: "*{.txt}"
+    process FILTER_BLAST_NT_VIRAL_DB_CAP3 {
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/blastn/viral_db", mode: 'link', overwrite: true, pattern: "*{.txt}"
         tag "$sampleid"
 
         input:
-        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}_blastn_vs_localdb.bls"), file("${sampleid}_cap3_${size_range}_megablast_vs_localdb.bls") from filter_blast_nt_localdb_cap3_ch
+        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}_blastn_vs_viral_db.bls"), file("${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls") from filter_blast_nt_viral_db_cap3_ch
 
         output:
-        file "summary_${sampleid}_cap3_${size_range}_*_vs_localdb.bls_viruses_viroids_ICTV*.txt"
-        file "summary_${sampleid}_cap3_${size_range}_*_vs_localdb.bls_filtered.txt"
-        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("summary_${sampleid}_cap3_${size_range}_megablast_vs_localdb.bls_viruses_viroids_ICTV.txt") into cov_stats_blast_nt_localdb_ch
+        file "summary_${sampleid}_cap3_${size_range}_*_vs_viral_db.bls_viruses_viroids_ICTV*.txt"
+        file "summary_${sampleid}_cap3_${size_range}_*_vs_viral_db.bls_filtered.txt"
+        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("summary_${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls_viruses_viroids_ICTV.txt") into cov_stats_blast_nt_viral_db_ch
         
         script:
         """
         c1grep() { grep "\$@" || test \$? = 1; }
         #retain 1st blast hit
-        for var in ${sampleid}_cap3_${size_range}_megablast_vs_localdb.bls ${sampleid}_cap3_${size_range}_blastn_vs_localdb.bls;
+        for var in ${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls ${sampleid}_cap3_${size_range}_blastn_vs_viral_db.bls;
             do 
                 cat \${var} | awk '{print \$1}' | sort | uniq > \${var}.top1.ids
                 for i in `cat \${var}.top1.ids`; do echo "fetching top hits..." \$i; grep \$i \${var} | head -1 >> \${var}.top1Hits.txt ; done
@@ -654,49 +654,49 @@ if (params.virreport_blastlocaldb) {
         """
     }
 
-    process COVSTATS_LOCALDB {
+    process COVSTATS_VIRAL_DB {
     tag "$sampleid"
     label "setting_5"
-    publishDir "${params.outdir}/01_VirReport/${sampleid}/alignments/localdb", mode: 'link', overwrite: true
+    publishDir "${params.outdir}/01_VirReport/${sampleid}/alignments/viral_db", mode: 'link', overwrite: true
     containerOptions "${bindOptions}"
     
     input:
-    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file(samplefile) from cov_stats_blast_nt_localdb_ch
+    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file(samplefile) from cov_stats_blast_nt_viral_db_ch
 
     output:
     file "${sampleid}_${params.minlen}-${params.maxlen}*"
-    file("${sampleid}_${size_range}_top_scoring_targets_with_cov_stats_localdb.txt") into contamination_flag_localdb
+    file("${sampleid}_${size_range}_top_scoring_targets_with_cov_stats_viral_db.txt") into contamination_flag_viral_db
     
     script:
     """
     if [[ ${params.dedup} == true ]]; then
-        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --blastdbpath ${blast_local_db_dir}/${blast_local_db_name} --dedup true --mode local --cpu ${task.cpus} --diagno ${params.diagno}
+        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --blastdbpath ${blast_viral_db_dir}/${blast_viral_db_name} --dedup true --mode viral_db --cpu ${task.cpus} --diagno ${params.diagno}
     else
-        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --blastdbpath ${blast_local_db_dir}/${blast_local_db_name} --dedup false --mode local --cpu ${task.cpus} --diagno ${params.diagno}
+        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --blastdbpath ${blast_viral_db_dir}/${blast_viral_db_name} --dedup false --mode viral_db --cpu ${task.cpus} --diagno ${params.diagno}
     fi
     """
     }
-    if (params.contamination_detection_localdb) {
-        process CONTAMINATION_DETECTION_LOCALDB {
+    if (params.contamination_detection_viral_db) {
+        process CONTAMINATION_DETECTION_VIRAL_DB {
             label "local"
             publishDir "${params.outdir}/01_VirReport/Summary", mode: 'link', overwrite: true
             
             input:
-            file ('*') from contamination_flag_localdb.collect().ifEmpty([])
+            file ('*') from contamination_flag_viral_db.collect().ifEmpty([])
 
             output:
-            file "run_top_scoring_targets_with_cov_stats_with_cont_flag*localdb*.txt"
+            file "run_top_scoring_targets_with_cov_stats_with_cont_flag*viral_db*.txt"
 
             script:
             """
-            flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --localdb true
+            flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --viral_db true
             """
         }
     }
 
-    process TBLASTN_LOCALDB {
+    process TBLASTN_VIRAL_DB {
         label "setting_4"
-        publishDir "${params.outdir}/01_VirReport/${sampleid}/tblastn/localdb", mode: 'link', overwrite: true
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/tblastn/viral_db", mode: 'link', overwrite: true
         tag "$sampleid"
         containerOptions "${bindOptions}"
 
@@ -705,8 +705,8 @@ if (params.virreport_blastlocaldb) {
         
         output:
         file "${sampleid}_cap3_${size_range}_getorf.all.fasta"
-        file "${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_localdb_out.bls"
-        file "${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_localdb_top5Hits_virus_viroids_final.txt"
+        file "${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_viral_db_out.bls"
+        file "${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_viral_db_top5Hits_virus_viroids_final.txt"
 
         script:
         """
@@ -716,26 +716,26 @@ if (params.virreport_blastlocaldb) {
         #cat ${sampleid}_cap3_${size_range}_getorf.all.fasta | grep ">" | sed 's/>//' | awk '{print \$1}' > ${sampleid}_cap3_${size_range}_getorf.all.fasta.ids
 
         tblastn -query ${sampleid}_cap3_${size_range}_getorf.all.fasta \
-            -db ${blast_local_db_dir}/${blast_local_db_name} \
+            -db ${blast_viral_db_dir}/${blast_viral_db_name} \
             -evalue ${params.tblastn_evalue} \
-            -out ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_localdb_out.bls \
+            -out ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_viral_db_out.bls \
             -num_threads ${task.cpus} \
             -max_target_seqs 10 \
             -outfmt '6 qseqid sseqid pident nident length mismatch gapopen gaps qstart qend qlen qframe sstart send slen evalue bitscore qcovhsp sallseqid stitle'
         
-        grep ">" ${sampleid}_cap3_${size_range}_getorf.all.fasta | sed 's/>//' | cut -f1 -d ' ' | sort | uniq > ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_localdb_out.wanted.ids
-        for i in `cat ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_localdb_out.wanted.ids`; do
-            grep \$i ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_localdb_out.bls | head -n5 >> ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_localdb_top5Hits.txt;
+        grep ">" ${sampleid}_cap3_${size_range}_getorf.all.fasta | sed 's/>//' | cut -f1 -d ' ' | sort | uniq > ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_viral_db_out.wanted.ids
+        for i in `cat ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_viral_db_out.wanted.ids`; do
+            grep \$i ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_viral_db_out.bls | head -n5 >> ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_viral_db_top5Hits.txt;
         done
     
-        grep -i "Virus" ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_localdb_top5Hits.txt > ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_localdb_top5Hits_virus_viroids.txt  || [[ \$? == 1 ]]
-        grep -i "Viroid" ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_localdb_top5Hits.txt >> ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_localdb_top5Hits_virus_viroids.txt || [[ \$? == 1 ]]
+        grep -i "Virus" ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_viral_db_top5Hits.txt > ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_viral_db_top5Hits_virus_viroids.txt  || [[ \$? == 1 ]]
+        grep -i "Viroid" ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_viral_db_top5Hits.txt >> ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_viral_db_top5Hits_virus_viroids.txt || [[ \$? == 1 ]]
         
-        #modify accordingly depending on version of localdb
-        cut -f2 ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_localdb_top5Hits_virus_viroids.txt | cut -f2 -d '|' > seq_ids.txt
-        cut -f20 ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_localdb_top5Hits_virus_viroids.txt | cut -f2 -d '|'  | sed 's/Species://' > species_name_extraction.txt
-        paste seq_ids.txt ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_localdb_top5Hits_virus_viroids.txt  species_name_extraction.txt > ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_localdb_top5Hits_virus_viroids_mod.txt
-        awk -v OFS='\\t' '{ print \$1,\$2,\$4,\$5,\$6,\$7,\$8,\$9,\$10,\$11,\$12,\$13,\$14,\$15,\$16,\$17,\$18,\$19,\$20,\$22}'  ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_localdb_top5Hits_virus_viroids_mod.txt | sed 's/ /_/g' > ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_localdb_top5Hits_virus_viroids_final.txt
+        #modify accordingly depending on version of viral_db
+        cut -f2 ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_viral_db_top5Hits_virus_viroids.txt | cut -f2 -d '|' > seq_ids.txt
+        cut -f20 ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_viral_db_top5Hits_virus_viroids.txt | cut -f2 -d '|'  | sed 's/Species://' > species_name_extraction.txt
+        paste seq_ids.txt ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_viral_db_top5Hits_virus_viroids.txt  species_name_extraction.txt > ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_viral_db_top5Hits_virus_viroids_mod.txt
+        awk -v OFS='\\t' '{ print \$1,\$2,\$4,\$5,\$6,\$7,\$8,\$9,\$10,\$11,\$12,\$13,\$14,\$15,\$16,\$17,\$18,\$19,\$20,\$22}'  ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_viral_db_top5Hits_virus_viroids_mod.txt | sed 's/ /_/g' > ${sampleid}_cap3_${size_range}_getorf.all_tblastn_vs_viral_db_top5Hits_virus_viroids_final.txt
         """
     }
 }
@@ -762,7 +762,7 @@ if (params.virreport_ncbi) {
         """
         #To extract the taxonomy, copy the taxonomy databases associated with your blast NT database
         if [[ ! -f ${params.blast_db_dir}/taxdb.btd || ! -f ${params.blast_db_dir}/taxdb.bti ]]; then
-            perl ${projectDir}/bin/update_blastdb.pl taxdb
+            update_blastdb.pl taxdb
             tar -xzf taxdb.tar.gz
         else
             cp ${params.blast_db_dir}/taxdb.btd .
@@ -815,9 +815,9 @@ if (params.virreport_ncbi) {
         script:
         """
         if [[ ${params.targets} == true ]]; then
-            filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --dedup ${params.dedup} --cpu ${task.cpus} --targets --targetspath ${params.targets_file} --mode NT  --diagno ${params.diagno}
+            filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --dedup ${params.dedup} --cpu ${task.cpus} --targets --targetspath ${params.targets_file} --mode ncbi --diagno ${params.diagno}
         else
-            filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --dedup ${params.dedup} --cpu ${task.cpus} --mode NT --diagno ${params.diagno}
+            filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --dedup ${params.dedup} --cpu ${task.cpus} --mode ncbi --diagno ${params.diagno}
         fi
         """
     }

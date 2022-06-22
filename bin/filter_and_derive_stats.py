@@ -7,7 +7,6 @@ import subprocess
 from functools import reduce
 from glob import glob
 from subprocess import run, PIPE
-import sys
 
 def main():
     ################################################################################
@@ -45,11 +44,8 @@ def main():
     mode = args.mode
     diagno = args.diagno
 
-
-    #log = open(sample + "filter_and_derive_stats.log", "a")
-    #sys.stdout = log
     
-    if mode == "NT":
+    if mode == "ncbi":
         raw_data = pd.read_csv(results_path, header=0, sep="\t",index_col=None)
         if len(raw_data) == 0:
             print("DataFrame is empty!")
@@ -227,13 +223,13 @@ def main():
         print(filtered_data)
         cov_stats (blastdbpath, cpus, dedup, fastqfiltbysize, filtered_data, rawfastq, read_size, sample, target_dict, targets, targetspath, mode, diagno)
 
-    elif mode == "local":
+    elif mode == "viral_db":
         final_data = pd.read_csv(results_path, header=0, sep="\t",index_col=None)
         final_data = final_data.rename(columns={"Species": "Species_updated"})
         if len(final_data) == 0:
             print("DataFrame is empty!")
             if diagno == "true":
-                extension = ("_top_scoring_targets_with_cov_stats_localdb.txt", "_top_scoring_targets_with_cov_stats_localdb_regulated.txt", "_top_scoring_targets_with_cov_stats_localdb_endemic.txt")
+                extension = ("_top_scoring_targets_with_cov_stats_viral_db.txt", "_top_scoring_targets_with_cov_stats_viral_db_regulated.txt", "_top_scoring_targets_with_cov_stats_viral_db_endemic.txt")
                 for ext in extension:
                     outfile = open(sample + "_" + read_size + ext, 'w')
                     if dedup == "true":
@@ -242,7 +238,7 @@ def main():
                         outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
                     outfile.close()
             else:
-                outfile = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_localdb.txt", "w")
+                outfile = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_viral_db.txt", "w")
                 if dedup == "true":
                     outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
                 else:
@@ -272,6 +268,18 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
     PCT_20X_dict = {}
     read_counts_dict = {}
     rpm_dict = {}
+
+    read_counts_dedup_df = pd.DataFrame()
+    dup_pc_df = pd.DataFrame()
+    cov_df = pd.DataFrame()
+    read_counts_df = pd.DataFrame()
+    rpm_df = pd.DataFrame()
+    fpkm_df = pd.DataFrame()
+    PCT_1X_df = pd.DataFrame()
+    PCT_5X_df = pd.DataFrame()
+    PCT_10X_df = pd.DataFrame()
+    PCT_20X_df = pd.DataFrame()
+
     
     for refid, refspname in target_dict.items():
         try:
@@ -282,7 +290,7 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
             print("Extract sequence from blast database")
             fastafile = (sample + "_" + read_size + "_" + combinedid + ".fa").replace(" ","_")
             single_fasta_entry = open(fastafile, "w")
-            if mode == "NT": 
+            if mode == "ncbi": 
                 command_line = ["blastdbcmd","-db", blastdbpath, "-entry", refid, \
                                 "-outfmt","'%f'"]
                 subprocess.call(command_line, stdout=single_fasta_entry)
@@ -297,7 +305,7 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
                     p2 = subprocess.run(["efetch", "-format", "fasta"], stdin=p1.stdout, stdout=single_fasta_entry)
                     single_fasta_entry.close()
 
-            elif mode == "local":
+            elif mode == "viral_db":
                 p1 = subprocess.Popen(["esearch", "-db", "nucleotide", "-query", refid], stdout=subprocess.PIPE)
                 p2 = subprocess.run(["efetch", "-format", "fasta"], stdin=p1.stdout, stdout=single_fasta_entry)
                 single_fasta_entry.close()
@@ -503,7 +511,7 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
         full_table["Dup %"] = full_table["Dup %"].astype(float)
     full_table.insert(0, "Sample", sample)
 
-    if mode == 'NT':
+    if mode == 'ncbi':
         full_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats.txt", index=None, sep="\t",float_format="%.2f")
         #This step will only extract viruses and viroids of interest
         if targets:
@@ -520,16 +528,16 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
             filtered_table = filtered_table.rename(columns={"Species_updated": "Species"})
             filtered_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_filtered_with_cov_stats.txt", index=None, sep="\t",float_format="%.2f")
 
-    elif mode == 'local':
+    elif mode == 'viral_db':
         full_table = full_table.rename(columns={"Species_updated": "Species"})
-        full_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_localdb.txt", index=None, sep="\t",float_format="%.2f")
+        full_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_viral_db.txt", index=None, sep="\t",float_format="%.2f")
         if diagno == "true":
             if [full_table['stitle'].str.contains('regulated')]:
                 regulated_table = full_table[full_table['stitle'].str.contains('regulated')]
-                regulated_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_localdb_regulated.txt", index=None, sep="\t",float_format="%.2f")
+                regulated_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_viral_db_regulated.txt", index=None, sep="\t",float_format="%.2f")
             if [full_table['stitle'].str.contains('endemic')]:
                 endemic_table = full_table[full_table['stitle'].str.contains('endemic')]
-                endemic_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_localdb_endemic.txt", index=None, sep="\t",float_format="%.2f")
+                endemic_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_viral_db_endemic.txt", index=None, sep="\t",float_format="%.2f")
 
 def max_avpid(df):
     max_row = df["av-pident"].max()

@@ -14,14 +14,14 @@ def main():
     parser.add_argument("--threshold", type=float)
     parser.add_argument("--read_size", type=str)
     parser.add_argument("--method", type=str)
-    parser.add_argument("--localdb", type=str)
+    parser.add_argument("--viral_db", type=str)
     parser.add_argument("--dedup", type=str)   
 
     args = parser.parse_args()
     threshold = args.threshold
     readsize = args.read_size
     method = args.method
-    local = args.localdb
+    viral_db = args.viral_db
     dedup = args.dedup
 
     run_data = pd.DataFrame()
@@ -31,7 +31,7 @@ def main():
     print (run_data)
     run_data["read size"] = readsize
     
-    if local == "true":
+    if viral_db == "true":
         if dedup == "true":
             run_data = run_data[["Sample","Species","sacc","naccs","length","slen","cov","av-pident","stitle", "qseqids","ICTV_information", "Mean coverage","Read count","Dedup read count","Dup %","RPM","FPKM","PCT_1X","PCT_5X","PCT_10X","PCT_20X"]]
         else:
@@ -43,7 +43,7 @@ def main():
         run_data["contamination_flag"] = np.where(run_data["FPKM"] <= run_data["threshold_value"], True, False)
         run_data["contamination_flag"] = np.where(run_data["count_max"] <= 10, "NA", run_data["contamination_flag"])
         run_data = run_data.sort_values(["Sample", "stitle"], ascending = (True, True))
-        run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_localdb.txt", index=None, sep="\t",float_format="%.2f")
+        run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db.txt", index=None, sep="\t",float_format="%.2f")
         #regulated_data = run_data[run_data['stitle'].str.contains('regulated')]
         #regulated_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_PVirDB_regulated.txt", index=None, sep="\t",float_format="%.2f")
         #endemic_data = run_data[run_data['stitle'].str.contains('endemic')]
