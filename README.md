@@ -198,8 +198,6 @@ The pipeline can perform additional optional steps, which include:
   }
   ```
 
-# Running the pipeline
-
 ## Outputs
 The folders are structured as follows:
 - 00_quality_filtering/Sample_name: this folder will output FASTQC of raw or filtered fastq files, cutadapt and umi_tools log files, a quality_trimmed.fastq.gz file and by default a fastq.gz file including reads only matching the size specified in the nextflow.config file)
@@ -223,7 +221,7 @@ For example: run_top_scoring_targets_with_cov_stats_with_cont_flag_21-22nt_0.01.
 - 02_VirusDetect/Sample_name: this folder includes a results folder with blastn and blastx summary. 
 For example: MT016_21-22nt.blastn.summary.txt and MT016_21-22nt.blastx.summary.txt
 
-## Authors
+## Credits
 Roberto Barrero, 14/03/2019  
 Desmond Schmidt, 2/7/2019  
 Converted to Nextflow by Craig Windell, 11/2020  
