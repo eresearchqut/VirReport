@@ -32,7 +32,7 @@ The pipeline can perform additional optional steps, which include:
 
 - VirusDetect version 1.8 can also be run in parallel. A summary of the top virus/viroid blastn hits will be separately output (**VIRUS_DETECT, VIRUS_IDENTIFY, VIRUS_DETECT_BLASTN_SUMMARY, VIRUS_DETECT_BLASTN_SUMMARY_FILTERED**)
 
-# Run the Pipeline
+## Run the Pipeline
 1. Install Nextflow
 
 2. Install Docker, Singularity or Conda
