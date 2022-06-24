@@ -27,7 +27,7 @@ nextflow -c conf/test.config run eresearchqut/VirReport -profile test,{docker, s
 2) This command will test your installation on a pair of raw fastq files derive from a sample infected with Citrus tristeza virus and will run VirReport using a mock viral database. 
 
 ```bash
-nextflow -c conf/test.config2 run eresearchqut/VirReport -profile test2,{docker, singularity or conda}
+nextflow -c conf/test2.config run eresearchqut/VirReport -profile test2,{docker, singularity or conda}
 ```
 
 Running these test datasets requires 2 cpus and 8 Gb mem and should take 5 mins to complete.
