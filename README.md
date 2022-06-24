@@ -321,7 +321,7 @@ results/
         ├── run_summary_top_scoring_targets_virusdetect_21-22nt_filtered.txt
         └── run_summary_virusdetect_21-22nt.txt
 ```     
-- 00_quality_filtering/sample_name: this folder will output FASTQC of raw or filtered fastq files, cutadapt and umi_tools log files, a quality_trimmed.fastq.gz file and by default a fastq.gz file including reads only matching the size specified in the nextflow.config file)
+- 00_quality_filtering/sample_name: this folder will output FASTQC of raw or filtered fastq files, cutadapt and umi_tools log files, a quality_trimmed.fastq.gz file and by default a fastq.gz file including reads only matching the size specified in the nextflow.config file
 
 - 00_quality_filter/qc_report: this folder contains QC summaries for all samples included in the index_example.csv file
 
