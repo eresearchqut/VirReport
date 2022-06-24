@@ -63,10 +63,8 @@ Searches against NCBI NT and NR databases:
 Searches against a local virus database:
 - Run blastn and megablast homology search on de novo assembly against local virus and viroid database (BLAST_NT_VIRAL_DB_CAP3). 
 - Derive coverage statistics, consensus sequence and VCF matching to top blast hits (FILTER_BLAST_NT_VIRAL_DB_CAP3, COVSTATS_VIRAL_DB)
-
-You can find an example of our curated virus database at https://github.com/maelyg/PVirDB.git
-
 - Run tblastn homolgy search on predicted ORF derived using getORF (TBLASTN_VIRAL_DB)
+
 
 Additional optional parameters can be specified:
 ```
@@ -122,7 +120,7 @@ params {
   maxlen = '25'
 }
 ```
-If you plan to run homology searches against public NCBI databases, you need to download these databases. Detailed information on how to do so is available at https://www.ncbi.nlm.nih.gov/books/NBK569850/. 
+If you want to run homology searches against public NCBI databases, you need to download these databases. Detailed information on how to do so is available at https://www.ncbi.nlm.nih.gov/books/NBK569850/. 
 
 Create a folder where you will store your NCBI database. It is good practice to include the date of download. For instance:
 ```
@@ -150,12 +148,24 @@ params {
 }
 ```
 
-If you want to run a blast analysis against a local database, please ensure you use NCBI BLAST+ makeblastdb to create the database. Then specify the full path to the database files including the prefix in the nextflow.config file. For example:
+If you want to run homology searches against a local database, please ensure you use NCBI BLAST+ makeblastdb to create the database.
+
+An example of curated virus database can be found at https://github.com/maelyg/PVirDB.git. To use this database, you would need to take the following steps:
+
+```
+git clone https://github.com/maelyg/PVirDB.git
+cd PVirDB
+gunzip PVirDB_v1.fasta.gz
+makeblastdb -in PVirDB_v1.fasta -parse_seqids -dbtype nucl
+```
+
+Then specify the full path to the database files including the prefix in the nextflow.config file. For example:
 ```
 params {
   blast_local_db_path = '/path_to_viral_DB/viral_DB_name'
 }
 ```
+
 If you want to run the initial qualityfilter step, you will need to specify in the nextflow.config file the directory which holds the required bowtie indices to: 1) derive the origin of the filtered reads obtained (optional RNA_SOURCE_PROFILE process) and 2) filter non-informative reads (DERIVE_USABLE_READS process). Examples of fasta files are available at https://github.com/maelyg/bowtie_indices.git and bowtie indices can be built from these using the command:
 
 ```
@@ -168,6 +178,14 @@ params {
   bowtie_db_dir = '/work/hia_mt18005_db/bowtie_idx'
 }
 ```
+
+If you are interested to derive the rna profile of your fastq files you will need to specify:
+```
+params {
+  rna_source_profile = true
+}
+```
+
 If you want to run VirusDetect, then specify the path to the viral database directory in nextflow.config file. These can be downloaded at http://bioinfo.bti.cornell.edu/ftp/program/VirusDetect/virus_database/v248. For example:
 ```
 virusdetect_db_path = '/home/gauthiem/code/VirusDetect_v1.8/databases/vrl_plant'
@@ -178,15 +196,22 @@ virusdetect_db_path = '/home/gauthiem/code/VirusDetect_v1.8/databases/vrl_plant'
 ## Outputs
 The folders are structured as follows:
 - 00_quality_filtering/Sample_name: this folder will output FASTQC of raw or filtered fastq files, cutadapt and umi_tools log files, a quality_trimmed.fastq.gz file and by default a fastq.gz file including reads only matching the size specified in the nextflow.config file)
-- 00_quality_filter/qc_report: this folder contains summaries for all samples included in the index_example.csv file
+- 00_quality_filter/qc_report: this folder contains QC summaries for all samples included in the index_example.csv file
 
-- 01_VirReport/Sample_name/Assembly: fasta file which includes the assembled contigs before and after CAP3, for example MT020_velvet_assembly_21-22nt.fasta, MT001_velvet_cap3_21-22nt_rename.fasta
-- 01_VirReport/Sample_name/blastn/NT: this folder contains all blastn results, filtered results limited to only viruses and viroid top 5 hit matches and the final BlastTools.jar summary output. For example: MT020_velvet_21-22nt_megablast_vs_NT.bls, MT020_velvet_21-22nt_megablast_vs_NT_top5Hits.txt, MT020_velvet_21-22nt_megablast_vs_NT_top5Hits_virus_viroids_final.txt, summary_MT029_velvet_21-22nt_megablast_vs_NT_top5Hits_virus_viroids_final.txt
+- 01_VirReport/Sample_name/assembly: fasta file which includes the assembled contigs before and after CAP3. For example MT020_velvet_assembly_21-22nt.fasta, MT001_velvet_cap3_21-22nt_rename.fasta
+
+- 01_VirReport/Sample_name/blastn/NT: this folder contains all blastn results, filtered results limited to only viruses and viroid top 5 hit matches and the final BlastTools.jar summary output. 
+For example: MT020_velvet_21-22nt_megablast_vs_NT.bls, MT020_velvet_21-22nt_megablast_vs_NT_top5Hits.txt, MT020_velvet_21-22nt_megablast_vs_NT_top5Hits_virus_viroids_final.txt, summary_MT029_velvet_21-22nt_megablast_vs_NT_top5Hits_virus_viroids_final.txt
 Analysis using the viral db will also be saved in 01_VirReport/Sample_name/blastn/viral_db
 MT001_velvet_21-22nt_blastn_vs_localdb.bls, summary_MT001_velvet_21-22nt_blastn_vs_localdb.bls_viruses_viroids_ICTV.txt
-- 01_VirReport/Sample_name/blastx/NT: this folder contains blastx outputs. 
 
-- 01_VirReport/Sample_name/Assembly: this folder ontains filtered blast summary with various coverage statistics for each virus and viroid hit, and associated consensus fasta file and vcf file. For example: MT020_21-22nt_top_scoring_targets_with_cov_stats.txt, MT020_21-22nt_MK929590_Peach_latent_mosaic_viroid.consensus.fasta, MT020_21-22nt_MK929590_Peach_latent_mosaic_viroid_sequence_variants.vcf.gz
-- 01_VirReport/Summary: this folder contains a summary of results for all samples included in the index.csv file. This summay table includes a cross-contamination prediction flag. For example: run_top_scoring_targets_with_cov_stats_with_cont_flag_21-22nt_0.01.txt
+- 01_VirReport/Sample_name/blastx/NT: this folder contains the blastx outputs. 
 
-- 02_VirusDetect/Sample_name: this folder includes a results folder with blastn and blastx summary. For example: MT016_21-22nt.blastn.summary.txt and MT016_21-22nt.blastx.summary.txt
+- 01_VirReport/Sample_name/alignments: this folder contains a filtered blast summary with various coverage statistics for each virus and viroid hit, and associated consensus fasta file and vcf file. The results for each sample are saved in a separate folder. 
+For example: MT020_21-22nt_top_scoring_targets_with_cov_stats.txt, MT020_21-22nt_MK929590_Peach_latent_mosaic_viroid.consensus.fasta, MT020_21-22nt_MK929590_Peach_latent_mosaic_viroid_sequence_variants.vcf.gz
+
+- 01_VirReport/Summary: this folder contains a summary of results for all samples included in the index.csv file. The summay table includes a cross-contamination prediction flag. 
+For example: run_top_scoring_targets_with_cov_stats_with_cont_flag_21-22nt_0.01.txt
+
+- 02_VirusDetect/Sample_name: this folder includes a results folder with blastn and blastx summary. 
+For example: MT016_21-22nt.blastn.summary.txt and MT016_21-22nt.blastx.summary.txt
