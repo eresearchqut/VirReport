@@ -2,7 +2,7 @@
 
 
 ## Introduction
-The VirReport pipeline is based upon the scientific workflow manager Nextflow. It was designed to help phytosanitary diagnostics of viruses and viroid pathogens in quarantine facilities. It takes small RNA-Seq fastq files as input. These can either be in raw format (the pipeline will perform a quality filtering step but currently expects samples to be specifically prepared using the QIAGEN QIAseq miRNA library kit) or quality-filtered. 
+The VirReport pipeline is based upon the scientific workflow manager Nextflow. It was designed to help phytosanitary diagnostics of viruses and viroid pathogens in quarantine facilities. It takes small RNA-Seq fastq files as input. These can either be in raw format (currently only samples specifically prepared with the QIAGEN QIAseq miRNA library kit can be processed this way) or quality-filtered. 
 
 The pipeline can either perform blast homology searches against a virus database or/and a local copy of NCBI nr and nt databases.
 
@@ -30,7 +30,7 @@ The pipeline can perform additional optional steps, which include:
   
 - A quality filtering step on raw fastq files (currently the workflow only processes samples prepared using QIAGEN QIAseq miRNA library kit). After performing quality filtering, the pipeline will also derive a qc report (FASTQC_RAW, ADAPTER_AND_QUAL_TRIMMING, QC_POST_QUAL_TRIMMING, DERIVE_USABLE_READS, QCREPORT). An RNA souce profile can be included as part of the reporting (RNA_SOURCE_PROFILE, RNA_SOURCE_PROFILE_REPORT)
 
-- VirusDetect version 1.8 can be run in parallel (VIRUS_DETECT, VIRUS_IDENTIFY, VIRUS_DETECT_BLASTN_SUMMARY, VIRUS_DETECT_BLASTN_SUMMARY_FILTERED)
+- VirusDetect version 1.8 can also be run in parallel (VIRUS_DETECT, VIRUS_IDENTIFY, VIRUS_DETECT_BLASTN_SUMMARY, VIRUS_DETECT_BLASTN_SUMMARY_FILTERED)
 
 # Run the Pipeline
 1. Install Nextflow
@@ -39,19 +39,19 @@ The pipeline can perform additional optional steps, which include:
 
 3. Download the pipeline and test it on minimal datatests:
 
-This command will test your installation on a single quality filtered fastq file derived from a sample infected with citrus exocortis viroid and will run VirReport using a mock ncbi database:
+  This command will test your installation on a single quality filtered fastq file derived from a sample infected with citrus exocortis viroid and will run VirReport using a mock ncbi database:
 
-```bash
-nextflow -c conf/test.config run eresearchqut/VirReport -profile test,{docker, singularity or conda}
-```
+  ```bash
+  nextflow -c conf/test.config run eresearchqut/VirReport -profile test,{docker, singularity or conda}
+  ```
 
-This command will test your installation on a pair of raw fastq files derived from a sample infected with citrus tristeza virus and will run VirReport using a mock viral database:
+  This command will test your installation on a pair of raw fastq files derived from a sample infected with citrus tristeza virus and will run VirReport using a mock viral database:
 
-```bash
-nextflow -c conf/test2.config run eresearchqut/VirReport -profile test2,{docker, singularity or conda}
-```
+  ```bash
+  nextflow -c conf/test2.config run eresearchqut/VirReport -profile test2,{docker, singularity or conda}
+  ```
 
-Running these test datasets requires 2 cpus and 8 Gb mem and should take 5 mins to complete.
+  Running these test datasets requires 2 cpus and 8 Gb mem and should take 5 mins to complete.
 
 4. Run with your own data
 - Provide an index.csv file.  
@@ -66,56 +66,7 @@ Running these test datasets requires 2 cpus and 8 Gb mem and should take 5 mins 
   MT212,/work/diagnostics/2021/MT212_21-22bp.fastq
   MT213,/work/diagnostics/2021/MT213_21-22bp.fastq
   ```
-
-- Provide a database
-  * If you want to run homology searches against a local database, please ensure you use NCBI BLAST+ makeblastdb to create the database. An example of curated virus database can be found at https://github.com/maelyg/PVirDB.git. To use this database, you would need to take the following steps:
-
-  ```
-  git clone https://github.com/maelyg/PVirDB.git
-  cd PVirDB
-  gunzip PVirDB_v1.fasta.gz
-  makeblastdb -in PVirDB_v1.fasta -parse_seqids -dbtype nucl
-  ```
-
-  Then specify the full path to the database files including the prefix in the nextflow.config file. For example:
-  ```
-  params {
-    blast_local_db_path = '/path_to_viral_DB/viral_DB_name'
-  }
-  ```  
-
-  * If you want to run homology searches against public NCBI databases, you need to download these locally. Detailed information on how to do so is available at https://www.ncbi.nlm.nih.gov/books/NBK569850/. 
-
-  Create a folder where you will store your NCBI databases. It is good practice to include the date of download. For instance:
-  ```
-  mkdir blastDB/30112021
-  ```
-
-  You will need to use the update_blastdb.pl script from the blast+ version you will use with your pipeline.  
-  For example:
-  ```
-  perl update_blastdb.pl --decompress nt [*]
-  perl update_blastdb.pl --decompress nr [*]
-  perl update_blastdb.pl taxdb
-  tar -xzf taxdb.tar.gz
-  ```
-
-  Make sure the taxdb.btd and the taxdb.bti files are also present in the same directory. 
-
-  Specify the path of your local NCBI blast nt and nr directories in the nextflow.config file.
-
-  For instance:
-  ```
-  params {
-    blast_db_dir = '/work/hia_mt18005_db/blastDB/20220408'
-  }
-  ```  
-
-  * If you want to run VirusDetect, then specify the path to the viral database directory in the nextflow.config file. These can be downloaded at http://bioinfo.bti.cornell.edu/ftp/program/VirusDetect/virus_database/v248. For example:
-  ```
-  virusdetect_db_path = '/home/gauthiem/code/VirusDetect_v1.8/databases/vrl_plant'
-  ```
-
+  
 - Run the command:
   ```bash
   nextflow run eresearchqut/VirReport -profile {docker or singularity or conda} --indexfile index_example.csv
@@ -136,11 +87,84 @@ Running these test datasets requires 2 cpus and 8 Gb mem and should take 5 mins 
   }
   ```
 
-- Additional optional parameters can be specified:
+- Provide a database
+  * If you want to run homology searches against a local database, please ensure you use NCBI BLAST+ makeblastdb to create the database. An example of curated virus database can be found at https://github.com/maelyg/PVirDB.git. To use this database, you would need to take the following steps:
+
+    ```
+    git clone https://github.com/maelyg/PVirDB.git
+    cd PVirDB
+    gunzip PVirDB_v1.fasta.gz
+    makeblastdb -in PVirDB_v1.fasta -parse_seqids -dbtype nucl
+    ```
+
+    Then specify the full path to the database files including the prefix in the nextflow.config file. For example:
+    ```
+    params {
+      blast_local_db_path = '/path_to_viral_DB/viral_DB_name'
+    }
+    ```  
+
+  * If you want to run homology searches against public NCBI databases, you need to set the parameter **virreport_ncbi** in the nextflow.config file to **true**:
+    ```
+    params {
+      virreport_ncbi = true
+    }  
+    ```
+    or add it in your nextflow command:  
+    ```
+    nextflow run eresearchqut/VirReport -profile {docker or singularity or conda} --virreport_ncbi
+    ```  
+    Download these locally. Detailed information on how to do so is available at https://www.ncbi.nlm.nih.gov/books/NBK569850/. 
+    Create a folder where you will store your NCBI databases. It is good practice to include the date of download. For instance:  
+    ```
+    mkdir blastDB/30112021  
+    ```
+    You will need to use the update_blastdb.pl script from the blast+ version you will use with your pipeline.  
+    For example:  
+    ```
+    perl update_blastdb.pl --decompress nt [*]
+    perl update_blastdb.pl --decompress nr [*]
+    perl update_blastdb.pl taxdb
+    tar -xzf taxdb.tar.gz
+    ```  
+    Make sure the taxdb.btd and the taxdb.bti files are also present in the same directory.  
+    Specify the path of your local NCBI blast nt and nr directories in the nextflow.config file.  
+    For instance:
+    ```
+    params {
+      blast_db_dir = '/work/hia_mt18005_db/blastDB/20220408'
+    }
+    ```  
+
+  * If you want to run VirusDetect in parallel, then either set the paramter --virusdetect as true in your config file or specify it in your nextflow command.
+    Specify the path to the VirusDetect viral database directory in the nextflow.config file (using the --virusdetect_db_path parameter). These files can be downloaded at http://bioinfo.bti.cornell.edu/ftp/program/VirusDetect/virus_database/v248. For example:
+  ```
+  virusdetect_db_path = '/home/gauthiem/code/VirusDetect_v1.8/databases/vrl_plant'
+  ```
+
+- If you want to run the initial qualityfilter step on raw fastq files, you will need to specify in the nextflow.config file the directory which holds the required bowtie indices (using the --bowtie_db_dir parameter) to: 1) filter non-informative reads (rusing the blacklist bowtie indices for the DERIVE_USABLE_READS process) and 2) derive the origin of the filtered reads obtained (optional RNA_SOURCE_PROFILE process). Examples of fasta files are available at https://github.com/maelyg/bowtie_indices.git and bowtie indices can be built from these using the command:
+
+  ```
+  bowtie-build -f [fasta file] [name of index]
+  ```
+
+  The location of the bowtie indices will need to be specified in the nextflow.config file:
+  ```
+  params {
+    bowtie_db_dir = '/path_to_bowtie_idx'
+  }
+  ```
+
+  If you are interested to derive the rna profile of your fastq files you will need to specify:
+  ```
+  params {
+    rna_source_profile = true
+  }
+  ```
+  
+- Additional optional parameters available include:
   ```     
       --merge-lane: if several fastq files are provided per sample, these will be collapsed together before performing downstream analyses
-      
-      --qualityfilter: performs a quality filtering step on raw fastq files (currently specifically written for samples prepared using QIAGEN QIAseq miRNA library kit). After performing quality filtering, the pipeline will also derive a qc report
    
       --dedup: first umi_tools will be used to extract UMI informations from fast file headers and after alignment, umi_tools will be used to identify and remove duplicate reads.
       
@@ -160,7 +184,6 @@ Running these test datasets requires 2 cpus and 8 Gb mem and should take 5 mins 
       
       --contamination_detection and contamination_detection_viral_db: Run cross-sample contamination prediction (CONTAMINATION_DETECTION and/or CONTAMINATION_DETECTION_VIRAL_DB) 
       
-      --virusdetect: VirusDetect version 1.8 can be run in parallel
   ```
 
   To enable these options, they can either be included in the nextflow run command: 
@@ -172,26 +195,6 @@ Running these test datasets requires 2 cpus and 8 Gb mem and should take 5 mins 
   params {
     virusdetect = true
     contamination_detection = true
-  }
-  ```
-
-- If you want to run the initial qualityfilter step, you will need to specify in the nextflow.config file the directory which holds the required bowtie indices to: 1) derive the origin of the filtered reads obtained (optional RNA_SOURCE_PROFILE process) and 2) filter non-informative reads (DERIVE_USABLE_READS process). Examples of fasta files are available at https://github.com/maelyg/bowtie_indices.git and bowtie indices can be built from these using the command:
-
-  ```
-  bowtie-build -f [fasta file] [name of index]
-  ```
-
-  The location of the bowtie indices will need to be specified in the nextflow.config file:
-  ```
-  params {
-    bowtie_db_dir = '/work/hia_mt18005_db/bowtie_idx'
-  }
-  ```
-
-  If you are interested to derive the rna profile of your fastq files you will need to specify:
-  ```
-  params {
-    rna_source_profile = true
   }
   ```
 
