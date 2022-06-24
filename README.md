@@ -19,13 +19,13 @@ The VirReport workflow will perform the following steps by default:
 
 - Searches against a local virus database:
   * Run megablast homology searches on de novo assembly against local virus and viroid database. Homology searches against blastn are also run in parallel for comparison with the megablast algorithm (**BLAST_NT_VIRAL_DB_CAP3**)
-  * Retain top megablast hit and restrict results to virus and viroid matches. Summarise results by group all the de novo contigs matching to the same viral hit and deriving the cumulative blast coverage and percent ID for each viral hit (**FILTER_BLAST_NT_VIRAL_DB_CAP3**)
+  * Retain top megablast hit and restrict results to virus and viroid matches. Summarise results by grouping all the de novo contigs matching to the same viral hit and deriving the cumulative blast coverage and percent ID for each viral hit (**FILTER_BLAST_NT_VIRAL_DB_CAP3**)
   * Align reads to top hit, derive coverage statistics, consensus sequence and VCF matching to top blast hit (**FILTER_BLAST_NT_VIRAL_DB_CAP3, COVSTATS_VIRAL_DB**)
   * Run tblastn homolgy search on predicted ORF >= 90 bp derived using getORF (**TBLASTN_VIRAL_DB**)
 
 The pipeline can perform additional optional steps, which include:
 - Searches against local NCBI NT and NR databases:
-  * Retain top 5 megablast hits and restrict results to virus and viroid matches. Summarise results by group all the de novo contigs matching to the same viral hit and deriving the cumulative blast coverage and percent ID for each viral hit (**BLATN_NT_CAP3**)
+  * Retain top 5 megablast hits and restrict results to virus and viroid matches. Summarise results by grouping all the de novo contigs matching to the same viral hit and deriving the cumulative blast coverage and percent ID for each viral hit (**BLATN_NT_CAP3**)
   * Align reads to top hit, derive coverage statistics, consensus sequence and VCF matching to top blast hits (**COVSTATS_NT**)
   * Run blastx homolgy search on contigs >= 90 bp long for which no match was obtained in the megablast search. Summarise the blastx results and restrict to virus and viroid matches (**BLASTX**)
   
