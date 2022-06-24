@@ -15,18 +15,19 @@ The VirReport workflow will perform the following steps by default:
 
 - De novo assembly using both Velvet and SPAdes. The contigs obtained are collapsed into scaffolds using cap3. By default, only contigs > 30 bp will be retained (**DENOVO_ASSEMBLY(**)
 
-- Run megablast homology search against either NCBI NT or a local virus database:
+- Run megablast homology search against either a local virus database or NCBI NT/NR databases:
 
 - Searches against a local virus database:
-  * Run blastn and megablast homology search on de novo assembly against local virus and viroid database (**BLAST_NT_VIRAL_DB_CAP3**)
-  * Derive coverage statistics, consensus sequence and VCF matching to top blast hits (**FILTER_BLAST_NT_VIRAL_DB_CAP3, COVSTATS_VIRAL_DB**)
+  * Run megablast homology searches on de novo assembly against local virus and viroid database. Homology searches against blastn are also run in parallel for comparison with the megablast algorithm (**BLAST_NT_VIRAL_DB_CAP3**)
+  * Retain top megablast hit and restrict results to virus and viroid matches. Summarise results by group all the de novo contigs matching to the same viral hit and deriving the cumulative blast coverage and percent ID for each viral hit (**FILTER_BLAST_NT_VIRAL_DB_CAP3**)
+  * Align reads to top hit, derive coverage statistics, consensus sequence and VCF matching to top blast hit (**FILTER_BLAST_NT_VIRAL_DB_CAP3, COVSTATS_VIRAL_DB**)
   * Run tblastn homolgy search on predicted ORF >= 90 bp derived using getORF (**TBLASTN_VIRAL_DB**)
 
 The pipeline can perform additional optional steps, which include:
 - Searches against local NCBI NT and NR databases:
-  * Summarise megablast results and restrict to virus and viroid matches (**BLATN_NT_CAP3**)
-  * Derive coverage statistics, consensus sequence and VCF matching to top blast hits (**COVSTATS_NT**)
-  * Run blastx on contigs >= 90 bp long for which no match was obtained in the blastn search. Summarise the blastx results and restrict to virus and viroid matches (**BLASTX**)
+  * Retain top 5 megablast hits and restrict results to virus and viroid matches. Summarise results by group all the de novo contigs matching to the same viral hit and deriving the cumulative blast coverage and percent ID for each viral hit (**BLATN_NT_CAP3**)
+  * Align reads to top hit, derive coverage statistics, consensus sequence and VCF matching to top blast hits (**COVSTATS_NT**)
+  * Run blastx homolgy search on contigs >= 90 bp long for which no match was obtained in the megablast search. Summarise the blastx results and restrict to virus and viroid matches (**BLASTX**)
   
 - A quality filtering step on raw fastq files (currently the workflow only processes samples prepared using QIAGEN QIAseq miRNA library kit). After performing quality filtering (**FASTQC_RAW, ADAPTER_AND_QUAL_TRIMMING, QC_POST_QUAL_TRIMMING, DERIVE_USABLE_READS**). the pipeline will also derive a qc report (QCREPORT). An RNA souce profile can be included as part of this step (**RNA_SOURCE_PROFILE, RNA_SOURCE_PROFILE_REPORT**)
 
@@ -88,7 +89,7 @@ The pipeline can perform additional optional steps, which include:
   ```
 
 - Provide a database
-  * If you want to run homology searches against a local database, please ensure you use NCBI BLAST+ makeblastdb to create the database. An example of curated virus database can be found at https://github.com/maelyg/PVirDB.git. To use this database, you would need to take the following steps:
+  * By default, the pipeline is set to run homology blast searches against a local plant virus/viroid database (this is set in the nextflow.config file with parameter `--virreport_viral_db = true`. You will need to provide this database to run the pipeline. You can either provide your own or use a curated database provided at https://github.com/maelyg/PVirDB.git. Ensure you use NCBI BLAST+ makeblastdb to create the database. For instance, to set up this database, you would take the following steps:
 
     ```
     git clone https://github.com/maelyg/PVirDB.git
@@ -104,7 +105,7 @@ The pipeline can perform additional optional steps, which include:
     }
     ```  
 
-  * If you want to run homology searches against public NCBI databases, you need to set the parameter **virreport_ncbi** in the nextflow.config file to **true**:
+  * If you also want to run homology searches against public NCBI databases, you need to set the parameter `virreport_ncbi` in the nextflow.config file to `true`:
     ```
     params {
       virreport_ncbi = true
@@ -114,12 +115,12 @@ The pipeline can perform additional optional steps, which include:
     ```
     nextflow run eresearchqut/VirReport -profile {docker or singularity or conda} --virreport_ncbi
     ```  
-    Download these locally. Detailed information on how to do so is available at https://www.ncbi.nlm.nih.gov/books/NBK569850/. 
+    Download these locally, following the detailed steps available at https://www.ncbi.nlm.nih.gov/books/NBK569850/. 
     Create a folder where you will store your NCBI databases. It is good practice to include the date of download. For instance:  
     ```
     mkdir blastDB/30112021  
     ```
-    You will need to use the update_blastdb.pl script from the blast+ version you will use with your pipeline.  
+    You will need to use the update_blastdb.pl script from the blast+ version used with the pipeline.  
     For example:  
     ```
     perl update_blastdb.pl --decompress nt [*]
@@ -127,7 +128,7 @@ The pipeline can perform additional optional steps, which include:
     perl update_blastdb.pl taxdb
     tar -xzf taxdb.tar.gz
     ```  
-    Make sure the taxdb.btd and the taxdb.bti files are also present in the same directory.  
+    Make sure the taxdb.btd and the taxdb.bti files are present in the same directory as your blast databases.  
     Specify the path of your local NCBI blast nt and nr directories in the nextflow.config file.  
     For instance:
     ```
@@ -136,8 +137,8 @@ The pipeline can perform additional optional steps, which include:
     }
     ```  
 
-  * If you want to run VirusDetect in parallel, then either set the paramter --virusdetect as true in your config file or specify it in your nextflow command.
-    Specify the path to the VirusDetect viral database directory in the nextflow.config file (using the **--virusdetect_db_path** parameter). These files can be downloaded at http://bioinfo.bti.cornell.edu/ftp/program/VirusDetect/virus_database/v248. For example:
+  * If you want to run VirusDetect in parallel, then either set the paramter `--virusdetect` to `true` in your config file or specify it in your nextflow run command.
+    Specify the path to the VirusDetect viral database directory in the nextflow.config file (using the `--virusdetect_db_path` parameter). These files can be downloaded at http://bioinfo.bti.cornell.edu/ftp/program/VirusDetect/virus_database/v248. For example:
   ```
   virusdetect_db_path = '/home/gauthiem/code/VirusDetect_v1.8/databases/vrl_plant'
   ```
@@ -196,27 +197,154 @@ The pipeline can perform additional optional steps, which include:
 
 ## Outputs
 The folders are structured as follows:
-- 00_quality_filtering/Sample_name: this folder will output FASTQC of raw or filtered fastq files, cutadapt and umi_tools log files, a quality_trimmed.fastq.gz file and by default a fastq.gz file including reads only matching the size specified in the nextflow.config file)
+
+results/
+├── 00_quality_filtering
+│   └── sample_name
+│   │   ├── sample_name_18-25nt_cutadapt.log
+│   │   ├── sample_name_fastqc.html
+│   │   ├── sample_name_fastqc.zip
+│   │   ├── sample_name_21-22nt_cutadapt.log
+│   │   ├── sample_name_21-22nt.fastq.gz
+│   │   ├── sample_name_24nt_cutadapt.log
+│   │   ├── sample_name_blacklist_filter.log
+│   │   ├── sample_name_fastp.html
+│   │   ├── sample_name_fastp.json
+│   │   ├── sample_name_qual_filtering_cutadapt.log
+│   │   ├── sample_name_quality_trimmed_fastqc.html
+│   │   ├── sample_name_quality_trimmed_fastqc.zip
+│   │   ├── sample_name_quality_trimmed.fastq.gz
+│   │   ├── sample_name_read_length_dist.pdf
+│   │   ├── sample_name_read_length_dist.txt
+│   │   ├── sample_name_truseq_adapter_cutadapt.log
+│   │   └── sample_name_umi_tools.log
+│   └── qc_report
+│       ├── read_origin_counts.txt
+│       ├── read_origin_detailed_pc.txt
+│       ├── read_origin_pc_summary.txt
+│       ├── read_origin_pc_summary.txt
+│       ├── run_qc_report.txt
+│       └── run_read_size_distribution.pdf
+├── 01_VirReport
+│   └── sample_name
+│   │   └── alignments
+│   │   │   └──NT
+│   │   │   │   ├── sample_name_21-22nt_all_targets_with_scores.txt
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name_bowtie_log.txt
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name.consensus.fasta
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name.dedup.bam
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name.dedup.bam.bai
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name.fa
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name.fa.fai
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name_norm.bcf
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name_norm.bcf.csi
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name_norm_flt_indels.bcf
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name_norm_flt_indels.bcf.csi
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name_picard_metrics.txt
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name_sequence_variants.vcf.gz
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name_sequence_variants.vcf.gz.csi
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name_umi_tools.log
+│   │   │   │   ├── sample_name_21-22nt_top_scoring_targets.txt
+│   │   │   │   └── sample_name_21-22nt_top_scoring_targets_with_cov_stats.txt
+│   │   │   └──viral_db
+│   │   │   │   ├── sample_name_21-22nt_all_targets_with_scores.txt
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name_bowtie_log.txt
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name.consensus.fasta
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name.dedup.bam
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name.dedup.bam.bai
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name.fa
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name.fa.fai
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name_norm.bcf
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name_norm.bcf.csi
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name_norm_flt_indels.bcf
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name_norm_flt_indels.bcf.csi
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name_picard_metrics.txt
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name_sequence_variants.vcf.gz
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name_sequence_variants.vcf.gz.csi
+│   │   │   │   ├── sample_name_21-22nt_GenBankID_virus_name_umi_tools.log
+│   │   │   │   └── sample_name_21-22nt_top_scoring_targets_with_cov_stats_viraldb.txt
+│   │   └── assembly
+│   │   │   ├── sample_name_cap3_21-22nt.fasta
+│   │   │   ├── sample_name_spades_assembly_21-22nt.fasta
+│   │   │   ├── sample_name_spades_log
+│   │   │   ├── sample_name_velvet_assembly_21-22nt.fasta
+│   │   │   └── sample_name_velvet_log
+│   │   └──blastn
+│   │   │   └── NT
+│   │   │   │   ├── sample_name_cap3_21-22nt_blastn_vs_NT.bls
+│   │   │   │   ├── sample_name_cap3_21-22nt_blastn_vs_NT_top5Hits.txt
+│   │   │   │   ├── sample_name_cap3_21-22nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt
+│   │   │   │   ├── sample_name_cap3_21-22nt_blastn_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt
+│   │   │   │   └── summary_sample_name_cap3_21-22nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt
+│   │   │   └── viral_db
+│   │   │       ├── sample_name_cap3_21-22nt_blastn_vs_viral_db.bls
+│   │   │       ├── sample_name_cap3_21-22nt_megablast_vs_viral_db.bls
+│   │   │       ├── summary_sample_name_cap3_21-22nt_blastn_vs_viral_db.bls_filtered.txt
+│   │   │       ├── summary_sample_name_cap3_21-22nt_blastn_vs_viral_db.bls_viruses_viroids_ICTV.txt
+│   │   │       ├── summary_sample_name_cap3_21-22nt_megablast_vs_viral_db.bls_filtered.txt
+│   │   │       └── summary_sample_name_cap3_21-22nt_megablast_vs_viral_db.bls_viruses_viroids_ICTV.txt
+│   │   ├── blastx
+│   │   │   └── NT
+│   │   │       ├── sample_name_cap3_21-22nt_blastx_vs_NT.bls
+│   │   │       ├── sample_name_cap3_21-22nt_blastx_vs_NT_top5Hits.txt
+│   │   │       ├── sample_name_cap3_21-22nt_blastx_vs_NT_top5Hits_virus_viroids_final.txt
+│   │   │       └── summary_sample_name_cap3_21-22nt_blastx_vs_NT_top5Hits_virus_viroids_final.txt
+│   │   └── tblastn
+│   │       └── viral_db
+│   │           ├── sample_name_cap3_21-22nt_getorf.all.fasta
+│   │           ├── sample_name_cap3_21-22nt_getorf.all_tblastn_vs_viral_db_out.bls
+│   │           └── sample_name_cap3_21-22nt_getorf.all_tblastn_vs_viral_db_top5Hits_virus_viroids_final.txt
+│   └── Summary
+│       ├── run_top_scoring_targets_with_cov_stats_with_cont_flag_FPKM_0.01_21-22nt.txt
+│       └── run_top_scoring_targets_with_cov_stats_with_cont_flag_FPKM_0.01_21-22nt_viral_db.txt
+└── 02_VirusDetect
+    └── sample_name
+    │   ├── blastn.reference.fa
+    │   ├── blastn_references
+    │   ├── blastx.reference.fa
+    │   ├── blastx_references
+    │   ├── contig_sequences.blastn.fa
+    │   ├── contig_sequences.blastx.fa
+    │   ├── contig_sequences.fa
+    │   ├── contig_sequences.undetermined.fa
+    │   ├── sample_name_21-22nt.blastn.html
+    │   ├── sample_name_21-22nt.blastn.sam
+    │   ├── sample_name_21-22nt.blastn_spp.txt
+    │   ├── sample_name_21-22nt.blastn.summary.filtered.txt
+    │   ├── sample_name_21-22nt.blastn.summary.txt
+    │   ├── sample_name_21-22nt.blastn.txt
+    │   ├── sample_name_21-22nt.blastx.html
+    │   ├── sample_name_21-22nt.blastx.sam
+    │   ├── sample_name_21-22nt.blastx.summary.txt
+    │   └── sample_name_21-22nt.blastx.txt
+    └── Summary
+        ├── run_summary_top_scoring_targets_virusdetect_21-22nt_filtered.txt
+        └── run_summary_virusdetect_21-22nt.txt
+        
+- 00_quality_filtering/sample_name: this folder will output FASTQC of raw or filtered fastq files, cutadapt and umi_tools log files, a quality_trimmed.fastq.gz file and by default a fastq.gz file including reads only matching the size specified in the nextflow.config file)
+
 - 00_quality_filter/qc_report: this folder contains QC summaries for all samples included in the index_example.csv file
 
-- 01_VirReport/Sample_name/assembly: fasta file which includes the assembled contigs before and after CAP3. For example MT020_velvet_assembly_21-22nt.fasta, MT001_velvet_cap3_21-22nt_rename.fasta
+- 01_VirReport/sample_name/assembly: fasta file which includes the assembled contigs before and after CAP3. The sample_name_cap3_21-22nt.fasta will be used  for homology searches in the next steps.
 
-- 01_VirReport/Sample_name/blastn/NT: this folder contains all blastn results, filtered results limited to only viruses and viroid top 5 hit matches and the final BlastTools.jar summary output. 
-For example: MT020_velvet_21-22nt_megablast_vs_NT.bls, MT020_velvet_21-22nt_megablast_vs_NT_top5Hits.txt, MT020_velvet_21-22nt_megablast_vs_NT_top5Hits_virus_viroids_final.txt, summary_MT029_velvet_21-22nt_megablast_vs_NT_top5Hits_virus_viroids_final.txt
-Analysis using the viral db will also be saved in 01_VirReport/Sample_name/blastn/viral_db
-MT001_velvet_21-22nt_blastn_vs_localdb.bls, summary_MT001_velvet_21-22nt_blastn_vs_localdb.bls_viruses_viroids_ICTV.txt
+- 01_VirReport/sample_name/blastn/NT: this folder contains all megablast results, filtered results limited to only viruses and viroid top 5 hit matches and the final BlastTools.jar summary output. 
+For example: sample_name_cap3_21-22nt_blastn_vs_NT.bls, summary_sample_name_cap3_21-22nt_blastn_vs_NT_top5Hits_virus_viroids_final.txt
 
-- 01_VirReport/Sample_name/blastx/NT: this folder contains the blastx outputs. 
+- 01_VirReport/sample_name/blastn/viral_db: Analysis using the viral db will be saved in this folder
+sample_name_cap3_21-22nt_megablast_vs_viral_db.bls, summary_sample_name_cap3_21-22nt_megablast_vs_viral_db.bls_viruses_viroids_ICTV.txt
 
-- 01_VirReport/Sample_name/alignments: this folder contains a filtered blast summary with various coverage statistics for each virus and viroid hit, and associated consensus fasta file and vcf file. The results for each sample are saved in a separate folder. 
-For example: MT020_21-22nt_top_scoring_targets_with_cov_stats.txt, MT020_21-22nt_MK929590_Peach_latent_mosaic_viroid.consensus.fasta, MT020_21-22nt_MK929590_Peach_latent_mosaic_viroid_sequence_variants.vcf.gz
+- 01_VirReport/sample_name/blastx/NT: this folder contains the blastx outputs. 
+
+- 01_VirReport/sample_name/alignments: this folder contains a filtered blast summary with various coverage statistics for each virus and viroid hit, and associated consensus fasta file and vcf file. The results for each sample are saved in a separate folder. 
+For example: sample_name_21-22nt_top_scoring_targets_with_cov_stats.txt, sample_name_21-22nt_GenBankID_virus_name.consensus.fasta 
 
 - 01_VirReport/Summary: this folder contains a summary of results for all samples included in the index.csv file. The summay table includes a cross-contamination prediction flag. 
 For example: run_top_scoring_targets_with_cov_stats_with_cont_flag_21-22nt_0.01.txt
 
-- 02_VirusDetect/Sample_name: this folder includes a results folder with blastn and blastx summary. 
-For example: MT016_21-22nt.blastn.summary.txt and MT016_21-22nt.blastx.summary.txt
+- 02_VirusDetect/sample_name: this folder includes a results folder with blastn and blastx summary. 
+For example: sample_name_21-22nt.blastn.summary.txt and sample_name_21-22nt.blastx.summary.txt
 
+ 
 ## Credits
 Roberto Barrero, 14/03/2019  
 Desmond Schmidt, 2/7/2019  
