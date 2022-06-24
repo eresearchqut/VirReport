@@ -6,6 +6,8 @@ import os
 import subprocess
 from functools import reduce
 import glob
+import time
+
 
 def main():
     ################################################################################
@@ -23,6 +25,8 @@ def main():
     method = args.method
     viral_db = args.viral_db
     dedup = args.dedup
+
+    timestr = time.strftime("%Y%m%d-%H%M%S")
 
     run_data = pd.DataFrame()
     for fl in glob.glob("*_top_scoring_targets_with_cov_stats*.txt"):
@@ -43,7 +47,7 @@ def main():
         run_data["contamination_flag"] = np.where(run_data["FPKM"] <= run_data["threshold_value"], True, False)
         run_data["contamination_flag"] = np.where(run_data["count_max"] <= 10, "NA", run_data["contamination_flag"])
         run_data = run_data.sort_values(["Sample", "stitle"], ascending = (True, True))
-        run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db.txt", index=None, sep="\t",float_format="%.2f")
+        run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
         #regulated_data = run_data[run_data['stitle'].str.contains('regulated')]
         #regulated_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_PVirDB_regulated.txt", index=None, sep="\t",float_format="%.2f")
         #endemic_data = run_data[run_data['stitle'].str.contains('endemic')]
@@ -68,7 +72,7 @@ def main():
             run_data["contamination_flag"] = np.where(run_data["count_max"] <= 10, "NA", run_data["contamination_flag"])
         
         run_data = run_data.sort_values(["Sample", "Species"], ascending = (True, True))
-        run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + ".txt", index=None, sep="\t",float_format="%.2f")
+        run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_ncbi_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
 
 if __name__ == "__main__":
     main()

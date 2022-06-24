@@ -512,6 +512,8 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
     full_table.insert(0, "Sample", sample)
 
     if mode == 'ncbi':
+        full_table = full_table.drop(["Species"], axis=1)
+        full_table = full_table.rename(columns={"Species_updated": "Species"})
         full_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats.txt", index=None, sep="\t",float_format="%.2f")
         #This step will only extract viruses and viroids of interest
         if targets:

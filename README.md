@@ -7,7 +7,7 @@ Modified by Maely Gauthier 12/2021
 
 ## About Pipeline
 VirReport pipeline is based upon the scientific workflow manager Nextflow.
-It was designed to help phytosanitary diagnostics of viruses and viroid pathogens in quarantine facilities. It takes small RNA-Seq fastq files as input. These can either be in raw format or quality-filtered (currently specifically written for samples prepared using QIAGEN QIAseq miRNA library kit).
+It was designed to help phytosanitary diagnostics of viruses and viroid pathogens in quarantine facilities. It takes small RNA-Seq fastq files as input. These can either be in raw format (the pieplien will perform a quality filtering step bu currently expects samples to be specifically prepared using the QIAGEN QIAseq miRNA library kit) or quality-filtered. 
 
 The pipeline can either perform blast homology searches against a virus database or/and a local copy of NCBI nr and nt databases.
 
@@ -16,12 +16,21 @@ The pipeline can either perform blast homology searches against a virus database
 # Run the Pipeline
 
 ## Test run
-Download the pipeline and test it on a minimal dataset with a single command:
+Once you have downloaded the pipeline, you can run two separate tests it on minimal datasets:
+
+1) This command will test your installation on a single quality filtered fastq file derived from a sample infected with a Citrus exocortis viroid  and run VirReport using a mock ncbi database.
+
 ```bash
-nextflow -c conf/test.config run eresearchqut/VirReport -profile test,conda --dedup --contamination_detection
+nextflow -c conf/test.config run eresearchqut/VirReport -profile test,{docker, singularity or conda}
 ```
 
-Running this dataset requires 2 cpus and 12 Gb mem and should take 2 mins to complete.
+2) This command will test your installation on a pair of raw fastq files derive from a sample infected with Citrus tristeza virus and will run VirReport using a mock viral database. 
+
+```bash
+nextflow -c conf/test.config2 run eresearchqut/VirReport -profile test2,{docker, singularity or conda}
+```
+
+Running these test datasets requires 2 cpus and 8 Gb mem and should take 5 mins to complete.
 
 ## Run with your own data
 
@@ -55,7 +64,8 @@ Searches against a local virus database:
 - Run blastn and megablast homology search on de novo assembly against local virus and viroid database (BLAST_NT_VIRAL_DB_CAP3). 
 - Derive coverage statistics, consensus sequence and VCF matching to top blast hits (FILTER_BLAST_NT_VIRAL_DB_CAP3, COVSTATS_VIRAL_DB)
 
-An example of a virus database can be downloaded at https://data.researchdatafinder.qut.edu.au/dataset/60eed574-a745-4a0f-ab7c-fb8b3c711695/resource/a17dfa13-a093-407a-a047-27f134f92ac9/download/pvirdbv1.fasta.gz
+You can find an example of our curated virus database at https://github.com/maelyg/PVirDB.git
+
 - Run tblastn homolgy search on predicted ORF derived using getORF (TBLASTN_VIRAL_DB)
 
 Additional optional parameters can be specified:

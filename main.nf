@@ -270,7 +270,7 @@ if (params.qualityfilter) {
     process QC_POST_QUAL_TRIMMING { 
         label "setting_3"
         tag "$sampleid"
-        publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{log,json,html,trimmed.fastq.gz,zip,html,pdf,txt}"  
+        publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{log,json,html,trimmed.fastq.gz,zip,html,pdf,txt}"
         
         input:
         tuple val(sampleid), file(fastqfile) from qc_post_qual_trimming_ch
@@ -802,7 +802,7 @@ if (params.virreport_ncbi) {
     process COVSTATS_NT {
         tag "$sampleid"
         label "setting_6"
-        publishDir "${params.outdir}/01_VirReport/${sampleid}/alignments/NT", mode: 'link', overwrite: true
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/alignments/NT", mode: 'link', overwrite: true, pattern: "*{.fa*,.fasta,metrics.txt,scores.txt,targets.txt,stats.txt,log.txt,.bcf*,.vcf.gz*,.bam*}"
         containerOptions "${bindOptions}"
         
         input:
