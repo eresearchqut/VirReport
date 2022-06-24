@@ -11,26 +11,26 @@ The pipeline can either perform blast homology searches against a virus database
 
 The VirReport workflow will perform the following steps by default:
 
-- Retain reads of a given length (21-22 nt long by default) from fastq file(s) provided in index.csv file (READPROCESSING)  
+- Retain reads of a given length (21-22 nt long by default) from fastq file(s) provided in index.csv file (**READPROCESSING**)  
 
-- De novo assembly using both Velvet and SPAdes. The contigs obtained are collapsed into scaffolds using cap3. By default, only contigs > 30 bp will be retained (DENOVO_ASSEMBLY)
+- De novo assembly using both Velvet and SPAdes. The contigs obtained are collapsed into scaffolds using cap3. By default, only contigs > 30 bp will be retained (**DENOVO_ASSEMBLY(**)
 
 - Run megablast homology search against either NCBI NT or a local virus database:
 
 - Searches against a local virus database:
-  * Run blastn and megablast homology search on de novo assembly against local virus and viroid database (BLAST_NT_VIRAL_DB_CAP3)
-  * Derive coverage statistics, consensus sequence and VCF matching to top blast hits (FILTER_BLAST_NT_VIRAL_DB_CAP3, COVSTATS_VIRAL_DB)
-  * Run tblastn homolgy search on predicted ORF derived using getORF (TBLASTN_VIRAL_DB)
+  * Run blastn and megablast homology search on de novo assembly against local virus and viroid database (**BLAST_NT_VIRAL_DB_CAP3**)
+  * Derive coverage statistics, consensus sequence and VCF matching to top blast hits (**FILTER_BLAST_NT_VIRAL_DB_CAP3, COVSTATS_VIRAL_DB**)
+  * Run tblastn homolgy search on predicted ORF >= 90 bp derived using getORF (**TBLASTN_VIRAL_DB**)
 
 The pipeline can perform additional optional steps, which include:
 - Searches against local NCBI NT and NR databases:
-  * Summarise megablast results and restrict to virus and viroid matches (BLATN_NT_CAP3)
-  * Derive coverage statistics, consensus sequence and VCF matching to top blast hits (COVSTATS_NT)
-  * Run blastx on contigs > 100 bp long for which no match was obtained in the blastn search. Summarise the blastx results and restrict to virus and viroid matches (BLASTX)
+  * Summarise megablast results and restrict to virus and viroid matches (**BLATN_NT_CAP3**)
+  * Derive coverage statistics, consensus sequence and VCF matching to top blast hits (**COVSTATS_NT**)
+  * Run blastx on contigs >= 90 bp long for which no match was obtained in the blastn search. Summarise the blastx results and restrict to virus and viroid matches (**BLASTX**)
   
-- A quality filtering step on raw fastq files (currently the workflow only processes samples prepared using QIAGEN QIAseq miRNA library kit). After performing quality filtering, the pipeline will also derive a qc report (FASTQC_RAW, ADAPTER_AND_QUAL_TRIMMING, QC_POST_QUAL_TRIMMING, DERIVE_USABLE_READS, QCREPORT). An RNA souce profile can be included as part of the reporting (RNA_SOURCE_PROFILE, RNA_SOURCE_PROFILE_REPORT)
+- A quality filtering step on raw fastq files (currently the workflow only processes samples prepared using QIAGEN QIAseq miRNA library kit). After performing quality filtering (**FASTQC_RAW, ADAPTER_AND_QUAL_TRIMMING, QC_POST_QUAL_TRIMMING, DERIVE_USABLE_READS**). the pipeline will also derive a qc report (QCREPORT). An RNA souce profile can be included as part of this step (**RNA_SOURCE_PROFILE, RNA_SOURCE_PROFILE_REPORT**)
 
-- VirusDetect version 1.8 can also be run in parallel (VIRUS_DETECT, VIRUS_IDENTIFY, VIRUS_DETECT_BLASTN_SUMMARY, VIRUS_DETECT_BLASTN_SUMMARY_FILTERED)
+- VirusDetect version 1.8 can also be run in parallel. A summary of the top virus/viroid blastn hits will be separately output (**VIRUS_DETECT, VIRUS_IDENTIFY, VIRUS_DETECT_BLASTN_SUMMARY, VIRUS_DETECT_BLASTN_SUMMARY_FILTERED**)
 
 # Run the Pipeline
 1. Install Nextflow
@@ -137,12 +137,12 @@ The pipeline can perform additional optional steps, which include:
     ```  
 
   * If you want to run VirusDetect in parallel, then either set the paramter --virusdetect as true in your config file or specify it in your nextflow command.
-    Specify the path to the VirusDetect viral database directory in the nextflow.config file (using the --virusdetect_db_path parameter). These files can be downloaded at http://bioinfo.bti.cornell.edu/ftp/program/VirusDetect/virus_database/v248. For example:
+    Specify the path to the VirusDetect viral database directory in the nextflow.config file (using the **--virusdetect_db_path** parameter). These files can be downloaded at http://bioinfo.bti.cornell.edu/ftp/program/VirusDetect/virus_database/v248. For example:
   ```
   virusdetect_db_path = '/home/gauthiem/code/VirusDetect_v1.8/databases/vrl_plant'
   ```
 
-- If you want to run the initial qualityfilter step on raw fastq files, you will need to specify in the nextflow.config file the directory which holds the required bowtie indices (using the --bowtie_db_dir parameter) to: 1) filter non-informative reads (rusing the blacklist bowtie indices for the DERIVE_USABLE_READS process) and 2) derive the origin of the filtered reads obtained (optional RNA_SOURCE_PROFILE process). Examples of fasta files are available at https://github.com/maelyg/bowtie_indices.git and bowtie indices can be built from these using the command:
+- If you want to run the initial qualityfilter step on raw fastq files, you will need to specify in the nextflow.config file the directory which holds the required bowtie indices (using the **--bowtie_db_dir** parameter) to: 1) filter non-informative reads (rusing the blacklist bowtie indices for the DERIVE_USABLE_READS process) and 2) derive the origin of the filtered reads obtained (optional RNA_SOURCE_PROFILE process). Examples of fasta files are available at https://github.com/maelyg/bowtie_indices.git and bowtie indices can be built from these using the command:
 
   ```
   bowtie-build -f [fasta file] [name of index]
@@ -164,33 +164,29 @@ The pipeline can perform additional optional steps, which include:
   
 - Additional optional parameters available include:
   ```     
-      --merge-lane: if several fastq files are provided per sample, these will be collapsed together before performing downstream analyses
+    --merge-lane: if several fastq files are provided per sample, these will be collapsed together before performing downstream analyses
    
-      --dedup: first umi_tools will be used to extract UMI informations from fast file headers and after alignment, umi_tools will be used to identify and remove duplicate reads.
+    --dedup: first umi_tools will be used to extract UMI informations from fast file headers and after alignment, umi_tools will be used to identify and remove duplicate reads.
+    --spadesmem specifies the memory usage available for SPAdes (by default 32)
       
-      --spadesmem specifies the memory usage available for SPAdes (by default 32)
-      
-      --cap3_len: specifies the minimal length of contigs to retain after CAP3 scaffolding (by default 30)
+    --cap3_len: specifies the minimal length of contigs to retain after CAP3 scaffolding (by default 30)
 
-      --blastn_method: The blastn homology search can be specified as blastn instead of megablast using --blastn_method blastn
+    --blastn_method: The blastn homology search can be specified as blastn instead of megablast using --blastn_method blastn
       
-      --blastn_evalue and --blastp_evalue: specifies the evalue parameter to use during blast analyses (by deafult 0.0001)
+    --blastn_evalue and --blastp_evalue: specifies the evalue parameter to use during blast analyses (by deafult 0.0001)
+     
+    --targets: A text file with the taxonomy of the viruses/virioids of interest can be provided and only these will be retained in the megablast summary results derived at the COVSTATS_NT step using NCBI NT database.
+    --blastx: if set to false, it will skip the blastx step performed when searching against local NCBI NT and NR databases 
       
-      --targets: A text file with the taxonomy of the viruses/virioids of interest can be provided and only these will be retained in the megablast summary results derived at the COVSTATS_NT step using NCBI NT database.
-      
-      --blastx: if set to false, it will skip the blastx step performed when searching against local NCBI NT and NR databases 
-      
-      --orf_minsize and --orf_circ_minsize: correspond to the minimal open reading frames getorf retains that will be used in the tblastn homology search against the virus database (by default 90 bp) 
-      
-      --contamination_detection and contamination_detection_viral_db: Run cross-sample contamination prediction (CONTAMINATION_DETECTION and/or CONTAMINATION_DETECTION_VIRAL_DB) 
-      
+    --orf_minsize and --orf_circ_minsize: correspond to the minimal open reading frames getorf retains that will be used in the tblastn homology search against the virus database (by default 90 bp) 
+    --contamination_detection and contamination_detection_viral_db: Run cross-sample contamination prediction (CONTAMINATION_DETECTION and/or CONTAMINATION_DETECTION_VIRAL_DB) 
   ```
 
   To enable these options, they can either be included in the nextflow run command: 
   ```
   nextflow run eresearchqut/VirReport -profile {docker or singularity or conda} --indexfile index_example.csv --contamination_detection --virusdetect
   ```
-  or the parameter in the nextflow.config file can be udpated to **true**. For instance:
+  or the parameter in the nextflow.config file can be udpated. For instance:
   ```
   params {
     virusdetect = true
