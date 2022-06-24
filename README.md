@@ -28,9 +28,9 @@ The pipeline can perform additional optional steps, which include:
   * Derive coverage statistics, consensus sequence and VCF matching to top blast hits (COVSTATS_NT)
   * Run blastx on contigs > 100 bp long for which no match was obtained in the blastn search. Summarise the blastx results and restrict to virus and viroid matches (BLASTX)
   
-- A quality filtering step on raw fastq files (currently the workflow only processes samples prepared using QIAGEN QIAseq miRNA library kit). After performing quality filtering, the pipeline will also derive a qc report. An RNA souce profile can be included as part of the reporting.
+- A quality filtering step on raw fastq files (currently the workflow only processes samples prepared using QIAGEN QIAseq miRNA library kit). After performing quality filtering, the pipeline will also derive a qc report (FASTQC_RAW, ADAPTER_AND_QUAL_TRIMMING, QC_POST_QUAL_TRIMMING, DERIVE_USABLE_READS, QCREPORT). An RNA souce profile can be included as part of the reporting (RNA_SOURCE_PROFILE, RNA_SOURCE_PROFILE_REPORT)
 
-- VirusDetect version 1.8 can be run in parallel
+- VirusDetect version 1.8 can be run in parallel (VIRUS_DETECT, VIRUS_IDENTIFY, VIRUS_DETECT_BLASTN_SUMMARY, VIRUS_DETECT_BLASTN_SUMMARY_FILTERED)
 
 # Run the Pipeline
 1. Install Nextflow
@@ -54,92 +54,90 @@ nextflow -c conf/test2.config run eresearchqut/VirReport -profile test2,{docker,
 Running these test datasets requires 2 cpus and 8 Gb mem and should take 5 mins to complete.
 
 4. Run with your own data
-- Provide an index.csv file
+- Provide an index.csv file.  
+  Create a TAB delimited text file that will be the input for the workflow. By default the pipeline will look for a file called “index.csv” in the base directory but you can specify any file name using the --indexfile [filename] in the nextflow run command. This text file requires the following columns (which needs to be included as a header): ```sampleid,samplepath``` 
 
-You need to create a TAB delimited text file that will be the input for the workflow. By default the pipeline will look for a file called “index.csv” in the base directory but you can specify any file name using the --indexfile [filename] in the nextflow run command. This text file requires the following columns (which needs to be included as a header): ```sampleid,samplepath```
+  **sampleid** will be the sample name that will be given to the files created by the pipeline  
+  **samplepath** is the full path to the fastq files that the pipeline requires as starting input  
 
-  * sampleid will be the sample name that will be given to the files created by the pipeline
-  * samplepath is the full path to the fastq files that the pipeline requires as starting input
-
-An index_example.csv is included in the base directory:
-```
-sampleid,samplepath
-MT212,/work/diagnostics/2021/MT212_21-22bp.fastq
-MT213,/work/diagnostics/2021/MT213_21-22bp.fastq
-```
+  An index_example.csv is included in the base directory:
+  ```
+  sampleid,samplepath
+  MT212,/work/diagnostics/2021/MT212_21-22bp.fastq
+  MT213,/work/diagnostics/2021/MT213_21-22bp.fastq
+  ```
 
 - Provide a database
   * If you want to run homology searches against a local database, please ensure you use NCBI BLAST+ makeblastdb to create the database. An example of curated virus database can be found at https://github.com/maelyg/PVirDB.git. To use this database, you would need to take the following steps:
 
-```
-git clone https://github.com/maelyg/PVirDB.git
-cd PVirDB
-gunzip PVirDB_v1.fasta.gz
-makeblastdb -in PVirDB_v1.fasta -parse_seqids -dbtype nucl
-```
+  ```
+  git clone https://github.com/maelyg/PVirDB.git
+  cd PVirDB
+  gunzip PVirDB_v1.fasta.gz
+  makeblastdb -in PVirDB_v1.fasta -parse_seqids -dbtype nucl
+  ```
 
-Then specify the full path to the database files including the prefix in the nextflow.config file. For example:
-```
-params {
-  blast_local_db_path = '/path_to_viral_DB/viral_DB_name'
-}
-```
+  Then specify the full path to the database files including the prefix in the nextflow.config file. For example:
+  ```
+  params {
+    blast_local_db_path = '/path_to_viral_DB/viral_DB_name'
+  }
+  ```  
 
   * If you want to run homology searches against public NCBI databases, you need to download these locally. Detailed information on how to do so is available at https://www.ncbi.nlm.nih.gov/books/NBK569850/. 
 
-Create a folder where you will store your NCBI databases. It is good practice to include the date of download. For instance:
-```
-mkdir blastDB/30112021
-```
+  Create a folder where you will store your NCBI databases. It is good practice to include the date of download. For instance:
+  ```
+  mkdir blastDB/30112021
+  ```
 
-You will need to use the update_blastdb.pl script from the blast+ version you will use with your pipeline.
+  You will need to use the update_blastdb.pl script from the blast+ version you will use with your pipeline.  
+  For example:
+  ```
+  perl update_blastdb.pl --decompress nt [*]
+  perl update_blastdb.pl --decompress nr [*]
+  perl update_blastdb.pl taxdb
+  tar -xzf taxdb.tar.gz
+  ```
 
-For example:
-```
-perl update_blastdb.pl --decompress nt [*]
-perl update_blastdb.pl --decompress nr [*]
-perl update_blastdb.pl taxdb
-tar -xzf taxdb.tar.gz
-```
+  Make sure the taxdb.btd and the taxdb.bti files are also present in the same directory. 
 
-Make sure the taxdb.btd and the taxdb.bti files are also present in the same directory. 
+  Specify the path of your local NCBI blast nt and nr directories in the nextflow.config file.
 
-Specify the path of your local NCBI blast nt and nr directories in the nextflow.config file.
+  For instance:
+  ```
+  params {
+    blast_db_dir = '/work/hia_mt18005_db/blastDB/20220408'
+  }
+  ```  
 
-For instance:
-```
-params {
-  blast_db_dir = '/work/hia_mt18005_db/blastDB/20220408'
-}
-```
   * If you want to run VirusDetect, then specify the path to the viral database directory in the nextflow.config file. These can be downloaded at http://bioinfo.bti.cornell.edu/ftp/program/VirusDetect/virus_database/v248. For example:
-```
-virusdetect_db_path = '/home/gauthiem/code/VirusDetect_v1.8/databases/vrl_plant'
-```
+  ```
+  virusdetect_db_path = '/home/gauthiem/code/VirusDetect_v1.8/databases/vrl_plant'
+  ```
 
 - Run the command:
-```bash
-nextflow run eresearchqut/VirReport -profile {docker or singularity or conda} --indexfile index_example.csv
-```
-
-Set the profile parameter to one of
-```
-docker
-singularity
-conda
-```
-to suit your environment.
+  ```bash
+  nextflow run eresearchqut/VirReport -profile {docker or singularity or conda} --indexfile index_example.csv
+  ```  
+  setting the profile parameter to one of
+  ```
+  docker
+  singularity
+  conda
+  ```  
+  to suit your environment.
 
 - By default the pipeline will only retain 21-22 nt long sRNA reads for downstream analysis but you can change this range in the nextflow.config file. For instance:
-```
-params {
-  minlen = '18'
-  maxlen = '25'
-}
-```
+  ```
+  params {
+    minlen = '18'
+    maxlen = '25'
+  }
+  ```
 
 - Additional optional parameters can be specified:
-```     
+  ```     
       --merge-lane: if several fastq files are provided per sample, these will be collapsed together before performing downstream analyses
       
       --qualityfilter: performs a quality filtering step on raw fastq files (currently specifically written for samples prepared using QIAGEN QIAseq miRNA library kit). After performing quality filtering, the pipeline will also derive a qc report
@@ -160,42 +158,42 @@ params {
       
       --orf_minsize and --orf_circ_minsize: correspond to the minimal open reading frames getorf retains that will be used in the tblastn homology search against the virus database (by default 90 bp) 
       
-       --contamination_detection and contamination_detection_viral_db: Run cross-sample contamination prediction (CONTAMINATION_DETECTION and/or CONTAMINATION_DETECTION_VIRAL_DB) 
+      --contamination_detection and contamination_detection_viral_db: Run cross-sample contamination prediction (CONTAMINATION_DETECTION and/or CONTAMINATION_DETECTION_VIRAL_DB) 
       
       --virusdetect: VirusDetect version 1.8 can be run in parallel
-```
+  ```
 
-To enable these options, they can either be included in the nextflow run command: 
-```
-nextflow run eresearchqut/VirReport -profile {docker or singularity or conda} --indexfile index_example.csv --contamination_detection --virusdetect
-```
-or the parameter in the nextflow.config file can be udpated to **true**. For instance:
-```
-params {
-  virusdetect = true
-  contamination_detection = true
-}
-```
+  To enable these options, they can either be included in the nextflow run command: 
+  ```
+  nextflow run eresearchqut/VirReport -profile {docker or singularity or conda} --indexfile index_example.csv --contamination_detection --virusdetect
+  ```
+  or the parameter in the nextflow.config file can be udpated to **true**. For instance:
+  ```
+  params {
+    virusdetect = true
+    contamination_detection = true
+  }
+  ```
 
-If you want to run the initial qualityfilter step, you will need to specify in the nextflow.config file the directory which holds the required bowtie indices to: 1) derive the origin of the filtered reads obtained (optional RNA_SOURCE_PROFILE process) and 2) filter non-informative reads (DERIVE_USABLE_READS process). Examples of fasta files are available at https://github.com/maelyg/bowtie_indices.git and bowtie indices can be built from these using the command:
+- If you want to run the initial qualityfilter step, you will need to specify in the nextflow.config file the directory which holds the required bowtie indices to: 1) derive the origin of the filtered reads obtained (optional RNA_SOURCE_PROFILE process) and 2) filter non-informative reads (DERIVE_USABLE_READS process). Examples of fasta files are available at https://github.com/maelyg/bowtie_indices.git and bowtie indices can be built from these using the command:
 
-```
-bowtie-build -f [fasta file] [name of index]
-```
+  ```
+  bowtie-build -f [fasta file] [name of index]
+  ```
 
-The location of the bowtie indices will need to be specified in the nextflow.config file:
-```
-params {
-  bowtie_db_dir = '/work/hia_mt18005_db/bowtie_idx'
-}
-```
+  The location of the bowtie indices will need to be specified in the nextflow.config file:
+  ```
+  params {
+    bowtie_db_dir = '/work/hia_mt18005_db/bowtie_idx'
+  }
+  ```
 
-If you are interested to derive the rna profile of your fastq files you will need to specify:
-```
-params {
-  rna_source_profile = true
-}
-```
+  If you are interested to derive the rna profile of your fastq files you will need to specify:
+  ```
+  params {
+    rna_source_profile = true
+  }
+  ```
 
 # Running the pipeline
 
