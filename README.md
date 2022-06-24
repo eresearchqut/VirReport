@@ -143,7 +143,7 @@ The pipeline can perform additional optional steps, which include:
   virusdetect_db_path = '/home/gauthiem/code/VirusDetect_v1.8/databases/vrl_plant'
   ```
 
-- If you want to run the initial qualityfilter step on raw fastq files, you will need to specify in the nextflow.config file the directory which holds the required bowtie indices (using the **--bowtie_db_dir** parameter) to: 1) filter non-informative reads (rusing the blacklist bowtie indices for the DERIVE_USABLE_READS process) and 2) derive the origin of the filtered reads obtained (optional RNA_SOURCE_PROFILE process). Examples of fasta files are available at https://github.com/maelyg/bowtie_indices.git and bowtie indices can be built from these using the command:
+- If you want to run the initial qualityfilter step on raw fastq files, you will need to set the `--qualityfilter` paramater to `true` in the config.file and specify the path to the directory which holds the required bowtie indices (using the `--bowtie_db_dir` parameter) to: 1) filter non-informative reads (using the **blacklist** bowtie indices for the DERIVE_USABLE_READS process) and 2) derive the origin of the filtered reads obtained (optional RNA_SOURCE_PROFILE process). The required fasta files are available at https://github.com/maelyg/bowtie_indices.git and bowtie indices can be built from these using the command:
 
   ```
   bowtie-build -f [fasta file] [name of index]
@@ -156,7 +156,7 @@ The pipeline can perform additional optional steps, which include:
   }
   ```
 
-  If you are interested to derive the rna profile of your fastq files you will need to specify:
+  If you are interested to derive the rna profile of your fastq files you will also need to specify:
   ```
   params {
     rna_source_profile = true
