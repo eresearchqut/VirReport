@@ -570,7 +570,8 @@ if (params.virreport_viral_db) {
             -evalue ${params.blastn_evalue} \
             -num_threads ${task.cpus} \
             -outfmt '6 qseqid sgi sacc length pident mismatch gapopen qstart qend qlen sstart send slen sstrand evalue bitscore qcovhsp stitle staxids qseq sseq sseqid qcovs qframe sframe' \
-            -max_target_seqs 50
+            -max_target_seqs 50 \
+            -word_size 20
         """
     }
 
