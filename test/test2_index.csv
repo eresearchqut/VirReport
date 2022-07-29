@@ -1,0 +1,3 @@
+sampleid,samplepath
+test_pair,test/test_pair_1.fastq.gz
+test_pair,test/test_pair_2.fastq.gz

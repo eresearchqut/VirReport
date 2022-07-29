@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 """
 Rename header of sequence and format fasta file so there is no line wrapping
@@ -11,8 +11,8 @@ import sys, os.path
 FROM = 0
 
 def __print_contig__(name, contig):
-    print name.strip()
-    print contig.upper()
+    print(name.strip())
+    print(contig.upper())
 
 def scaff_split(lines, cutoff, FROM):
     current_name = lines[0].lstrip('>')
@@ -41,5 +41,5 @@ if __name__ == "__main__":
             FROM = int(sys.argv[3])
         scaff_split(lines, cutoff, FROM)
     else:
-        print "i need to be given input!"
-        print "usage: extract_seqs.py <input.fa> MIN_LENGTH"
+        print("i need to be given input!")
+        print("usage: extract_seqs.py <input.fa> MIN_LENGTH")

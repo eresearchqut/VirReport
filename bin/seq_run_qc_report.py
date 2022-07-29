@@ -3,11 +3,12 @@ import pandas as pd
 from functools import reduce
 import glob
 import re
-import csv
 import os
-import numpy as np
+import time
 
 def main():
+
+    timestr = time.strftime("%Y%m%d-%H%M%S")
 
     raw_read_counts_dict = {}
     for umitools_out in glob.glob("*_umi_tools.log"):
@@ -142,7 +143,7 @@ def main():
     #Retain 2 decimal point format for GC content column
     run_data_df.loc[:, 'gc content'] = run_data_df['gc content'].map('{:.2f}'.format)
     run_data_df = run_data_df.sort_values("sample")
-    run_data_df.to_csv('run_qc_report.txt', index = None, sep="\t")
+    run_data_df.to_csv("run_qc_report_" + timestr + ".txt", index = None, sep="\t")
 
 if __name__ == '__main__':
     main()
