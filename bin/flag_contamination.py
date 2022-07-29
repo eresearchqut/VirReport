@@ -2,8 +2,6 @@
 import argparse
 import pandas as pd
 import numpy as np
-import os
-import subprocess
 from functools import reduce
 import glob
 import time
@@ -17,7 +15,8 @@ def main():
     parser.add_argument("--read_size", type=str)
     parser.add_argument("--method", type=str)
     parser.add_argument("--viral_db", type=str)
-    parser.add_argument("--dedup", type=str)   
+    parser.add_argument("--dedup", type=str)
+    parser.add_argument("--diagno", type=str)
 
     args = parser.parse_args()
     threshold = args.threshold
@@ -25,6 +24,7 @@ def main():
     method = args.method
     viral_db = args.viral_db
     dedup = args.dedup
+    diagno = args.diagno
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
 
@@ -48,10 +48,11 @@ def main():
         run_data["contamination_flag"] = np.where(run_data["count_max"] <= 10, "NA", run_data["contamination_flag"])
         run_data = run_data.sort_values(["Sample", "stitle"], ascending = (True, True))
         run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
-        #regulated_data = run_data[run_data['stitle'].str.contains('regulated')]
-        #regulated_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_PVirDB_regulated.txt", index=None, sep="\t",float_format="%.2f")
-        #endemic_data = run_data[run_data['stitle'].str.contains('endemic')]
-        #endemic_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_PVirDB_endemic.txt", index=None, sep="\t",float_format="%.2f")
+        if diagno == "true":
+            regulated_data = run_data[run_data['stitle'].str.contains('regulated')]
+            regulated_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db_regulated" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
+            endemic_data = run_data[run_data['stitle'].str.contains('endemic')]
+            endemic_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db_endemic" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
 
     else:
         if dedup == "true":

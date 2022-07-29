@@ -229,15 +229,8 @@ if (params.qualityfilter) {
         output:
         file "${sampleid}_umi_tools.log"
         file "${sampleid}_truseq_adapter_cutadapt.log"
-        file "${sampleid}_qual_filtering_cutadapt.log"
-        file "${sampleid}_quality_trimmed.fastq.gz"
-
         file "${sampleid}_umi_tools.log" into umi_tools_results
-        file "${sampleid}_qual_filtering_cutadapt.log" into cutadapt_qual_filt_results
-
-        tuple val(sampleid), file("${sampleid}_quality_trimmed.fastq.gz") into qc_post_qual_trimming_ch
-        tuple val(sampleid), file("${sampleid}_quality_trimmed.fastq") into derive_usable_reads_ch
-        tuple val(sampleid), file("${sampleid}_umi_cleaned.fastq.gz") into rna_profile_ch
+        tuple val(sampleid), file("${sampleid}_umi_cleaned.fastq.gz") into rna_profile_ch, qc_post_qual_trimming_ch
         
 
         script:
@@ -257,13 +250,6 @@ if (params.qualityfilter) {
                             -S ${sampleid}_umi_cleaned.fastq.gz > ${sampleid}_umi_tools.log
         
         rm ${sampleid}_trimmed.fastq.gz
-
-        cutadapt -j ${task.cpus} \
-                --trim-n --max-n 0 -m 18 -q 30 \
-                -o ${sampleid}_quality_trimmed.fastq \
-                ${sampleid}_umi_cleaned.fastq.gz > ${sampleid}_qual_filtering_cutadapt.log
-
-        pigz --best --force -p ${task.cpus} -r ${sampleid}_quality_trimmed.fastq -c > ${sampleid}_quality_trimmed.fastq.gz
         """
     }
 
@@ -281,12 +267,23 @@ if (params.qualityfilter) {
         file "${sampleid}_fastp.html"
         file "${sampleid}_read_length_dist.pdf"
         file "${sampleid}_read_length_dist.txt"
+        file "${sampleid}_quality_trimmed.fastq.gz"
+        file "${sampleid}_qual_filtering_cutadapt.log"
 
+        file "${sampleid}_qual_filtering_cutadapt.log" into cutadapt_qual_filt_results
+        tuple val(sampleid), file("${sampleid}_quality_trimmed.fastq") into derive_usable_reads_ch
         file "${sampleid}_fastp.json" into fastp_results
         file "${sampleid}_read_length_dist.txt" into read_length_dist_results
 
         script:
         """
+        cutadapt -j ${task.cpus} \
+                --trim-n --max-n 0 -m 18 -q 30 \
+                -o ${sampleid}_quality_trimmed.fastq \
+                ${sampleid}_umi_cleaned.fastq.gz > ${sampleid}_qual_filtering_cutadapt.log
+
+        pigz --best --force -p ${task.cpus} -r ${sampleid}_quality_trimmed.fastq -c > ${sampleid}_quality_trimmed.fastq.gz
+
         fastqc --quiet --threads ${task.cpus} ${sampleid}_quality_trimmed.fastq.gz
 
         fastp --in1=${sampleid}_quality_trimmed.fastq.gz --out1=${sampleid}_fastp_trimmed.fastq.gz \
@@ -301,7 +298,7 @@ if (params.qualityfilter) {
         cutadapt -j ${task.cpus} \
                 --trim-n --max-n 0 -m 5 -q 30 \
                 -o ${sampleid}_quality_trimmed_temp.fastq \
-                ${sampleid}_quality_trimmed.fastq.gz
+                ${sampleid}_umi_cleaned.fastq.gz
         
         fastq2fasta.pl ${sampleid}_quality_trimmed_temp.fastq > ${sampleid}_quality_trimmed.fasta
         
@@ -393,9 +390,8 @@ if (params.qualityfilter) {
         file "${sampleid}_blacklist_filter.log"
         file "${sampleid}_${params.minlen}-${params.maxlen}nt.fastq.gz"
         
-        tuple val(sampleid), file(fastqfile), file("${sampleid}_${params.minlen}-${params.maxlen}nt.fastq") into denovo_ch
+        tuple val(sampleid), file(fastqfile), file("${sampleid}_${params.minlen}-${params.maxlen}nt.fastq") into denovo_ch, synthetic_oligos_ch
         tuple val(sampleid), file("${sampleid}_${params.minlen}-${params.maxlen}nt.fastq") into virusdetect_ch
-        tuple val(sampleid), file("${sampleid}_${params.minlen}-${params.maxlen}nt.fastq") into spades_ch
         
         file ("*_18-25nt_cutadapt.log") into cutadapt_18_25nt_results
         file ("*_21-22nt_cutadapt.log") into cutadapt_21_22nt_results
@@ -437,7 +433,7 @@ if (params.qualityfilter) {
         file ('*') from umi_tools_results.collect().ifEmpty([]) 
 
         output:
-        file "run_qc_report.txt"
+        file "run_qc_report*.txt"
         file "run_read_size_distribution.pdf"
         
         script:
@@ -460,9 +456,8 @@ else {
         output:
         file "${sampleid}_${size_range}_cutadapt.log"
         file "${sampleid}_${size_range}.fastq"
-        tuple val(sampleid), file("unzipped.fastqfile"), file("${sampleid}_${size_range}.fastq") into denovo_ch
+        tuple val(sampleid), file("unzipped.fastqfile"), file("${sampleid}_${size_range}.fastq") into denovo_ch, synthetic_oligos_ch
         tuple val(sampleid), file("${sampleid}_${size_range}.fastq") into virusdetect_ch
-        tuple val(sampleid), file("${sampleid}_${size_range}.fastq") into spades_ch
 
         script:
         """
@@ -656,26 +651,26 @@ if (params.virreport_viral_db) {
     }
 
     process COVSTATS_VIRAL_DB {
-    tag "$sampleid"
-    label "setting_5"
-    publishDir "${params.outdir}/01_VirReport/${sampleid}/alignments/viral_db", mode: 'link', overwrite: true
-    containerOptions "${bindOptions}"
-    
-    input:
-    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file(samplefile) from cov_stats_blast_nt_viral_db_ch
+        tag "$sampleid"
+        label "setting_5"
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/alignments/viral_db", mode: 'link', overwrite: true
+        containerOptions "${bindOptions}"
+        
+        input:
+        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file(samplefile) from cov_stats_blast_nt_viral_db_ch
 
-    output:
-    file "${sampleid}_${params.minlen}-${params.maxlen}*"
-    file("${sampleid}_${size_range}_top_scoring_targets_with_cov_stats_viral_db.txt") into contamination_flag_viral_db
-    
-    script:
-    """
-    if [[ ${params.dedup} == true ]]; then
-        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --blastdbpath ${blast_viral_db_dir}/${blast_viral_db_name} --dedup true --mode viral_db --cpu ${task.cpus} --diagno ${params.diagno}
-    else
-        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --blastdbpath ${blast_viral_db_dir}/${blast_viral_db_name} --dedup false --mode viral_db --cpu ${task.cpus} --diagno ${params.diagno}
-    fi
-    """
+        output:
+        file "${sampleid}_${params.minlen}-${params.maxlen}*"
+        file("${sampleid}_${size_range}_top_scoring_targets_with_cov_stats_viral_db.txt") into contamination_flag_viral_db
+        
+        script:
+        """
+        if [[ ${params.dedup} == true ]]; then
+            filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --blastdbpath ${blast_viral_db_dir}/${blast_viral_db_name} --dedup true --mode viral_db --cpu ${task.cpus} --diagno ${params.diagno}
+        else
+            filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --blastdbpath ${blast_viral_db_dir}/${blast_viral_db_name} --dedup false --mode viral_db --cpu ${task.cpus} --diagno ${params.diagno}
+        fi
+        """
     }
     if (params.contamination_detection_viral_db) {
         process CONTAMINATION_DETECTION_VIRAL_DB {
@@ -690,7 +685,7 @@ if (params.virreport_viral_db) {
 
             script:
             """
-            flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --viral_db true
+            flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --viral_db true --diagno ${params.diagno}
             """
         }
     }
@@ -911,34 +906,34 @@ if (params.virreport_ncbi) {
 
 if (params.virusdetect) {
     process VIRUS_DETECT {
-    tag "$sampleid"
-    label "setting_6"
-    containerOptions "${bindOptions}"
+        tag "$sampleid"
+        label "setting_6"
+        containerOptions "${bindOptions}"
 
-    input:
-    tuple val(sampleid), file(samplefile) from virusdetect_ch
+        input:
+        tuple val(sampleid), file(samplefile) from virusdetect_ch
 
-    output:
-    //file "${sampleid}_${size_range}_temp/*"
-    tuple val(sampleid), \
-          file(samplefile), \
-          file("${sampleid}_${size_range}.combined") into virus_identify_ch
+        output:
+        //file "${sampleid}_${size_range}_temp/*"
+        tuple val(sampleid), \
+            file(samplefile), \
+            file("${sampleid}_${size_range}.combined") into virus_identify_ch
 
-    script:
-    """
-    virus_detect.pl --thread_num ${task.cpus}  \
-                    --reference ${params.virusdetect_db_path} \
-                    ${samplefile} \
-                    --depth_cutoff 2 
+        script:
+        """
+        virus_detect.pl --thread_num ${task.cpus}  \
+                        --reference ${params.virusdetect_db_path} \
+                        ${samplefile} \
+                        --depth_cutoff 2 
 
-    cp ${sampleid}_${size_range}_temp/${sampleid}_${size_range}.combined .
-    """
+        cp ${sampleid}_${size_range}_temp/${sampleid}_${size_range}.combined .
+        """
     }   
 
     process VIRUS_IDENTIFY {
         publishDir "${params.outdir}/02_VirusDetect", mode: 'link', overwrite: true
         tag "$sampleid"
-        label "setting_6"
+        label "setting_4"
         containerOptions "${bindOptions}"
 
         input:
@@ -976,7 +971,18 @@ if (params.virusdetect) {
 
         mv result_${sampleid}_${size_range} ${sampleid}
         mv ${sampleid}_${size_range}.combined ${sampleid}
-        cp ${sampleid}/${sampleid}_${size_range}.blastn.summary.txt .
+
+        #if VirusDetect does not detect a virus hit via blastn, no summary files will be created
+        #Exit process
+        if [[ ! -f ${sampleid}/${sampleid}_${size_range}.blastn.summary.txt ]]; then
+            touch ${sampleid}/${sampleid}_${size_range}.blastn.summary.txt
+            touch ${sampleid}_${size_range}.blastn.summary.spp.txt ${sampleid}/${sampleid}_${size_range}.blastn.summary.spp.txt
+            touch ${sampleid}_${size_range}.blastn.summary.filtered.txt ${sampleid}/${sampleid}_${size_range}.blastn.summary.filtered.txt
+            exit 0
+        else
+            cp ${sampleid}/${sampleid}_${size_range}.blastn.summary.txt .
+        fi
+
         cut -f2 ${sampleid}_${size_range}.blastn.summary.txt | grep -v Reference > ${sampleid}_${size_range}.blastn_ids.txt
         cp ${params.blast_db_dir}/taxdb.btd .
         cp ${params.blast_db_dir}/taxdb.bti .
@@ -1003,7 +1009,7 @@ if (params.virusdetect) {
         grep -v retrovirus ${sampleid}_${size_range}.blastn.summary.tmp.txt > ${sampleid}_${size_range}.blastn.summary.filtered.txt
         rm taxdb.btd
         rm taxdb.bti
-        cp ${sampleid}_${size_range}.blastn.summary.spp.txt ${sampleid}/${sampleid}_${size_range}.blastn_spp.txt
+        cp ${sampleid}_${size_range}.blastn.summary.spp.txt ${sampleid}/${sampleid}_${size_range}.blastn.summary.spp.txt
         cp ${sampleid}_${size_range}.blastn.summary.filtered.txt ${sampleid}/${sampleid}_${size_range}.blastn.summary.filtered.txt
         """
     }
@@ -1011,25 +1017,24 @@ if (params.virusdetect) {
     process VIRUS_DETECT_BLASTN_SUMMARY {
         publishDir "${params.outdir}/02_VirusDetect/Summary", mode: 'link', overwrite: true
         label "local"
-        tag "$sampleid"
 
         input:
         file ('*') from virusdetectblastnsummary_flag.collect().ifEmpty([])
 
         output:
-        file ("run_summary_virusdetect_21-22nt.txt")
+        file ("run_summary_top_scoring_targets_virusdetect_21-22nt.txt")
 
         script:
         """
-        cat *nt.blastn.summary.spp.txt | sort -k1,1 -k13,13 | grep -v "%Identity" >  run_summary_virusdetect_21-22nt.txt
-        sed -i '1 i\\Sample\tReference\tLength\tCoverage (%)\t#contig\tDepth\tDepth (Norm)\t%Identity\t%Iden Max\t%Iden Min\tGenus\tDescription\tSpecies' run_summary_virusdetect_21-22nt.txt
+        touch run_summary_top_scoring_targets_virusdetect_21-22nt.txt
+        echo "Sample\tReference\tLength\tCoverage (%)\t#contig\tDepth\tDepth (Norm)\t%Identity\t%Iden Max\t%Iden Min\tGenus\tDescription\tSpecies" >> run_summary_top_scoring_targets_virusdetect_21-22nt.txt
+        [ -n "\$(find -name '*nt.blastn.summary.spp.txt' | head -1)" ] && cat *nt.blastn.summary.spp.txt | sort -k1,1 -k13,13 | grep -v "%Identity" >>  run_summary_top_scoring_targets_virusdetect_21-22nt.txt
         """
     }
 
     process VIRUS_DETECT_BLASTN_SUMMARY_FILTERED {
-        label "local"
         publishDir "${params.outdir}/02_VirusDetect/Summary", mode: 'link', overwrite: true
-        tag "$sampleid"
+        label "local"
 
         input:
         file ('*') from virusdetectblastnsummaryfiltered_flag.collect().ifEmpty([])
@@ -1039,12 +1044,31 @@ if (params.virusdetect) {
 
         script:
         """
-        cat *nt.blastn.summary.filtered.txt | sort -k1,1 -k14,14 | grep -v "%Identity" > run_summary_top_scoring_targets_virusdetect_21-22nt_filtered.txt
-        sed -i '1 i\\Sample\tReference\tLength\tCoverage (%)\t#contig\tDepth\tDepth (Norm)\t%Identity\t%Iden Max\t%Iden Min\tGenus\tDescription\tSpecies' run_summary_top_scoring_targets_virusdetect_21-22nt_filtered.txt
+        touch run_summary_top_scoring_targets_virusdetect_21-22nt_filtered.txt
+        echo "Sample\tReference\tLength\tCoverage (%)\t#contig\tDepth\tDepth (Norm)\t%Identity\t%Iden Max\t%Iden Min\tGenus\tDescription\tSpecies" >> run_summary_top_scoring_targets_virusdetect_21-22nt_filtered.txt
+        [ -n "\$(find -name '*nt.blastn.summary.filtered.txt' | head -1)" ] && cat *nt.blastn.summary.filtered.txt | sort -k1,1 -k13,13 | grep -v "%Identity" >> run_summary_top_scoring_targets_virusdetect_21-22nt_filtered.txt
         """
     }
 }
 
+if (params.synthetic_oligos) {
+    process SYNTHETIC_OLIGOS {
+        tag "$sampleid"
+        label "setting_4"
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/Synthetic_oligos", mode: 'link', overwrite: true
+        
+        input:
+        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size) from synthetic_oligos_ch
+
+        output:
+        file ("${sampleid}_${size_range}*")
+
+        script:
+        """
+        synthetic_oligos.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize ${fastq_filt_by_size} --read_size ${size_range}
+        """
+    }
+}
 /*
 if (params.blastp || params.tblastn) {
     process getorf {

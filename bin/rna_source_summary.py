@@ -87,14 +87,14 @@ def main():
                     leftover = int(re.sub(r' \(.*\)', '', leftover).strip())
                     
         f.close()
-        read_origin_dict[sample] = [rRNA, mt_pt_other, plant_tRNA, plant_nc, artefacts,\
+        read_origin_dict[sample] = [rRNA, plant_tRNA, mt_pt_other, plant_nc, artefacts,\
                                     plant_miRNA, viral, leftover, total_reads]
         #sort dictionary by key (ie sample name)
         read_origin_dict = collections.OrderedDict(sorted(read_origin_dict.items()))
     
     #convert dictionary into pandas df
     read_origin_df = pd.DataFrame([([k] + v) for k, v in read_origin_dict.items()], columns=['sample','rRNA_total', 
-                                'mitochondrial_and_plastid_genes', 'plant_tRNA', 'plant_non_coding_RNA',
+                                'plant_tRNA', 'mitochondrial_and_plastid_genes', 'plant_non_coding_RNA',
                                 'PhiX_and_artefacts', 'plant_miRNA', 'virus_and_viroids', 'leftover', 'total_reads'])              
     
     read_origin_df = read_origin_df.set_index(read_origin_df.columns[0])
@@ -107,7 +107,7 @@ def main():
 
     pc_df.to_csv('read_origin_detailed_pc.txt', sep="\t", float_format="%.2f")
 
-    pc_df.plot.barh(stacked=True, color=['#000000', '#C5C9C7', '#808080', 'purple', 'red', 'yellow',  '#069AF3', '#15B01A', '#E6E6FA'], figsize=(8,15)).legend(loc='lower center',bbox_to_anchor=(0.5, -0.3))
+    pc_df.plot.barh(stacked=True, color=['#000000', '#C5C9C7', '#808080', 'purple', 'yellow', '#069AF3', '#15B01A', '#E6E6FA'], figsize=(8,15)).legend(loc='lower center',bbox_to_anchor=(0.5, -0.3))
     plt.tight_layout()
     plt.savefig("read_RNA_source.pdf", format='pdf')
     plt.close()

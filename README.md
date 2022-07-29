@@ -2,9 +2,11 @@
 
 
 ## Introduction
-The VirReport pipeline is based upon the scientific workflow manager Nextflow. It was designed to help phytosanitary diagnostics of viruses and viroid pathogens in quarantine facilities. It takes small RNA-Seq fastq files as input. These can either be in raw format (currently only samples specifically prepared with the QIAGEN QIAseq miRNA library kit can be processed this way) or quality-filtered. 
+eresearchqut/VirReport is a bioinformatics pipeline based upon the scientific workflow manager Nextflow. It was designed to help phytosanitary diagnostics of viruses and viroid pathogens in quarantine facilities. It takes small RNA-Seq fastq files as input. These can either be in raw format (currently only samples specifically prepared with the QIAGEN QIAseq miRNA library kit can be processed this way) or quality-filtered.
 
 The pipeline can either perform blast homology searches against a virus database or/and a local copy of NCBI nr and nt databases.
+
+**Pipeline prerequisites:** java 11 or later, Nextflow, and Docker/Singularity/Conda to suit your environment.
 
 ## Pipeline summary
 ![diagram pipeline](docs/images/diagram_pipeline.jpeg)
@@ -33,10 +35,11 @@ The pipeline can perform additional optional steps, which include:
 
 - VirusDetect version 1.8 can also be run in parallel. A summary of the top virus/viroid blastn hits will be separately output (**VIRUS_DETECT, VIRUS_IDENTIFY, VIRUS_DETECT_BLASTN_SUMMARY, VIRUS_DETECT_BLASTN_SUMMARY_FILTERED**)
 
-## Run the Pipeline
-1. Install Nextflow
 
-2. Install Docker, Singularity or Conda
+## Run the Pipeline
+1. Install Nextflow [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation)
+
+2. Install [`Docker`](https://docs.docker.com/get-docker/), [`Singularity`](https://docs.sylabs.io/guides/3.0/user-guide/quick_start.html#quick-installation-steps) or [`Conda`](https://conda.io/miniconda.html) to suit your environment.
 
 3. Download the pipeline and test it on minimal datatests:
 
@@ -70,7 +73,7 @@ The pipeline can perform additional optional steps, which include:
   
 - Run the command:
   ```bash
-  nextflow run eresearchqut/VirReport -profile {docker or singularity or conda} --indexfile index_example.csv
+  nextflow run eresearchqut/VirReport -profile {docker, singularity or conda} --indexfile index_example.csv
   ```  
   setting the profile parameter to one of
   ```
@@ -80,7 +83,7 @@ The pipeline can perform additional optional steps, which include:
   ```  
   to suit your environment.
 
-- By default the pipeline will only retain 21-22 nt long sRNA reads for downstream analysis but you can change this range in the nextflow.config file. For instance:
+- By default the pipeline will only retain 21-22 nt long sRNA reads for downstream analysis but you can change this range in the nextflow.config file. For instance this set of parameters will target 21-25nt long reads:
   ```
   params {
     minlen = '18'
@@ -113,7 +116,7 @@ The pipeline can perform additional optional steps, which include:
     ```
     or add it in your nextflow command:  
     ```
-    nextflow run eresearchqut/VirReport -profile {docker or singularity or conda} --virreport_ncbi
+    nextflow run eresearchqut/VirReport -profile {docker, singularity or conda} --virreport_ncbi
     ```  
     Download these locally, following the detailed steps available at https://www.ncbi.nlm.nih.gov/books/NBK569850/. 
     Create a folder where you will store your NCBI databases. It is good practice to include the date of download. For instance:  
@@ -137,32 +140,36 @@ The pipeline can perform additional optional steps, which include:
     }
     ```  
 
-  * If you want to run VirusDetect in parallel, then either set the paramter `--virusdetect` to `true` in your config file or specify it in your nextflow run command.
-    Specify the path to the VirusDetect viral database directory in the nextflow.config file (using the `--virusdetect_db_path` parameter). These files can be downloaded at http://bioinfo.bti.cornell.edu/ftp/program/VirusDetect/virus_database/v248. For example:
+  * If you want to run VirusDetect in parallel, then either set the parameter `--virusdetect` to `true` in your config file or specify it in your nextflow run command.
+    You will need to download the VirusDetect viral database files at http://bioinfo.bti.cornell.edu/ftp/program/VirusDetect/virus_database/v248. And specify the path to the VirusDetect viral database in the nextflow.config file (using the `--virusdetect_db_path` parameter).  For example:
   ```
   virusdetect_db_path = '/home/gauthiem/code/VirusDetect_v1.8/databases/vrl_plant'
   ```
 
-- If you want to run the initial qualityfilter step on raw fastq files, you will need to specify in the nextflow.config file the directory which holds the required bowtie indices (using the **--bowtie_db_dir** parameter) to: 1) filter non-informative reads (rusing the blacklist bowtie indices for the DERIVE_USABLE_READS process) and 2) derive the origin of the filtered reads obtained (optional RNA_SOURCE_PROFILE process). Examples of fasta files are available at https://github.com/maelyg/bowtie_indices.git and bowtie indices can be built from these using the command:
+- If you want to run the initial qualityfilter step on raw fastq files, you will need to specify in the nextflow.config file the directory which holds the required bowtie indices (using the **--bowtie_db_dir** parameter) to: 1) filter non-informative reads (using the blacklist bowtie indices for the DERIVE_USABLE_READS process) and 2) derive the origin of the filtered reads obtained (optional RNA_SOURCE_PROFILE process). Examples of fasta files are available at https://github.com/maelyg/bowtie_indices.git and bowtie indices can be built from these using Bowtie.
+For instance to derive the bowtie indices for the blacklist, run the following command:
 
   ```
-  bowtie-build -f [fasta file] [name of index]
+  git clone https://github.com/maelyg/bowtie_indices.git
+  gunzip blacklist_v2.fasta.gz
+  bowtie-build -f blacklist_v2.fasta blasklist
   ```
 
-  The location of the bowtie indices will need to be specified in the nextflow.config file:
+  The location of the directory in which the bowtie indices are located will need to be specified in the nextflow.config file:
   ```
   params {
-    bowtie_db_dir = '/path_to_bowtie_idx'
+    bowtie_db_dir = '/path_to_bowtie_idx_directory'
   }
   ```
 
-  If you are interested to derive the rna profile of your fastq files you will need to specify:
+  If you are interested to derive the RNA profile of your fastq files you will need to specify:
   ```
   params {
     rna_source_profile = true
   }
   ```
-  
+  And build the other indices from the fasta files included in https://github.com/maelyg/bowtie_indices.git (i.e. rRNA, plant_tRNA, plant_noncoding, plant_pt_mt_other_genes, artefacts, plant_miRNA, virus).
+
 - Additional optional parameters available include:
   ```     
     --merge-lane: if several fastq files are provided per sample, these will be collapsed together before performing downstream analyses
@@ -185,7 +192,7 @@ The pipeline can perform additional optional steps, which include:
 
   To enable these options, they can either be included in the nextflow run command: 
   ```
-  nextflow run eresearchqut/VirReport -profile {docker or singularity or conda} --indexfile index_example.csv --contamination_detection --virusdetect
+  nextflow run eresearchqut/VirReport -profile {singularity, docker or conda} --indexfile index_example.csv --contamination_detection --virusdetect
   ```
   or the parameter in the nextflow.config file can be udpated. For instance:
   ```

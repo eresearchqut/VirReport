@@ -72,6 +72,7 @@ def main():
             taxonomy_df = pd.read_csv(taxonomy, header=None, sep="\t")
             taxonomy_df.columns =["sacc", "Species"]
             taxonomy_df["Species"] = taxonomy_df["Species"].str.replace("Hop_stunt_viroid_-_citrus","Hop_stunt_viroid")
+            taxonomy_df["Species"] = taxonomy_df["Species"].str.replace("Hop_stunt_viroid;Hop_stunt_viroid","Hop_stunt_viroid")
         #print(taxonomy_df)
 
         #print(raw_data).head(10)
@@ -101,6 +102,7 @@ def main():
         raw_data = raw_data[~raw_data["stitle"].str.contains("resistance protein")]
         raw_data = raw_data[~raw_data["stitle"].str.contains("pararetrovirus")]
         raw_data = raw_data[~raw_data["stitle"].str.contains("transposon")]
+        raw_data = raw_data[~raw_data["stitle"].str.contains("Petunia vein clearing virus-like nonautonomous isolate")]
         
         raw_data = pd.merge(raw_data, taxonomy_df, on=["sacc"])
         raw_data["Species"] = raw_data["Species"].str.replace("_", " ")
@@ -246,7 +248,7 @@ def main():
                 outfile.close()
             
             exit ()
-
+        final_data["stitle"] = final_data["stitle"].str.replace("\._", "_")
         target_dict = {}
         target_dict = pd.Series(final_data.Species_updated.values,index=final_data.sacc).to_dict()
         print (target_dict)
@@ -326,6 +328,8 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
             derivebam = ["samtools", "view", "-@", cpus, "-bS", samoutput]
             subprocess.call(derivebam, stdout=open(bamoutput,"w"))
 
+            subprocess.call(["rm","-r", samoutput])
+
             print("Sorting bam file")
             sortedbamoutput = str(index + ".sorted.bam")
             sorting = ["samtools", "sort", "-@", cpus, bamoutput, "-o", sortedbamoutput]
@@ -336,8 +340,65 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
             indexing = ["samtools", "index", sortedbamoutput]
             subprocess.call(indexing, stdout=open(bamindex,"w"))
 
+            read_counts = ()
+            with open(bowtie_output) as bo:
+                a = " "
+                while(a):
+                    a = bo.readline()
+                    l = a.find("# reads with at least one alignment:") #Gives a non-negative value when there is a match
+                    if ( l >= 0 ):
+                        print(a)
+                        read_counts = a.split(" ")[7]
+            read_counts_dict[refspname] = read_counts
+
+            subprocess.call(["rm","-r", bamoutput])
+
+            #If data needs to be deduplicated
+            dedupbamoutput = str(index + ".dedup.bam")
+            umi_dedup_log = str(index + "_umi_tools.log")
+            dedupbamindex = str(index + ".dedup.bam.bai")
+            dedup_read_counts = ()
+            final_read_counts = ()
+            dup_pc = ()
+            finalbamoutput = ()
+            finalbamindex = ()
+            rpm = ()
+            fpkm = ()
+
+            if dedup == "true":
+                print("Deduping bam file")
+                umitools_dedup = ["umi_tools", "dedup", "-I", sortedbamoutput, "-L", umi_dedup_log]
+                subprocess.call(umitools_dedup, stdout=open(dedupbamoutput,"w"))
+                
+                print("Indexing dedup bam file")
+                dedup_indexing = ["samtools", "index", dedupbamoutput]
+                subprocess.call(dedup_indexing, stdout=open(dedupbamindex,"w"))
+                p = run(["samtools", "view", "-c", "-F", "260", dedupbamoutput], stdout=PIPE, encoding='ascii')
+                
+                dedup_read_counts = int(p.stdout.replace("\n",""))
+                dedup_read_counts_dict[refspname] = dedup_read_counts
+                print(dedup_read_counts_dict)
+                
+                dup_pc = round(100-(int(dedup_read_counts)*100/int(read_counts)))
+                dup_pc_dict[refspname] = dup_pc
+                
+                read_counts_dedup_df = pd.DataFrame(dedup_read_counts_dict.items(),columns=["Species_updated", "Dedup read count"]) 
+                dup_pc_df = pd.DataFrame(dup_pc_dict.items(),columns=["Species_updated", "Dup %"])
+                finalbamoutput = dedupbamoutput
+                finalbamindex = dedupbamindex
+                final_read_counts = dedup_read_counts            
+                
+                subprocess.call(["rm","-r", sortedbamoutput])
+                subprocess.call(["rm","-r", bamindex])
+
+            if dedup == "false":
+                finalbamoutput = sortedbamoutput
+                finalbamindex = bamindex
+                final_read_counts = read_counts
+
             pileup = str(index + ".pileup")
-            derivepileup= ["samtools", "mpileup", "-uf", fastafile, sortedbamoutput, "-o", pileup]
+            derivepileup = ["samtools", "mpileup", "-uf", fastafile, finalbamoutput, "-o", pileup]
+            #subprocess.call(derivepileup, stdout=pileup)
             subprocess.call(derivepileup)
 
             #variant calling
@@ -371,7 +432,7 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
 
             # Get consensus fasta file
             genomecovbed = str(index + "_genome_cov.bed")
-            gencovcall = ["bedtools", "genomecov", "-ibam", sortedbamoutput, "-bga"]
+            gencovcall = ["bedtools", "genomecov", "-ibam", finalbamoutput, "-bga"]
             subprocess.call(gencovcall, stdout=open(genomecovbed,"w"))
 
             # Assign N to nucleotide positions that have zero coverage
@@ -388,10 +449,16 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
             consensuscall = ["bcftools", "consensus", "-f",  maskedfasta, vcfout, "-o", consensus]
             subprocess.call(consensuscall)
 
+            subprocess.call(["rm","-r", pileup])
+            subprocess.call(["rm","-r", vcfout])
+            subprocess.call(["rm","-r", genomecovbed])
+            subprocess.call(["rm","-r", zerocovbed])
+            subprocess.call(["rm","-r", maskedfasta])
+
             # Derive Picard statistics 
             print("Running picard")
             picard_output = (index + "_picard_metrics.txt")
-            picard = ["picard", "CollectWgsMetrics", "-I", str(sortedbamoutput), "-O", str(picard_output), "-R", str(fastafile), "-READ_LENGTH","22", "-COUNT_UNPAIRED", "true"]
+            picard = ["picard", "CollectWgsMetrics", "-I", str(finalbamoutput), "-O", str(picard_output), "-R", str(fastafile), "-READ_LENGTH","22", "-COUNT_UNPAIRED", "true"]
             subprocess.call(picard)
 
             reflen = ()
@@ -416,23 +483,10 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
             PCT_5X_dict[refspname] = PCT_5X
             PCT_10X_dict[refspname] = PCT_10X
             PCT_20X_dict[refspname] = PCT_20X
-            read_counts = ()
-            rpm = ()
-            fpkm = ()
-            with open(bowtie_output) as bo:
-                a = " "
-                while(a):
-                    a = bo.readline()
-                    l = a.find("# reads with at least one alignment:") #Gives a non-negative value when there is a match
-                    if ( l >= 0 ):
-                        print(a)
-                        read_counts = a.split(" ")[7]
-            
-            read_counts_dict[refspname] = read_counts
-            #fpkm = round(int(dedup_read_counts)/(int(reflen)/1000*int(rawfastq_read_counts)/1000000))
-            #rpm = round(int(dedup_read_counts)*1000000/int(rawfastq_read_counts))
-            fpkm = round(int(read_counts)/(int(reflen)/1000*int(rawfastq_read_counts)/1000000))
-            rpm = round(int(read_counts)*1000000/int(rawfastq_read_counts))
+
+            fpkm = round(int(final_read_counts)/(int(reflen)/1000*int(rawfastq_read_counts)/1000000))
+            rpm = round(int(final_read_counts)*1000000/int(rawfastq_read_counts))
+
             rpm_dict[refspname] = rpm
             fpkm_dict[refspname] = fpkm
 
@@ -444,54 +498,12 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
             PCT_5X_df = pd.DataFrame(PCT_5X_dict.items(),columns=["Species_updated", "PCT_5X"])
             PCT_10X_df = pd.DataFrame(PCT_10X_dict.items(),columns=["Species_updated", "PCT_10X"])
             PCT_20X_df = pd.DataFrame(PCT_20X_dict.items(),columns=["Species_updated", "PCT_20X"])
-            
-            #If data needs to be deduplicated
-            dedupbamoutput = str(index + ".dedup.bam")
-            umi_dedup_log = str(index + "_umi_tools.log")
-            dedupbamindex = str(index + ".dedup.bam.bai")
-            dedup_read_counts = ()
-            dup_pc = ()
-
-            if dedup == "true":
-                print("Deduping bam file")
-                dedup = ["umi_tools", "dedup", "-I", sortedbamoutput, "-L", umi_dedup_log]
-                subprocess.call(dedup, stdout=open(dedupbamoutput,"w"))
-                
-                print("Indexing dedup bam file")
-                dedup_indexing = ["samtools", "index", dedupbamoutput]
-                subprocess.call(dedup_indexing, stdout=open(dedupbamindex,"w"))
-                p = run(["samtools", "view", "-c", "-F", "260", dedupbamoutput], stdout=PIPE, encoding='ascii')
-                
-                dedup_read_counts = p.stdout.replace("\n","")
-                dedup_read_counts_dict[refspname] = dedup_read_counts
-                print(dedup_read_counts_dict)
-                
-                dup_pc = round(100-(int(dedup_read_counts)*100/int(read_counts)))
-                dup_pc_dict[refspname] = dup_pc
-                
-                read_counts_dedup_df = pd.DataFrame(dedup_read_counts_dict.items(),columns=["Species_updated", "Dedup read count"]) 
-                dup_pc_df = pd.DataFrame(dup_pc_dict.items(),columns=["Species_updated", "Dup %"])
-                subprocess.call(["rm","-r", sortedbamoutput])
-                subprocess.call(["rm","-r", bamindex])
-        
-            elif dedup == "false":
-                subprocess.call(["rm","-r", dedupbamoutput])
-                subprocess.call(["rm","-r", umi_dedup_log])
-                subprocess.call(["rm","-r", dedupbamindex])
-
-            subprocess.call(["rm","-r", samoutput])
-            subprocess.call(["rm","-r", bamoutput])
-            subprocess.call(["rm","-r", pileup])
-            subprocess.call(["rm","-r", vcfout])
-            subprocess.call(["rm","-r", genomecovbed])
-            subprocess.call(["rm","-r", zerocovbed])
-            subprocess.call(["rm","-r", maskedfasta])
 
             project_files = glob(index + "*ebwt") + glob(index + ".vcf.gz*")
             for fl in project_files:
                 subprocess.call(["rm","-r", fl])
-        except:
-            print("An exception occurred") 
+        except OSError as err:
+            print("OS error: {0}".format(err))
 
     print("Deriving summary table with coverage statistics")
 
