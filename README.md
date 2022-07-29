@@ -15,7 +15,7 @@ The VirReport workflow will perform the following steps by default:
 
 - Retain reads of a given length (21-22 nt long by default) from fastq file(s) provided in index.csv file (**READPROCESSING**)  
 
-- De novo assembly using both Velvet and SPAdes. The contigs obtained are collapsed into scaffolds using cap3. By default, only contigs > 30 bp will be retained (**DENOVO_ASSEMBLY(**)
+- De novo assembly using both Velvet and SPAdes. The contigs obtained are collapsed into scaffolds using cap3. By default, only contigs > 30 bp will be retained (**DENOVO_ASSEMBLY**)
 
 - Run megablast homology search against either a local virus database or NCBI NT/NR databases:
 
