@@ -102,7 +102,7 @@ def main():
         raw_data = raw_data[~raw_data["stitle"].str.contains("resistance protein")]
         raw_data = raw_data[~raw_data["stitle"].str.contains("pararetrovirus")]
         raw_data = raw_data[~raw_data["stitle"].str.contains("transposon")]
-        raw_data = raw_data[~raw_data["stitle"].str.contains("Petunia vein clearing virus-like nonautonomous isolate")]
+        raw_data = raw_data[~raw_data["stitle"].str.contains("Petunia vein clearing virus like nonautonomous isolate")]
         
         raw_data = pd.merge(raw_data, taxonomy_df, on=["sacc"])
         raw_data["Species"] = raw_data["Species"].str.replace("_", " ")

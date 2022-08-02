@@ -665,11 +665,7 @@ if (params.virreport_viral_db) {
         
         script:
         """
-        if [[ ${params.dedup} == true ]]; then
-            filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --blastdbpath ${blast_viral_db_dir}/${blast_viral_db_name} --dedup true --mode viral_db --cpu ${task.cpus} --diagno ${params.diagno}
-        else
-            filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --blastdbpath ${blast_viral_db_dir}/${blast_viral_db_name} --dedup false --mode viral_db --cpu ${task.cpus} --diagno ${params.diagno}
-        fi
+        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --blastdbpath ${blast_viral_db_dir}/${blast_viral_db_name} --dedup ${params.dedup} --mode viral_db --cpu ${task.cpus} --diagno ${params.diagno}
         """
     }
     if (params.contamination_detection_viral_db) {
@@ -685,7 +681,7 @@ if (params.virreport_viral_db) {
 
             script:
             """
-            flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --viral_db true --diagno ${params.diagno}
+            flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --viral_db true --diagno ${params.diagno} --dedup ${params.dedup}
             """
         }
     }
@@ -831,7 +827,7 @@ if (params.virreport_ncbi) {
 
             script:
             """
-            flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method}
+            flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --dedup ${params.dedup}
             """
         }
     }
@@ -931,7 +927,7 @@ if (params.virusdetect) {
     }   
 
     process VIRUS_IDENTIFY {
-        publishDir "${params.outdir}/02_VirusDetect", mode: 'link', overwrite: true
+        publishDir "${params.outdir}/02_VirusDetect", mode: 'link', overwrite: true, pattern: "*/*{references,combined,fa,html,sam,txt,identified,identified_with_depth}"
         tag "$sampleid"
         label "setting_4"
         containerOptions "${bindOptions}"
