@@ -1535,7 +1535,7 @@ sub plot_result
 	my %index;
 
 	my $out_table = '';
-	my $out_table_txt = "Sample\tReference\tLength\tCoverage (%)\t#contig\tDepth\tDepth (Norm)\t%Identity\t\t%Iden Max\t%Iden Min\tGenus\tDescription\n";
+	my $out_table_txt = "Sample\tReference\tLength\tCoverage (%)\t#contig\tDepth\tDepth (Norm)\t%Identity\t%Iden Max\t%Iden Min\tGenus\tDescription\n";
 	#my $string = '';
 	#my $string2 = '';
 	#$string = 'Reference\tLength\tCoverage (%)\t#contig\tDepth\tDepth (Norm)\t%Identity\t\t%Iden Max\t%Iden Min\tGenus\tDescription';

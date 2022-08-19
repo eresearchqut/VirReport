@@ -37,40 +37,40 @@ def main():
     
     if viral_db == "true":
         if dedup == "true":
-            run_data = run_data[["Sample","Species","sacc","naccs","length","slen","cov","av-pident","stitle", "qseqids","ICTV_information", "Mean coverage","Read count","Dedup read count","Dup %","RPM","FPKM","PCT_1X","PCT_5X","PCT_10X","PCT_20X"]]
+            run_data = run_data[["Sample","Species","sacc","naccs","length","slen","cov","av-pident","stitle", "qseqids", "contig_ind_lengths", "cumulative_contig_len", "contig_lenth_min", "contig_lenth_max", "ICTV_information", "Mean read depth","Read count","Dedup read count","Dup %","FPKM","PCT_5X","PCT_10X",]]
         else:
-            run_data = run_data[["Sample","Species","sacc","naccs","length","slen","cov","av-pident","stitle", "qseqids","ICTV_information", "Mean coverage","Read count","RPM","FPKM","PCT_1X","PCT_5X","PCT_10X","PCT_20X"]]
+            run_data = run_data[["Sample","Species","sacc","naccs","length","slen","cov","av-pident","stitle", "qseqids", "contig_ind_lengths", "cumulative_contig_len", "contig_lenth_min", "contig_lenth_max", "ICTV_information", "Mean read depth","Read count","RPM","FPKM","PCT_5X","PCT_10X",]]
         
         run_data["FPKM"] = run_data["FPKM"].astype(float)
-        run_data["count_max"] = run_data.groupby(["Species"])["FPKM"].transform(max)
-        run_data["threshold_value"]=run_data["count_max"]*threshold
+        run_data["FPKM_max"] = run_data.groupby(["Species"])["FPKM"].transform(max)
+        run_data["threshold_value"]=run_data["FPKM_max"]*threshold
         run_data["contamination_flag"] = np.where(run_data["FPKM"] <= run_data["threshold_value"], True, False)
-        run_data["contamination_flag"] = np.where(run_data["count_max"] <= 10, "NA", run_data["contamination_flag"])
+        run_data["contamination_flag"] = np.where(run_data["FPKM_max"] <= 10, "NA", run_data["contamination_flag"])
         run_data = run_data.sort_values(["Sample", "stitle"], ascending = (True, True))
         run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
-        if diagno == "true":
-            regulated_data = run_data[run_data['stitle'].str.contains('regulated')]
-            regulated_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db_regulated" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
-            endemic_data = run_data[run_data['stitle'].str.contains('endemic')]
-            endemic_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db_endemic" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
+        #if diagno == "true":
+        #    regulated_data = run_data[run_data['stitle'].str.contains('regulated')]
+        #    regulated_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db_regulated" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
+        #    endemic_data = run_data[run_data['stitle'].str.contains('endemic')]
+        #    endemic_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db_endemic" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
 
     else:
         if dedup == "true":
-            run_data = run_data[["Sample","sacc","naccs","length","slen","cov","av-pident","qseqids","Species","Mean coverage","Read count","Dedup read count","Dup %","RPM","FPKM","PCT_1X","PCT_5X","PCT_10X","PCT_20X"]]
+            run_data = run_data[["Sample","Species","sacc","naccs","length","slen","cov","av-pident","stitle","qseqids","contig_ind_lengths","cumulative_contig_len","contig_lenth_min","contig_lenth_max","Mean read depth","Read count","Dedup read count","Dup %","FPKM","PCT_5X","PCT_10X"]]
         else:
-            run_data = run_data[["Sample","sacc","naccs","length","slen","cov","av-pident","qseqids","Species","Mean coverage","Read count","RPM","FPKM","PCT_1X","PCT_5X","PCT_10X","PCT_20X"]]
+            run_data = run_data[["Sample","Species","sacc","naccs","length","slen","cov","av-pident","stitle","qseqids","contig_ind_lengths","cumulative_contig_len","contig_lenth_min","contig_lenth_max","Mean read depth","Read count","FPKM","PCT_5X","PCT_10X"]]
         #testing both FPKM and RPM
         if method == "FPKM":
-            run_data["count_max"] = run_data.groupby(["Species"])["FPKM"].transform(max)
-            run_data["threshold_value"]=run_data["count_max"]*threshold
+            run_data["FPKM_max"] = run_data.groupby(["Species"])["FPKM"].transform(max)
+            run_data["threshold_value"]=run_data["FPKM_max"]*threshold
             run_data["contamination_flag"] = np.where(run_data["FPKM"] <= run_data["threshold_value"], True, False)
-            run_data["contamination_flag"] = np.where(run_data["count_max"] <= 10, "NA", run_data["contamination_flag"])
+            run_data["contamination_flag"] = np.where(run_data["FPKM_max"] <= 10, "NA", run_data["contamination_flag"])
         
         elif method == "read_counts_normalised":
-            run_data["count_max"] = run_data.groupby(["Species"])["read_counts_normalised"].transform(max)
-            run_data["threshold_value"]=run_data["count_max"]*threshold
+            run_data["FPKM_max"] = run_data.groupby(["Species"])["read_counts_normalised"].transform(max)
+            run_data["threshold_value"]=run_data["FPKM_max"]*threshold
             run_data["contamination_flag"] = np.where(run_data["read_counts_normalised"] <= run_data["threshold_value"], True, False)
-            run_data["contamination_flag"] = np.where(run_data["count_max"] <= 10, "NA", run_data["contamination_flag"])
+            run_data["contamination_flag"] = np.where(run_data["FPKM_max"] <= 10, "NA", run_data["contamination_flag"])
         
         run_data = run_data.sort_values(["Sample", "Species"], ascending = (True, True))
         run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_ncbi_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")

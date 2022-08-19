@@ -50,16 +50,16 @@ def main():
         if len(raw_data) == 0:
             print("DataFrame is empty!")
             csv_file1 = open(sample + "_" + read_size + "_all_targets_with_scores.txt", "w")
-            csv_file1.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tSpecies\tRNA_type\tSpecies_updated\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score")
+            csv_file1.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tSpecies\tRNA_type\tSpecies_updated\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score")
             csv_file1.close()
             csv_file2 = open(sample + "_" + read_size + "_top_scoring_targets.txt", "w")
-            csv_file2.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tSpecies\tRNA_type\tSpecies_updated\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score")       
+            csv_file2.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tSpecies\tRNA_type\tSpecies_updated\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score")       
             csv_file2.close()
             csv_file3 = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats.txt", "w")
             if dedup == "true": 
-                csv_file3.write("Sample\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tSpecies\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score\tMean coverage\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_10X\tPCT_20X")
+                csv_file3.write("Sample\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tSpecies\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score\tMean read depth\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_10X\tPCT_20X")
             else:
-                csv_file3.write("Sample\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tSpecies\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score\tMean coverage\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_10X\tPCT_20X")
+                csv_file3.write("Sample\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tSpecies\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score\tMean read depth\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_10X\tPCT_20X")
             csv_file3.close()
             exit ()
 
@@ -133,16 +133,16 @@ def main():
         if len(raw_data.Species.value_counts()) == 0:
             print ("Dataframe has no targetted viruses or viroids")
             csv_file1 = open(sample + "_" + read_size + "_all_targets_with_scores.txt", "w")
-            csv_file1.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tSpecies\tRNA_type\tSpecies_updated\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score")
+            csv_file1.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tSpecies\tRNA_type\tSpecies_updated\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score")
             csv_file1.close()
             csv_file2 = open(sample + "_" + read_size + "_top_scoring_targets.txt", "w")
-            csv_file2.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tSpecies\tRNA_type\tSpecies\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score")       
+            csv_file2.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tSpecies\tRNA_type\tSpecies\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score")       
             csv_file2.close()
             csv_file3 = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats.txt", "w")
             if dedup == "true":
-                csv_file3.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
+                csv_file3.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tMean read depth\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
             else:
-                csv_file3.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
+                csv_file3.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tMean read depth\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
             csv_file3.close()
             exit ()
 
@@ -221,7 +221,7 @@ def main():
         target_dict = pd.Series(filtered_data.Species_updated.values,index=filtered_data.sacc).to_dict()
         print(filtered_data)
         print (target_dict)
-        filtered_data = filtered_data[["sacc","Species","Species_updated","naccs","length","slen","cov","av-pident","stitle","qseqids","total_score"]]
+        filtered_data = filtered_data[["sacc","Species","Species_updated","naccs","length","slen","cov","av-pident","stitle","qseqids","contig_ind_lengths","cumulative_contig_len","contig_lenth_min","contig_lenth_max","total_score"]]
         print(filtered_data)
         cov_stats (blastdbpath, cpus, dedup, fastqfiltbysize, filtered_data, rawfastq, read_size, sample, target_dict, targets, targetspath, mode, diagno)
 
@@ -231,20 +231,20 @@ def main():
         if len(final_data) == 0:
             print("DataFrame is empty!")
             if diagno == "true":
-                extension = ("_top_scoring_targets_with_cov_stats_viral_db.txt", "_top_scoring_targets_with_cov_stats_viral_db_regulated.txt", "_top_scoring_targets_with_cov_stats_viral_db_endemic.txt")
-                for ext in extension:
-                    outfile = open(sample + "_" + read_size + ext, 'w')
-                    if dedup == "true":
-                        outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
-                    else:
-                        outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
-                    outfile.close()
+                #extension = ("_top_scoring_targets_with_cov_stats_viral_db.txt", "_top_scoring_targets_with_cov_stats_viral_db_regulated.txt", "_top_scoring_targets_with_cov_stats_viral_db_endemic.txt")
+                #for ext in extension:
+                outfile = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_viral_db.txt", 'w')
+                if dedup == "true":
+                    outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean read depth\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
+                else:
+                    outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean read depth\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
+                outfile.close()
             else:
                 outfile = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_viral_db.txt", "w")
                 if dedup == "true":
-                    outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
+                    outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean read depth\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
                 else:
-                    outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean coverage\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
+                    outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean read depth\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
                 outfile.close()
             
             exit ()
@@ -490,7 +490,7 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
             rpm_dict[refspname] = rpm
             fpkm_dict[refspname] = fpkm
 
-            cov_df = pd.DataFrame(cov_dict.items(),columns=["Species_updated", "Mean coverage"])
+            cov_df = pd.DataFrame(cov_dict.items(),columns=["Species_updated", "Mean read depth"])
             read_counts_df = pd.DataFrame(read_counts_dict.items(),columns=["Species_updated", "Read count"])
             rpm_df = pd.DataFrame(rpm_dict.items(),columns=["Species_updated", "RPM"])
             fpkm_df = pd.DataFrame(fpkm_dict.items(),columns=["Species_updated", "FPKM"])
@@ -514,7 +514,7 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
 
     full_table = reduce(lambda left,right: pd.merge(left,right,on=["Species_updated"],how='outer'), dfs)
 
-    full_table["Mean coverage"] = full_table["Mean coverage"].astype(float)
+    full_table["Mean read depth"] = full_table["Mean read depth"].astype(float)
     full_table["PCT_1X"] = full_table["PCT_1X"].astype(float)
     full_table["PCT_5X"] = full_table["PCT_5X"].astype(float)
     full_table["PCT_10X"] = full_table["PCT_10X"].astype(float)
@@ -545,13 +545,13 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
     elif mode == 'viral_db':
         full_table = full_table.rename(columns={"Species_updated": "Species"})
         full_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_viral_db.txt", index=None, sep="\t",float_format="%.2f")
-        if diagno == "true":
-            if [full_table['stitle'].str.contains('regulated')]:
-                regulated_table = full_table[full_table['stitle'].str.contains('regulated')]
-                regulated_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_viral_db_regulated.txt", index=None, sep="\t",float_format="%.2f")
-            if [full_table['stitle'].str.contains('endemic')]:
-                endemic_table = full_table[full_table['stitle'].str.contains('endemic')]
-                endemic_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_viral_db_endemic.txt", index=None, sep="\t",float_format="%.2f")
+        #if diagno == "true":
+        #    if [full_table['stitle'].str.contains('regulated')]:
+        #        regulated_table = full_table[full_table['stitle'].str.contains('regulated')]
+        #        regulated_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_viral_db_regulated.txt", index=None, sep="\t",float_format="%.2f")
+        #    if [full_table['stitle'].str.contains('endemic')]:
+        #        endemic_table = full_table[full_table['stitle'].str.contains('endemic')]
+        #        endemic_table.to_csv(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_viral_db_endemic.txt", index=None, sep="\t",float_format="%.2f")
 
 def max_avpid(df):
     max_row = df["av-pident"].max()

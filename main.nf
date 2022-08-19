@@ -544,7 +544,7 @@ if (params.virreport_viral_db) {
         output:
         file "${sampleid}_cap3_${size_range}_blastn_vs_viral_db.bls"
         file "${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls"
-        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}_blastn_vs_viral_db.bls"), file("${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls") into filter_blast_nt_viral_db_cap3_ch
+        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}.fasta"), file("${sampleid}_cap3_${size_range}_blastn_vs_viral_db.bls"), file("${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls") into filter_blast_nt_viral_db_cap3_ch
 
         script:
         """
@@ -575,7 +575,7 @@ if (params.virreport_viral_db) {
         tag "$sampleid"
 
         input:
-        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}_blastn_vs_viral_db.bls"), file("${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls") from filter_blast_nt_viral_db_cap3_ch
+        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}.fasta"), file("${sampleid}_cap3_${size_range}_blastn_vs_viral_db.bls"), file("${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls") from filter_blast_nt_viral_db_cap3_ch
 
         output:
         file "summary_${sampleid}_cap3_${size_range}_*_vs_viral_db.bls_viruses_viroids_ICTV*.txt"
@@ -595,18 +595,21 @@ if (params.virreport_viral_db) {
                 #summarise the blast files
                 java -jar ${projectDir}/bin/BlastTools.jar -t blastn \${var}.txt
 
-                #only retain hits to plant viruses (regulated/edemic/LandPlant)
-                c1grep  "virus\\|viroid" summary_\${var}.txt > summary_\${var}_filtered.txt
+                sequence_length.py --virus_list summary_\${var}.txt --contig_fasta ${sampleid}_cap3_${size_range}.fasta --sample_name ${sampleid} --read_size ${size_range} --out  summary_\${var}_with_contig_lengths.txt
+
+                #only retain hits to plant viruses
+                c1grep  "virus\\|viroid" summary_\${var}_with_contig_lengths.txt > summary_\${var}_filtered.txt
 
                 if [[ ! -s summary_\${var}_filtered.txt ]]
                 then
                     if [[ ${params.diagno} == true ]]; then
-                        for FILE in summary_\${var}_viruses_viroids_ICTV.txt summary_\${var}_viruses_viroids_ICTV_endemic.txt summary_\${var}_viruses_viroids_ICTV_regulated.txt;
+                        #for FILE in summary_\${var}_viruses_viroids_ICTV.txt summary_\${var}_viruses_viroids_ICTV_endemic.txt summary_\${var}_viruses_viroids_ICTV_regulated.txt;
+                        for FILE in summary_\${var}_viruses_viroids_ICTV.txt;
                             do
-                                echo -e "Species\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information" > "\${FILE}"
+                                echo -e "Species\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tICTV_information" > "\${FILE}"
                             done
                     else
-                        echo -e "Species\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information" > summary_\${var}_viruses_viroids_ICTV.txt;   
+                        echo -e "Species\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tICTV_information" > summary_\${var}_viruses_viroids_ICTV.txt;   
                     fi
 
                 else
@@ -617,11 +620,11 @@ if (params.virreport_viral_db) {
                     touch \${var}_filtered.txt
                     for id in `cat \${var}_uniq.ids`;
                         do
-                            grep \${id} summary_\${var}.txt | sort -k3,3nr -k5,5nr | head -1 >> \${var}_filtered.txt
+                            grep \${id} summary_\${var}_filtered.txt | sort -k3,3nr -k5,5nr | head -1 >> \${var}_filtered.txt
                         done
 
                     #print the header of the inital summary_blastn file
-                    cat summary_\${var}.txt | head -1 > header
+                    cat summary_\${var}_with_contig_lengths.txt | head -1 > header
 
                     #report 1
                     cat header \${var}_filtered.txt > summary_\${var}_viruses_viroids.txt
@@ -636,20 +639,22 @@ if (params.virreport_viral_db) {
                     grep -w -F -f wanted.names ${projectDir}/bin/${params.ictvinfo} | sort > wanted.ICTV
 
                     #join reports with ICTV information
-                    join -a1 -1 1 -2 1 summary_\${var}_viruses_viroids.MOD wanted.ICTV | tr ' ' '\\t' >  summary_\${var}_viruses_viroids_ICTV
+                    join -a1 -1 1 -2 1 -t '\t' summary_\${var}_viruses_viroids.MOD wanted.ICTV > summary_\${var}_viruses_viroids_ICTV
 
                     #report 2
-                    awk '{print "Species" "\\t" \$0 "\\t" "ICTV_information"}' header > header2
+                    awk '{print "Species" "\\t" \$0 "\\t"  "ICTV_information" }' header > header2
                     cat header2 summary_\${var}_viruses_viroids_ICTV | awk -F"\\t" '\$1!=""&&\$2!=""&&\$3!=""' > summary_\${var}_viruses_viroids_ICTV.txt
-                    if [[ ${params.diagno} == true ]]; then
-                        c1grep "ICTV_information\\|regulated" summary_\${var}_viruses_viroids_ICTV.txt > summary_\${var}_viruses_viroids_ICTV_regulated.txt
-                        c1grep "ICTV_information\\|endemic" summary_\${var}_viruses_viroids_ICTV.txt > summary_\${var}_viruses_viroids_ICTV_endemic.txt
-                    fi
+
                 fi
             done
         """
     }
-
+/*
+//                    #if [[ ${params.diagno} == true ]]; then
+//                    #    c1grep "ICTV_information\\|regulated" summary_\${var}_viruses_viroids_ICTV.txt > summary_\${var}_viruses_viroids_ICTV_regulated.txt
+//                    #    c1grep "ICTV_information\\|endemic" summary_\${var}_viruses_viroids_ICTV.txt > summary_\${var}_viruses_viroids_ICTV_endemic.txt
+//                    #fi
+*/
     process COVSTATS_VIRAL_DB {
         tag "$sampleid"
         label "setting_5"
@@ -732,7 +737,7 @@ if (params.virreport_viral_db) {
     }
 }
 if (params.virreport_ncbi) {
-    process BLATN_NT_CAP3 {
+    process BLASTN_NT_CAP3 {
         label "setting_2"
         publishDir "${params.outdir}/01_VirReport/${sampleid}/blastn/NT", mode: 'link', overwrite: true, pattern: "*{vs_NT.bls,_top5Hits.txt,_final.txt,taxonomy.txt}"
         tag "$sampleid"
@@ -744,8 +749,9 @@ if (params.virreport_ncbi) {
         output:
         file "${cap3_fasta.baseName}_blastn_vs_NT.bls"
         file "${cap3_fasta.baseName}_blastn_vs_NT_top5Hits.txt"
-        file "${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt"
+        file "${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids.txt"
         file "summary_${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt"
+        file "summary_${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids.txt"
         tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("summary_${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt"), file("${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt") into blastTools_results_ch
         tuple val(sampleid), file(cap3_fasta), file("${cap3_fasta.baseName}_blastn_vs_NT_top5Hits.txt") into blastx_nt_cap3_ch
         
@@ -779,15 +785,17 @@ if (params.virreport_ncbi) {
             grep \$i ${cap3_fasta.baseName}_blastn_vs_NT.bls | head -n5 >> ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits.txt;
         done
         
-        grep -i "Virus" ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits.txt > ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids.txt  || [[ \$? == 1 ]]
-        grep -i "Viroid" ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits.txt >> ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids.txt || [[ \$? == 1 ]]
-        cat ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids.txt | sed 's/ /_/g' > ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt
-        cut -f3,26 ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt | sort | uniq > ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt
+        grep -i "Virus" ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits.txt > ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_tmp.txt  || [[ \$? == 1 ]]
+        grep -i "Viroid" ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits.txt >> ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_tmp.txt || [[ \$? == 1 ]]
+        cat ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_tmp.txt | sed 's/ /_/g' > ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids.txt
+        cut -f3,26 ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids.txt | sort | uniq > ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_seq_ids_taxonomy.txt
         
-        java -jar ${projectDir}/bin/BlastTools.jar -t blastn ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt
+        java -jar ${projectDir}/bin/BlastTools.jar -t blastn ${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids.txt
 
         rm taxdb.btd
         rm taxdb.bti
+        
+        sequence_length.py --virus_list summary_${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids.txt --contig_fasta ${cap3_fasta.baseName}.fasta --sample_name ${sampleid} --read_size ${size_range} --out summary_${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt
         """
     }
 
@@ -972,8 +980,11 @@ if (params.virusdetect) {
         #Exit process
         if [[ ! -f ${sampleid}/${sampleid}_${size_range}.blastn.summary.txt ]]; then
             touch ${sampleid}/${sampleid}_${size_range}.blastn.summary.txt
-            touch ${sampleid}_${size_range}.blastn.summary.spp.txt ${sampleid}/${sampleid}_${size_range}.blastn.summary.spp.txt
-            touch ${sampleid}_${size_range}.blastn.summary.filtered.txt ${sampleid}/${sampleid}_${size_range}.blastn.summary.filtered.txt
+            touch  ${sampleid}/${sampleid}_${size_range}.blastn.summary.spp.txt
+            awk '{print "Species" "\\t" "Sample" "\\t" "Reference"	"\\t" "Length" "\\t" "%Coverage" "\\t" "#contig" "\\t" "Depth" "\\t" "Depth_Norm" "\\t" "%Identity" "\\t" "%Identity_max" "\\t" "%Identity_min" "\\t" "Genus" "\\t" "Description" "\\t" "Species"}'  > ${sampleid}_${size_range}.blastn.summary.spp.txt
+            touch ${sampleid}/${sampleid}_${size_range}.blastn.summary.filtered.txt
+            awk '{print "Species" "\\t" "Sample" "\\t" "Reference""\\t" "Length" "\\t" "%Coverage" "\\t" "#contig" "\\t" "Depth" "\\t" "Depth_Norm" "\\t" "%Identity" "\\t" "%Identity_max" "\\t" "%Identity_min" "\\t" "Genus" "\\t" "Description" "\\t" "Species"}' > ${sampleid}_${size_range}.blastn.summary.filtered.txt 
+            
             exit 0
         else
             cp ${sampleid}/${sampleid}_${size_range}.blastn.summary.txt .
@@ -1003,6 +1014,15 @@ if (params.virusdetect) {
             done
 
         grep -v retrovirus ${sampleid}_${size_range}.blastn.summary.tmp.txt > ${sampleid}_${size_range}.blastn.summary.filtered.txt
+        for i in ${sampleid}_${size_range}.blastn.summary.spp.txt ${sampleid}_${size_range}.blastn.summary.filtered.txt;
+            do
+                sed -i 's/Coverage (%)/%Coverage/' \${i}
+                sed -i 's/Depth (Norm)/Depth_Norm/' \${i}
+                sed -i 's/Iden Max/Identity_max/' \${i}
+                sed -i 's/Iden Min/Identity_min/' \${i}
+            done
+
+
         rm taxdb.btd
         rm taxdb.bti
         cp ${sampleid}_${size_range}.blastn.summary.spp.txt ${sampleid}/${sampleid}_${size_range}.blastn.summary.spp.txt
@@ -1016,18 +1036,18 @@ if (params.virusdetect) {
 
         input:
         file ('*') from virusdetectblastnsummary_flag.collect().ifEmpty([])
+        file ('*') from virusdetectblastnsummaryfiltered_flag.collect().ifEmpty([])
 
         output:
-        file ("run_summary_top_scoring_targets_virusdetect_21-22nt.txt")
+        file ("run_summary_top_scoring_targets_virusdetect_${size_range}*.txt")
+        file ("run_summary_top_scoring_targets_virusdetect_filtered_${size_range}*.txt")
 
         script:
         """
-        touch run_summary_top_scoring_targets_virusdetect_21-22nt.txt
-        echo "Sample\tReference\tLength\tCoverage (%)\t#contig\tDepth\tDepth (Norm)\t%Identity\t%Iden Max\t%Iden Min\tGenus\tDescription\tSpecies" >> run_summary_top_scoring_targets_virusdetect_21-22nt.txt
-        [ -n "\$(find -name '*nt.blastn.summary.spp.txt' | head -1)" ] && cat *nt.blastn.summary.spp.txt | sort -k1,1 -k13,13 | grep -v "%Identity" >>  run_summary_top_scoring_targets_virusdetect_21-22nt.txt
+        summary_virus_detect.py --read_size ${size_range}
         """
     }
-
+/*
     process VIRUS_DETECT_BLASTN_SUMMARY_FILTERED {
         publishDir "${params.outdir}/02_VirusDetect/Summary", mode: 'link', overwrite: true
         label "local"
@@ -1045,13 +1065,14 @@ if (params.virusdetect) {
         [ -n "\$(find -name '*nt.blastn.summary.filtered.txt' | head -1)" ] && cat *nt.blastn.summary.filtered.txt | sort -k1,1 -k13,13 | grep -v "%Identity" >> run_summary_top_scoring_targets_virusdetect_21-22nt_filtered.txt
         """
     }
+*/
 }
 
 if (params.synthetic_oligos) {
     process SYNTHETIC_OLIGOS {
         tag "$sampleid"
         label "setting_4"
-        publishDir "${params.outdir}/01_VirReport/${sampleid}/Synthetic_oligos", mode: 'link', overwrite: true
+        publishDir "${params.outdir}/01_VirReport/${sampleid}/synthetic_oligos", mode: 'link', overwrite: true
         
         input:
         tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size) from synthetic_oligos_ch
@@ -1065,232 +1086,3 @@ if (params.synthetic_oligos) {
         """
     }
 }
-/*
-if (params.blastp || params.tblastn) {
-    process getorf {
-        label 'local'
-        publishDir "${params.outdir}/01_VirReport/${sampleid}/tblastn/localdb", mode: 'link'
-        tag "$sampleid"
-
-        input:
-        tuple val(sampleid), file(cap3_fasta) from getorf_ch
-        
-        output:
-        //file "${sampleid}_cap3_${params.minlen}-${params.maxlen}nt_getorf.min50aa.fasta"
-        //file "${sampleid}_cap3_${params.minlen}-${params.maxlen}nt_getorf.circular.min50aa.fasta"
-        //file "${sampleid}_cap3_${params.minlen}-${params.maxlen}nt_getorf.all.min50aa.fasta"
-        tuple val(sampleid), file("${sampleid}_cap3_${params.minlen}-${params.maxlen}nt_getorf.all.min35aa.fasta") into tblastn_ch, blastp_ch
-        
-        script:
-        """
-        getorf -sequence ${cap3_fasta} -outseq ${sampleid}_cap3_${params.minlen}-${params.maxlen}nt_getorf.min35aa.fasta  -minsize ${params.orf_minsize}
-        getorf -sequence ${cap3_fasta} -circular True -outseq ${sampleid}_cap3_${params.minlen}-${params.maxlen}nt_getorf.circular.min35aa.fasta -minsize ${params.orf_circ_minsize}
-        cat ${sampleid}_cap3_${params.minlen}-${params.maxlen}nt_getorf.min35aa.fasta ${sampleid}_cap3_${params.minlen}-${params.maxlen}nt_getorf.circular.min35aa.fasta >  ${sampleid}_cap3_${params.minlen}-${params.maxlen}nt_getorf.all.min35aa.fasta
-        #cat ${sampleid}_cap3_${params.minlen}-${params.maxlen}nt_getorf.all.min35aa.fasta | grep ">" | sed 's/>//' | awk '{print \$1}' > ${sampleid}_cap3_${params.minlen}-${params.maxlen}nt_getorf.all.min35aa.fasta.ids
-        """
-    }
-}
-
-if (params.blastp) {
-    process blastp {
-        label "setting_3"
-        publishDir "${params.outdir}/01_VirReport/${sampleid}/blastp", mode: 'link'
-        tag "$sampleid"
-        containerOptions "${bindOptions}"
-
-        input:
-        tuple val(sampleid), file(fasta) from blastp_ch
-        
-        output:
-        file "${fasta}"
-        file "${fasta.baseName}_blastp_vs_NR_out.bls"
-        tuple val(sampleid), file("${fasta.baseName}_blastp_vs_NR_out.wanted.ids"), file("${fasta.baseName}_blastp_vs_NR_out.bls") into blastpdbcmd_ch
-        
-        script:
-        """         
-        blastp -query ${fasta} \
-            -db ${blastp_db_name} \
-            -evalue ${params.blastp_evalue} \
-            -out ${fasta.baseName}_blastp_vs_NR_out.bls \
-            -num_threads ${task.cpus} \
-            -max_target_seqs 1 \
-            -outfmt '6 qseqid sseqid pident nident length mismatch gapopen gaps qstart qend qlen qframe sstart send slen evalue bitscore qcovhsp sallseqid sscinames'
-
-        cat ${fasta.baseName}_blastp_vs_NR_out.bls | awk '{print \$2}' | cut -f2 -d '|' | sort | uniq > ${fasta.baseName}_blastp_vs_NR_out.wanted.ids
-        """
-    }
-    process blastpdbcmd {
-        label "setting_5"
-        publishDir "${params.outdir}/01_VirReport/${sampleid}/blastp", mode: 'link'
-        tag "$sampleid"
-        containerOptions "${bindOptions}"
-
-        input:
-        tuple val(sampleid), file(blastp_nr_bls_ids), file(blastp_nr_bls) from blastpdbcmd_ch
-
-        output:
-        file "${blastp_nr_bls.baseName}_virus_viroid.txt"
-        tuple val(sampleid), file("${blastp_nr_bls.baseName}_virus_viroid.txt") into BlastToolsp_ch
-
-        script:
-        """
-        blastdbcmd  -db ${blastp_db_name} \
-                    -dbtype prot \
-                    -entry_batch ${blastp_nr_bls_ids} > ${blastp_nr_bls_ids.baseName}.out
-
-        grep ">" ${blastp_nr_bls_ids.baseName}.out | sed 's/>//' > ${blastp_nr_bls_ids.baseName}.out.header || [[ \$? == 1 ]]
-        cat ${blastp_nr_bls_ids.baseName}.out.header | sed 's/ /__/g'| sed 's/__/ /' | tr ' ' '\\t' | grep "irus" > ${blastp_nr_bls_ids.baseName}.out.header_virus_viroid || [[ \$? == 1 ]]
-        cat ${blastp_nr_bls_ids.baseName}.out.header | sed 's/ /__/g'| sed 's/__/ /' | tr ' ' '\\t' | grep "iroid" >> ${blastp_nr_bls_ids.baseName}.out.header_virus_viroid || [[ \$? == 1 ]]
-        cat ${blastp_nr_bls_ids.baseName}.out.header_virus_viroid | awk '{print \$1}' | sort | uniq > ${blastp_nr_bls_ids.baseName}_virus_viroid.ids
-        cat ${blastp_nr_bls_ids.baseName}.out.header_virus_viroid | sed 's/__/_/g' | sort -k1 > ${blastp_nr_bls_ids.baseName}_virus_viroid.mod
-
-        grep -F -f ${blastp_nr_bls_ids.baseName}_virus_viroid.ids ${blastp_nr_bls} > ${blastp_nr_bls.baseName}_virus_viroid.bls.txt || [[ \$? == 1 ]]
-        cat ${blastp_nr_bls.baseName}_virus_viroid.bls.txt | sort -k2 >  ${blastp_nr_bls.baseName}_virus_viroid_sorted.bls.txt 
-        cut -f2 ${blastp_nr_bls.baseName}_virus_viroid_sorted.bls.txt  | cut -f2 -d '|' > ${blastp_nr_bls.baseName}_virus_viroid_sorted.bls.id.extraction
-        paste ${blastp_nr_bls.baseName}_virus_viroid_sorted.bls.txt ${blastp_nr_bls.baseName}_virus_viroid_sorted.bls.id.extraction  | sort -k20 > ${blastp_nr_bls.baseName}_virus_viroid_sorted2.bls.txt
-        join -1 20 -2 1 ${blastp_nr_bls.baseName}_virus_viroid_sorted2.bls.txt ${blastp_nr_bls_ids.baseName}_virus_viroid.mod | sort -u | tr ' ' '\\t' | awk -v OFS='\\t' '{ print \$1,\$2,\$4,\$5,\$6,\$7,\$8,\$9,\$10,\$11,\$12,\$13,\$14,\$15,\$16,\$17,\$18,\$19,\$20,\$21}' > ${blastp_nr_bls.baseName}_virus_viroid.txt || [[ \$? == 1 ]]
-        """
-    }   
-
-    process BlastToolsp {
-        label "local"
-        publishDir "${params.outdir}/01_VirReport/${sampleid}/blastp", mode: 'link'
-        tag "$sampleid"
-
-        input:
-        tuple val(sampleid), file(topHits_blastp_final) from BlastToolsp_ch
-
-        output:
-        file "summary_${topHits_blastp_final}"
-
-        script:
-        """
-        java -jar ${projectDir}/bin/BlastTools.jar -t blastp ${topHits_blastp_final}
-        """
-    }
-}
-
-
-       process RNA_DIST {
-            label "setting_2"
-            tag "$sampleid"
-            publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link',overwrite: true, pattern: "*{log}"
-            containerOptions "${bindOptions}"
-
-            input:
-            tuple val(sampleid), file(fastqfile) from rna_dist_ch
-            
-            output:
-            file "${sampleid}_bowtie.log"
-            file "${sampleid}_bowtie.log" into rna_source_bowtie_results
-
-            script:
-            """
-            cutadapt -j ${task.cpus} \
-                    --trim-n --max-n 0 -m 15 -q 30 \
-                    -o ${sampleid}_quality_trimmed_temp2.fastq \
-                    ${sampleid}_umi_cleaned.fastq.gz
-
-            #derive distribution for quality filtered reads > 15 bp bp long
-            echo ${sampleid} > ${sampleid}_bowtie.log;
-
-            echo 5S rRNA genes alignment: >> ${sampleid}_bowtie.log;
-            bowtie -q -v 1 -k 1 -p ${task.cpus} \
-                --un ${sampleid}_5S_rRNA_cleaned_sRNA.fq \
-                -x ${params.bowtie_db_dir}/5S_rRNA \
-                ${sampleid}_quality_trimmed_temp2.fastq \
-                ${sampleid}_5S_rRNA_match 2>>${sampleid}_bowtie.log;
-
-            echo nc SSU and LSU rRNA genes alignment: >> ${sampleid}_bowtie.log;
-            bowtie -q -v 1 -k 1 -p ${task.cpus} \
-                --un ${sampleid}_nc_rRNA_cleaned_sRNA.fq \
-                -x ${params.bowtie_db_dir}/rRNA \
-                ${sampleid}_5S_rRNA_cleaned_sRNA.fq \
-                ${sampleid}_rRNA_match 2>>${sampleid}_bowtie.log;
-
-            echo mt rRNA genes alignment: >> ${sampleid}_bowtie.log;
-            bowtie -q -v 1 -k 1 -p ${task.cpus} \
-                --un ${sampleid}_mt_rRNA_cleaned_sRNA.fq \
-                -x ${params.bowtie_db_dir}/plant_mt_rRNA_genes \
-                ${sampleid}_nc_rRNA_cleaned_sRNA.fq \
-                ${sampleid}_mt_rRNA_match 2>>${sampleid}_bowtie.log;
-
-            echo pt rRNA genes alignment: >> ${sampleid}_bowtie.log;
-            bowtie -q -v 1 -k 1 -p ${task.cpus} \
-                --un ${sampleid}_pt_rRNA_cleaned_sRNA.fq \
-                -x ${params.bowtie_db_dir}/plant_pt_rRNA_genes \
-                ${sampleid}_mt_rRNA_cleaned_sRNA.fq \
-                ${sampleid}_pt_rRNA_match 2>>${sampleid}_bowtie.log;
-
-            echo mt other genes alignment: >> ${sampleid}_bowtie.log;
-            bowtie -q -v 1 -k 1 -p ${task.cpus} \
-                --un ${sampleid}_mt_other_cleaned_sRNA.fq \
-                -x ${params.bowtie_db_dir}/plant_mt_other_genes \
-                ${sampleid}_pt_rRNA_cleaned_sRNA.fq \
-                ${sampleid}_mt_other_match 2>>${sampleid}_bowtie.log;
-
-            echo pt other genes alignment: >> ${sampleid}_bowtie.log;
-            bowtie -q -v 1 -k 1 -p ${task.cpus} \
-                --un ${sampleid}_pt_other_cleaned_sRNA.fq \
-                -x ${params.bowtie_db_dir}/plant_pt_other_genes \
-                ${sampleid}_mt_other_cleaned_sRNA.fq \
-                ${sampleid}_pt_other_match 2>>${sampleid}_bowtie.log;
-
-            echo plant miRNA genes alignment: >> ${sampleid}_bowtie.log;
-            bowtie -q -v 1 -k 1 -p ${task.cpus} \
-                --un ${sampleid}_plant_miRNA_cleaned_sRNA.fq \
-                -x ${params.bowtie_db_dir}/plant_miRNA \
-                ${sampleid}_pt_other_cleaned_sRNA.fq \
-                ${sampleid}_plant_miRNA_match 2>>${sampleid}_bowtie.log;
-
-            echo other miRNA genes alignment: >> ${sampleid}_bowtie.log;
-            bowtie -q -v 1 -k 1 -p ${task.cpus} \
-                --un ${sampleid}_other_miRNA_cleaned_sRNA.fq \
-                -x ${params.bowtie_db_dir}/miRBase \
-                ${sampleid}_plant_miRNA_cleaned_sRNA.fq \
-                ${sampleid}_other_miRNA_match 2>>${sampleid}_bowtie.log;
-
-            echo tRNA genes alignment: >> ${sampleid}_bowtie.log;
-            bowtie -q -v 1 -k 1 -p ${task.cpus} \
-                --un ${sampleid}_plant_tRNA_cleaned_sRNA.fq \
-                -x ${params.bowtie_db_dir}/plant_tRNA \
-                ${sampleid}_other_miRNA_cleaned_sRNA.fq \
-                ${sampleid}_tRNA_match 2>>${sampleid}_bowtie.log;
-
-            echo plant nc genes alignment: >> ${sampleid}_bowtie.log;
-            bowtie -q -v 1 -k 1 -p ${task.cpus} \
-                --un ${sampleid}_plant_nc_cleaned_sRNA.fq \
-                -x ${params.bowtie_db_dir}/plant_nc_genes \
-                ${sampleid}_plant_tRNA_cleaned_sRNA.fq \
-                ${sampleid}_plant_nc_match 2>>${sampleid}_bowtie.log;
-
-            echo plant transposons alignment: >> ${sampleid}_bowtie.log;
-            bowtie -q -v 1 -k 1 -p ${task.cpus} \
-                --un ${sampleid}_transposon_cleaned_sRNA.fq \
-                -x ${params.bowtie_db_dir}/plant_transposons \
-                ${sampleid}_plant_nc_cleaned_sRNA.fq \
-                ${sampleid}_transposon_match 2>>${sampleid}_bowtie.log;
-
-            echo PhiX alignment: >> ${sampleid}_bowtie.log;
-            bowtie -q -v 1 -k 1 -p ${task.cpus} \
-                --un ${sampleid}_PhiX_cleaned_sRNA.fq \
-                -x ${params.bowtie_db_dir}/phiX174 \
-                ${sampleid}_transposon_cleaned_sRNA.fq \
-                ${sampleid}_PhiX_sRNA_match 2>>${sampleid}_bowtie.log;
-
-            echo Vector alignment: >> ${sampleid}_bowtie.log;
-            bowtie -q -v 1 -k 1 -p ${task.cpus} \
-                --un ${sampleid}_UniVec_cleaned_sRNA.fq \
-                -x ${params.bowtie_db_dir}/UniVec \
-                ${sampleid}_PhiX_cleaned_sRNA.fq \
-                ${sampleid}_UniVec_match 2>>${sampleid}_bowtie.log;
-
-            echo Virus and viroid alignment: >> ${sampleid}_bowtie.log;
-            bowtie -q -v 1 -k 1 -p ${task.cpus} \
-                --un ${sampleid}_final_unaligned_sRNA.fq \
-                -x ${params.bowtie_db_dir}/virus \
-                ${sampleid}_UniVec_cleaned_sRNA.fq \
-                ${sampleid}_viral_match 2>>${sampleid}_bowtie.log;
-            """
-        }
-*/
