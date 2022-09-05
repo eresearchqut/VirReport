@@ -980,11 +980,8 @@ if (params.virusdetect) {
         #Exit process
         if [[ ! -f ${sampleid}/${sampleid}_${size_range}.blastn.summary.txt ]]; then
             touch ${sampleid}/${sampleid}_${size_range}.blastn.summary.txt
-            touch  ${sampleid}/${sampleid}_${size_range}.blastn.summary.spp.txt
-            awk '{print "Species" "\\t" "Sample" "\\t" "Reference"	"\\t" "Length" "\\t" "%Coverage" "\\t" "#contig" "\\t" "Depth" "\\t" "Depth_Norm" "\\t" "%Identity" "\\t" "%Identity_max" "\\t" "%Identity_min" "\\t" "Genus" "\\t" "Description" "\\t" "Species"}'  > ${sampleid}_${size_range}.blastn.summary.spp.txt
-            touch ${sampleid}/${sampleid}_${size_range}.blastn.summary.filtered.txt
-            awk '{print "Species" "\\t" "Sample" "\\t" "Reference""\\t" "Length" "\\t" "%Coverage" "\\t" "#contig" "\\t" "Depth" "\\t" "Depth_Norm" "\\t" "%Identity" "\\t" "%Identity_max" "\\t" "%Identity_min" "\\t" "Genus" "\\t" "Description" "\\t" "Species"}' > ${sampleid}_${size_range}.blastn.summary.filtered.txt 
-            
+            echo -e "Sample\tReference\tLength\t%Coverage\t#contig\tDepth\tDepth_Norm\t%Identity\t%Identity_max\t%Identity_min\tGenus\tDescription\tSpecies" | tee ${sampleid}_${size_range}.blastn.summary.filtered.txt >  ${sampleid}/${sampleid}_${size_range}.blastn.summary.filtered.txt
+            echo -e "Sample\tReference\tLength\t%Coverage\t#contig\tDepth\tDepth_Norm\t%Identity\t%Identity_max\t%Identity_min\tGenus\tDescription\tSpecies" | tee ${sampleid}_${size_range}.blastn.summary.spp.txt > ${sampleid}/${sampleid}_${size_range}.blastn.summary.spp.txt 
             exit 0
         else
             cp ${sampleid}/${sampleid}_${size_range}.blastn.summary.txt .
