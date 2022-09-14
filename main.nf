@@ -335,7 +335,7 @@ if (params.qualityfilter) {
             echo ${sampleid} > ${sampleid}_bowtie.log;
 
             count=1
-            for rnatype in rRNA plant_pt_mt_other_genes plant_miRNA plant_tRNA plant_noncoding artefacts virus; do
+            for rnatype in rRNA plant_pt_mt_other_genes miRNA plant_tRNA plant_noncoding artefacts plant_virus_viroid; do
                 if [[ \${count} == 1 ]]; then
                     fastqfile=${sampleid}_quality_trimmed_temp2.fastq
                 fi

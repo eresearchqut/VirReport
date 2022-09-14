@@ -45,7 +45,7 @@ def main():
                     mt_pt_other = elements[1].strip()
                     mt_pt_other = int(re.sub(r' \(.*\)', '', mt_pt_other).strip())
         
-                elif ("plant_miRNA alignment:") in line:
+                elif ("miRNA alignment:") in line:
                     line = next(f)
                     line = next(f)
                     elements = line.split("# reads with at least one alignment: ")
@@ -75,7 +75,7 @@ def main():
                     artefacts = elements[1].strip()
                     artefacts = int(re.sub(r' \(.*\)', '', artefacts).strip())
                 
-                elif ("virus alignment:") in line:
+                elif ("plant_virus_viroid alignment:") in line:
                     line = next(f)
                     line = next(f)
                     elements = line.split("# reads with at least one alignment: ")
