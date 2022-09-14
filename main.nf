@@ -565,8 +565,7 @@ if (params.virreport_viral_db) {
             -evalue ${params.blastn_evalue} \
             -num_threads ${task.cpus} \
             -outfmt '6 qseqid sgi sacc length pident mismatch gapopen qstart qend qlen sstart send slen sstrand evalue bitscore qcovhsp stitle staxids qseq sseq sseqid qcovs qframe sframe' \
-            -max_target_seqs 50 \
-            -word_size 24
+            -max_target_seqs 50
         """
     }
 
@@ -639,7 +638,7 @@ if (params.virreport_viral_db) {
                     grep -w -F -f wanted.names ${projectDir}/bin/${params.ictvinfo} | sort > wanted.ICTV
 
                     #join reports with ICTV information
-                    join -a1 -1 1 -2 1 -t '\t' summary_\${var}_viruses_viroids.MOD wanted.ICTV > summary_\${var}_viruses_viroids_ICTV
+                    join -a1 -1 1 -2 1 -t '\t' summary_\${var}_viruses_viroids.MOD wanted.ICTV |  awk '\$4>=40' > summary_\${var}_viruses_viroids_ICTV
 
                     #report 2
                     awk '{print "Species" "\\t" \$0 "\\t"  "ICTV_information" }' header > header2
