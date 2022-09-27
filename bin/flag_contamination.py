@@ -17,6 +17,8 @@ def main():
     parser.add_argument("--viral_db", type=str)
     parser.add_argument("--dedup", type=str)
     parser.add_argument("--diagno", type=str)
+    parser.add_argument("--sampleinfopath", type=str)
+    parser.add_argument("--targets", type=str)
 
     args = parser.parse_args()
     threshold = args.threshold
@@ -25,6 +27,8 @@ def main():
     viral_db = args.viral_db
     dedup = args.dedup
     diagno = args.diagno
+    sampleinfo = args.sampleinfopath
+    targets = args.targets
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
 
@@ -47,13 +51,33 @@ def main():
         run_data["contamination_flag"] = np.where(run_data["FPKM"] <= run_data["threshold_value"], True, False)
         run_data["contamination_flag"] = np.where(run_data["FPKM_max"] <= 10, "NA", run_data["contamination_flag"])
         run_data = run_data.sort_values(["Sample", "stitle"], ascending = (True, True))
-        run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
-        #if diagno == "true":
-        #    regulated_data = run_data[run_data['stitle'].str.contains('regulated')]
-        #    regulated_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db_regulated" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
-        #    endemic_data = run_data[run_data['stitle'].str.contains('endemic')]
-        #    endemic_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db_endemic" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
+        
 
+        if diagno == "true":
+            run_data['Evidence_category'] = np.where((run_data['av-pident'] >= 90) & (run_data['PCT_10X'] >= 0.7) & (run_data['length'] >= 45), "KNOWN",
+                                        np.where((run_data['av-pident'] >= 90) & (run_data['PCT_10X'] >= 0.1) & (run_data['length'] >= 45), "KNOWN_FRAGMENT",
+                                        np.where((run_data['av-pident'] < 90) & (run_data['av-pident'] > 70)  & (run_data['length'] >= 45), "PUTATIVE_NOVEL","EXCLUDE")))
+            
+            if sampleinfo is not None:
+                sampleinfo_data = pd.read_csv(sampleinfo, header=0, sep="\t",index_col=None)
+                run_data = pd.merge(sampleinfo_data, run_data, on="Sample", how='outer').fillna('NA')
+            
+            
+            run_data = run_data.sort_values(["Sample", "Species"], ascending = (True, True))
+            run_data.drop_duplicates()
+            run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
+    
+            grouped_summary=run_data[['Sample', 'Species']]
+            grouped_summary = grouped_summary.groupby('Sample').agg(','.join)
+            grouped_summary["Species"] = grouped_summary["Species"].str.replace(",",", ")
+            if sampleinfo is not None:
+                sampleinfo_data = pd.read_csv(sampleinfo, header=0, sep="\t",index_col=None)
+                grouped_summary = pd.merge(sampleinfo_data, grouped_summary, on="Sample", how='outer').fillna('NA')
+            grouped_summary.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag_collapsed" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
+        
+        else:
+            run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
+    
     else:
         if dedup == "true":
             run_data = run_data[["Sample","Species","sacc","naccs","length","slen","cov","av-pident","stitle","qseqids","contig_ind_lengths","cumulative_contig_len","contig_lenth_min","contig_lenth_max","Mean read depth","Read count","Dedup read count","Dup %","FPKM","PCT_5X","PCT_10X"]]
@@ -73,7 +97,36 @@ def main():
             run_data["contamination_flag"] = np.where(run_data["FPKM_max"] <= 10, "NA", run_data["contamination_flag"])
         
         run_data = run_data.sort_values(["Sample", "Species"], ascending = (True, True))
-        run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_ncbi_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
+
+        if diagno == "true":
+            run_data['Evidence_category'] = np.where((run_data['av-pident'] >= 90) & (run_data['PCT_10X'] >= 0.7) & (run_data['length'] >= 45), "KNOWN",
+                                        np.where((run_data['av-pident'] >= 90) & (run_data['PCT_10X'] >= 0.1) & (run_data['length'] >= 45), "KNOWN_FRAGMENT",
+                                        np.where((run_data['av-pident'] < 90) & (run_data['av-pident'] > 70)  & (run_data['length'] >= 45), "PUTATIVE_NOVEL","EXCLUDE")))
+            
+            
+            targets_df = pd.read_csv(targets, header=0, sep="\t", index_col=None)
+            targets_df["Species"] = targets_df["Species"].astype(str)
+            #targets_df["Species"] = targets_df["Species"].str.lower()
+            targets_list = targets_df["Species"].tolist()
+            run_data["SSG_category"] = run_data['Species'].isin(targets_list)
+            run_data['SSG_category'] = run_data['SSG_category'].map({True: 'Quarantinable', False: 'Higher_plant_viruses'})
+            if sampleinfo is not None:
+                sampleinfo_data = pd.read_csv(sampleinfo, header=0, sep="\t",index_col=None)
+                run_data = pd.merge(sampleinfo_data, run_data, on="Sample", how='outer').fillna('NA')
+            run_data = run_data.sort_values(["Sample", "Species"], ascending = (True, True))
+            run_data.drop_duplicates()
+            run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_ncbi_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
+            
+            grouped_summary=run_data[['Sample', 'Species']]
+            grouped_summary = grouped_summary.groupby('Sample').agg(','.join)
+            grouped_summary["Species"] = grouped_summary["Species"].str.replace(",",", ")
+            if sampleinfo is not None:
+                sampleinfo_data = pd.read_csv(sampleinfo, header=0, sep="\t",index_col=None)
+                grouped_summary = pd.merge(sampleinfo_data, grouped_summary, on="Sample", how='outer').fillna('NA')
+            grouped_summary.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag_collapsed" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_ncbi_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
+            
+        else:
+            run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_ncbi_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
 
 if __name__ == "__main__":
     main()

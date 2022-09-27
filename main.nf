@@ -132,24 +132,65 @@ if (params.help) {
     helpMessage()
     exit 0
 }
-
-blastn_db_name = "${params.blast_db_dir}/nt"
-blastp_db_name = "${params.blast_db_dir}/nr"
-//negative_seqid_list = "${params.blast_db_dir}/negative_list_out.txt"
-blast_viral_db_name = file(params.blast_viral_db_path).name
-blast_viral_db_dir = file(params.blast_viral_db_path).parent
-virusdetect_db_dir = file(params.virusdetect_db_path).parent
+if (params.blast_db_dir != null) {
+    blastn_db_name = "${params.blast_db_dir}/nt"
+    blastp_db_name = "${params.blast_db_dir}/nr"
+}
+if (params.blast_viral_db_path != null) {
+    blast_viral_db_name = file(params.blast_viral_db_path).name
+    blast_viral_db_dir = file(params.blast_viral_db_path).parent
+}
+if (params.virusdetect_db_path != null) {
+    virusdetect_db_dir = file(params.virusdetect_db_path).parent
+}
 size_range = "${params.minlen}-${params.maxlen}nt"
+if (params.sampleinfo_path != null) {
+    sampleinfo_dir = file(params.sampleinfo_path).parent
+    sampleinfo_name = file(params.sampleinfo_path).name
+}
+
 
 switch (workflow.containerEngine) {
     case "docker":
-        bindOptions = "-v ${params.blast_db_dir}:${params.blast_db_dir} -v ${blast_viral_db_dir}:${blast_viral_db_dir} -v ${bowtie_db_dir}:${bowtie_db_dir} -v ${virusdetect_db_dir}:${virusdetect_db_dir}"
+        bindbuild = "";
+        if (params.blast_viral_db_path != null) {
+            bindbuild = "-v ${blast_viral_db_dir}:${blast_viral_db_dir} "
+        }
+        if (params.blast_db_dir != null) {
+            bindbuild = (bindbuild + "-v ${params.blast_db_dir}:${params.blast_db_dir} ")
+        }
+        if (params.bowtie_db_dir != null) {
+            bindbuild = (bindbuild + "-v ${params.bowtie_db_dir}:${params.bowtie_db_dir} ")
+        }
+        if (params.virusdetect_db_path != null) {
+            bindbuild = (bindbuild + "-v ${virusdetect_db_dir}:${virusdetect_db_dir} ")
+        }
+        if (params.sampleinfo_path != null) {
+            bindbuild = (bindbuild + "-v ${sampleinfo_dir}:${sampleinfo_dir} ")
+        }
+        bindOptions = bindbuild;
         break;
     case "singularity":
-        bindOptions = "-B ${blast_viral_db_dir} -B ${params.blast_db_dir} -B ${params.bowtie_db_dir}"
+        bindbuild = "";
+        if (params.blast_viral_db_path != null) {
+            bindbuild = "-B ${blast_viral_db_dir} "
+        }
+        if (params.blast_db_dir != null) {
+            bindbuild = (bindbuild + "-B ${params.blast_db_dir} ")
+        }
+        if (params.bowtie_db_dir != null) {
+            bindbuild = (bindbuild + "-B ${params.bowtie_db_dir} ")
+        }
+        if (params.virusdetect_db_path != null) {
+            bindbuild = (bindbuild + "-B ${virusdetect_db_dir} ")
+        }
+        if (params.sampleinfo_path != null) {
+            bindbuild = (bindbuild + "-B ${sampleinfo_dir} ")
+        }
+        bindOptions = bindbuild;
         break;
     default:
-        bindOptions = ""
+        bindOptions = "";
 }
 
 if (params.indexfile) {
@@ -219,7 +260,7 @@ if (params.qualityfilter) {
 
     //This step takes > 1h to run for the large flow cells
     process ADAPTER_AND_QUAL_TRIMMING {
-        label "setting_4"
+        label "setting_6"
         tag "$sampleid"
         publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{log,json,html,trimmed.fastq.gz,zip,html,pdf,txt}"
 
@@ -340,7 +381,7 @@ if (params.qualityfilter) {
                     fastqfile=${sampleid}_quality_trimmed_temp2.fastq
                 fi
                 echo \${rnatype} alignment: >> ${sampleid}_bowtie.log;
-                bowtie -q -v 1 -k 1 -p ${task.cpus} \
+                bowtie -q -v 2 -k 1 -p ${task.cpus} \
                     --un ${sampleid}_\${rnatype}_cleaned_sRNA.fq \
                     -x ${params.bowtie_db_dir}/\${rnatype} \
                     \${fastqfile} \
@@ -364,10 +405,10 @@ if (params.qualityfilter) {
             file ('*') from rna_source_bowtie_results.collect().ifEmpty([]) 
 
             output:
-            file "read_origin_pc_summary.txt"
-            file "read_origin_counts.txt"
-            file "read_RNA_source.pdf"
-            file "read_origin_detailed_pc.txt"
+            file "read_origin_pc_summary*.txt"
+            file "read_origin_counts*.txt"
+            file "read_RNA_source*.pdf"
+            file "read_origin_detailed_pc*.txt"
 
             script:
             """
@@ -434,7 +475,7 @@ if (params.qualityfilter) {
 
         output:
         file "run_qc_report*.txt"
-        file "run_read_size_distribution.pdf"
+        file "run_read_size_distribution*.pdf"
         
         script:
         """
@@ -597,8 +638,11 @@ if (params.virreport_viral_db) {
                 sequence_length.py --virus_list summary_\${var}.txt --contig_fasta ${sampleid}_cap3_${size_range}.fasta --sample_name ${sampleid} --read_size ${size_range} --out  summary_\${var}_with_contig_lengths.txt
 
                 #only retain hits to plant viruses
-                c1grep  "virus\\|viroid" summary_\${var}_with_contig_lengths.txt > summary_\${var}_filtered.txt
+                c1grep  "virus\\|viroid\\|Endogenous" summary_\${var}_with_contig_lengths.txt > summary_\${var}_filtered.txt
 
+                sed -i 's/Elephantopus_scaber_closterovirus/Citrus_tristeza_virus/'  summary_\${var}_filtered.txt
+                sed -i 's/Hop_stunt_viroid_-_cucumber/Hop_stunt_viroid/' summary_\${var}_filtered.txt
+                
                 if [[ ! -s summary_\${var}_filtered.txt ]]
                 then
                     if [[ ${params.diagno} == true ]]; then
@@ -676,7 +720,8 @@ if (params.virreport_viral_db) {
         process CONTAMINATION_DETECTION_VIRAL_DB {
             label "local"
             publishDir "${params.outdir}/01_VirReport/Summary", mode: 'link', overwrite: true
-            
+            containerOptions "${bindOptions}"
+
             input:
             file ('*') from contamination_flag_viral_db.collect().ifEmpty([])
 
@@ -685,7 +730,11 @@ if (params.virreport_viral_db) {
 
             script:
             """
-            flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --viral_db true --diagno ${params.diagno} --dedup ${params.dedup}
+            if ${params.sampleinfo}; then
+                flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --viral_db true --diagno ${params.diagno} --dedup ${params.dedup} --sampleinfo ${params.sampleinfo_path}
+            else
+                flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --viral_db true --diagno ${params.diagno} --dedup ${params.dedup}
+            fi
             """
         }
     }
@@ -813,11 +862,8 @@ if (params.virreport_ncbi) {
         
         script:
         """
-        if [[ ${params.targets} == true ]]; then
-            filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --dedup ${params.dedup} --cpu ${task.cpus} --targets --targetspath ${params.targets_file} --mode ncbi --diagno ${params.diagno}
-        else
-            filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --dedup ${params.dedup} --cpu ${task.cpus} --mode ncbi --diagno ${params.diagno}
-        fi
+        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --dedup ${params.dedup} --cpu ${task.cpus} --mode ncbi --diagno ${params.diagno}
+        
         """
     }
 
@@ -825,7 +871,8 @@ if (params.virreport_ncbi) {
         process CONTAMINATION_DETECTION {
             label "local"
             publishDir "${params.outdir}/01_VirReport/Summary", mode: 'link', overwrite: true
-            
+            containerOptions "${bindOptions}"
+
             input:
             file ('*') from contamination_flag.collect().ifEmpty([])
 
@@ -834,7 +881,11 @@ if (params.virreport_ncbi) {
 
             script:
             """
-            flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --dedup ${params.dedup}
+            if [[ ${params.sampleinfo} == true ]]; then
+                flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --dedup ${params.dedup} --diagno ${params.diagno} --targets ${params.targets_file} --sampleinfopath ${params.sampleinfo_path}
+            else
+                flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --dedup ${params.dedup} --diagno ${params.diagno} --targets ${params.targets_file}
+            fi
             """
         }
     }
@@ -1067,7 +1118,7 @@ if (params.virusdetect) {
 if (params.synthetic_oligos) {
     process SYNTHETIC_OLIGOS {
         tag "$sampleid"
-        label "setting_4"
+        label "setting_6"
         publishDir "${params.outdir}/01_VirReport/${sampleid}/synthetic_oligos", mode: 'link', overwrite: true
         
         input:
