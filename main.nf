@@ -692,12 +692,7 @@ if (params.virreport_viral_db) {
             done
         """
     }
-/*
-//                    #if [[ ${params.diagno} == true ]]; then
-//                    #    c1grep "ICTV_information\\|regulated" summary_\${var}_viruses_viroids_ICTV.txt > summary_\${var}_viruses_viroids_ICTV_regulated.txt
-//                    #    c1grep "ICTV_information\\|endemic" summary_\${var}_viruses_viroids_ICTV.txt > summary_\${var}_viruses_viroids_ICTV_endemic.txt
-//                    #fi
-*/
+
     process COVSTATS_VIRAL_DB {
         tag "$sampleid"
         label "setting_5"
@@ -726,7 +721,7 @@ if (params.virreport_viral_db) {
             file ('*') from contamination_flag_viral_db.collect().ifEmpty([])
 
             output:
-            file "run_top_scoring_targets_with_cov_stats_with_cont_flag*viral_db*.txt"
+            file "VirReport_detection_summary*viral_db*.txt"
 
             script:
             """
@@ -877,7 +872,7 @@ if (params.virreport_ncbi) {
             file ('*') from contamination_flag.collect().ifEmpty([])
 
             output:
-            file "run_top_scoring_targets_with_cov_stats_with_cont_flag*.txt"
+            file "VirReport_detection_summary*.txt"
 
             script:
             """

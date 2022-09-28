@@ -56,27 +56,25 @@ def main():
         if diagno == "true":
             run_data['Evidence_category'] = np.where((run_data['av-pident'] >= 90) & (run_data['PCT_10X'] >= 0.7) & (run_data['length'] >= 45), "KNOWN",
                                         np.where((run_data['av-pident'] >= 90) & (run_data['PCT_10X'] >= 0.1) & (run_data['length'] >= 45), "KNOWN_FRAGMENT",
-                                        np.where((run_data['av-pident'] < 90) & (run_data['av-pident'] > 70)  & (run_data['length'] >= 45), "PUTATIVE_NOVEL","EXCLUDE")))
-            
+                                        np.where((run_data['av-pident'] < 90) & (run_data['av-pident'] > 70)  & (run_data['length'] >= 45) &  (run_data['PCT_10X'] >= 0.1), "PUTATIVE_NOVEL","EXCLUDE")))
+            run_data = run_data.sort_values(["Sample", "Species"], ascending = (True, True))
+            run_data.drop_duplicates()
+
+            grouped_summary=run_data[['Sample', 'Species']]
+            grouped_summary = grouped_summary.groupby('Sample', as_index=False).agg(','.join)
+            grouped_summary["Species"] = grouped_summary["Species"].str.replace(",",", ")
+            print(grouped_summary)
+
             if sampleinfo is not None:
                 sampleinfo_data = pd.read_csv(sampleinfo, header=0, sep="\t",index_col=None)
                 run_data = pd.merge(sampleinfo_data, run_data, on="Sample", how='outer').fillna('NA')
-            
-            
-            run_data = run_data.sort_values(["Sample", "Species"], ascending = (True, True))
-            run_data.drop_duplicates()
-            run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
-    
-            grouped_summary=run_data[['Sample', 'Species']]
-            grouped_summary = grouped_summary.groupby('Sample').agg(','.join)
-            grouped_summary["Species"] = grouped_summary["Species"].str.replace(",",", ")
-            if sampleinfo is not None:
-                sampleinfo_data = pd.read_csv(sampleinfo, header=0, sep="\t",index_col=None)
                 grouped_summary = pd.merge(sampleinfo_data, grouped_summary, on="Sample", how='outer').fillna('NA')
-            grouped_summary.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag_collapsed" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
+            
+            run_data.to_csv("VirReport_detection_summary_" +  "_" + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
+            grouped_summary.to_csv("VirReport_detection_summary_collapsed" + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")  
         
         else:
-            run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
+            run_data.to_csv("VirReport_detection_summary_" + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
     
     else:
         if dedup == "true":
@@ -110,23 +108,25 @@ def main():
             targets_list = targets_df["Species"].tolist()
             run_data["SSG_category"] = run_data['Species'].isin(targets_list)
             run_data['SSG_category'] = run_data['SSG_category'].map({True: 'Quarantinable', False: 'Higher_plant_viruses'})
+            
+            run_data = run_data.sort_values(["Sample", "Species"], ascending = (True, True))
+            run_data.drop_duplicates()
+
+            grouped_summary=run_data[['Sample', 'Species']]
+            grouped_summary = grouped_summary.groupby('Sample', as_index=False).agg(','.join)
+            grouped_summary["Species"] = grouped_summary["Species"].str.replace(",",", ")
+            print(grouped_summary)
+
             if sampleinfo is not None:
                 sampleinfo_data = pd.read_csv(sampleinfo, header=0, sep="\t",index_col=None)
                 run_data = pd.merge(sampleinfo_data, run_data, on="Sample", how='outer').fillna('NA')
-            run_data = run_data.sort_values(["Sample", "Species"], ascending = (True, True))
-            run_data.drop_duplicates()
-            run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_ncbi_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
-            
-            grouped_summary=run_data[['Sample', 'Species']]
-            grouped_summary = grouped_summary.groupby('Sample').agg(','.join)
-            grouped_summary["Species"] = grouped_summary["Species"].str.replace(",",", ")
-            if sampleinfo is not None:
-                sampleinfo_data = pd.read_csv(sampleinfo, header=0, sep="\t",index_col=None)
                 grouped_summary = pd.merge(sampleinfo_data, grouped_summary, on="Sample", how='outer').fillna('NA')
-            grouped_summary.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag_collapsed" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_ncbi_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
+            
+            run_data.to_csv("VirReport_detection_summary_"  + readsize + "_ncbi_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
+            grouped_summary.to_csv("VirReport_detection_summary_"  + readsize + "_ncbi_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
             
         else:
-            run_data.to_csv("run_top_scoring_targets_with_cov_stats_with_cont_flag" +  "_" + str(method) + "_" + str(threshold) + '_'  + readsize + "_ncbi_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
+            run_data.to_csv("VirReport_detection_summary_" + readsize + "_ncbi_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
 
 if __name__ == "__main__":
     main()
