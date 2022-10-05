@@ -55,8 +55,8 @@ def main():
 
         if diagno == "true":
             run_data['Evidence_category'] = np.where((run_data['av-pident'] >= 90) & (run_data['PCT_10X'] >= 0.7) & (run_data['length'] >= 45), "KNOWN",
-                                        np.where((run_data['av-pident'] >= 90) & (run_data['PCT_10X'] >= 0.1) & (run_data['length'] >= 45), "KNOWN_FRAGMENT",
-                                        np.where((run_data['av-pident'] < 90) & (run_data['av-pident'] > 70)  & (run_data['length'] >= 45) &  (run_data['PCT_10X'] >= 0.1), "PUTATIVE_NOVEL","EXCLUDE")))
+                                        np.where((run_data['av-pident'] >= 90) & (run_data['PCT_10X'] >= 0.1) & (run_data['PCT_10X'] < 0.7) & (run_data['contig_lenth_max'] >= 45), "KNOWN_FRAGMENT",
+                                        np.where((run_data['av-pident'] < 90) & (run_data['av-pident'] >= 60) & (run_data['PCT_10X'] >= 0.1) & (run_data['length'] >= 45) & (run_data['contig_lenth_max'] >= 200), "CANDIDATE_NOVEL","EXCLUDE")))
             run_data = run_data.sort_values(["Sample", "Species"], ascending = (True, True))
             run_data.drop_duplicates()
 
@@ -70,7 +70,7 @@ def main():
                 run_data = pd.merge(sampleinfo_data, run_data, on="Sample", how='outer').fillna('NA')
                 grouped_summary = pd.merge(sampleinfo_data, grouped_summary, on="Sample", how='outer').fillna('NA')
             
-            run_data.to_csv("VirReport_detection_summary_" +  "_" + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
+            run_data.to_csv("VirReport_detection_summary_" + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
             grouped_summary.to_csv("VirReport_detection_summary_collapsed" + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")  
         
         else:
@@ -98,9 +98,8 @@ def main():
 
         if diagno == "true":
             run_data['Evidence_category'] = np.where((run_data['av-pident'] >= 90) & (run_data['PCT_10X'] >= 0.7) & (run_data['length'] >= 45), "KNOWN",
-                                        np.where((run_data['av-pident'] >= 90) & (run_data['PCT_10X'] >= 0.1) & (run_data['length'] >= 45), "KNOWN_FRAGMENT",
-                                        np.where((run_data['av-pident'] < 90) & (run_data['av-pident'] > 70)  & (run_data['length'] >= 45), "PUTATIVE_NOVEL","EXCLUDE")))
-            
+                                        np.where((run_data['av-pident'] >= 90) & (run_data['PCT_10X'] >= 0.1) & (run_data['PCT_10X'] < 0.7) & (run_data['contig_lenth_max'] >= 45), "KNOWN_FRAGMENT",
+                                        np.where((run_data['av-pident'] < 90) & (run_data['av-pident'] >= 60) & (run_data['PCT_10X'] >= 0.1) & (run_data['length'] >= 45) & (run_data['contig_lenth_max'] >= 200), "CANDIDATE_NOVEL","EXCLUDE")))
             
             targets_df = pd.read_csv(targets, header=0, sep="\t", index_col=None)
             targets_df["Species"] = targets_df["Species"].astype(str)
