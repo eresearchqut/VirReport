@@ -137,13 +137,13 @@ def main():
         dup_pc = round(100-(int(dedup_read_counts)*100/(int(read_counts)+0.1)))
         dup_pc_dict[index] = dup_pc
 
-        read_counts_df = pd.DataFrame(read_counts_dict.items(),columns=[index, "Read count"])
-        read_counts_dedup_df = pd.DataFrame(dedup_read_counts_dict.items(),columns=[index, "Dedup read count"]) 
-        dup_pc_df = pd.DataFrame(dup_pc_dict.items(),columns=[index, "Dup %"]) 
-        fpkm_df = pd.DataFrame(fpkm_dict.items(),columns=[index, "FPKM"])
+        read_counts_df = pd.DataFrame(read_counts_dict.items(),columns=["Synthetic oligos", "Read count"])
+        read_counts_dedup_df = pd.DataFrame(dedup_read_counts_dict.items(),columns=["Synthetic oligos", "Dedup read count"]) 
+        dup_pc_df = pd.DataFrame(dup_pc_dict.items(),columns=["Synthetic oligos", "Dup %"]) 
+        fpkm_df = pd.DataFrame(fpkm_dict.items(),columns=["Synthetic oligos", "FPKM"])
 
         dfs = [read_counts_df, read_counts_dedup_df, fpkm_df, dup_pc_df]
-        full_table = reduce(lambda left,right: pd.merge(left,right,on=index), dfs)
+        full_table = reduce(lambda left,right: pd.merge(left,right,on="Synthetic oligos"), dfs)
 
         full_table["Dup %"] = full_table["Dup %"].astype(float)
         

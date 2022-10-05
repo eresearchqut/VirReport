@@ -259,7 +259,7 @@ if (params.qualityfilter) {
     }
 
     //This step takes > 1h to run for the large flow cells
-    process ADAPTER_AND_QUAL_TRIMMING {
+    process ADAPTER_TRIMMING {
         label "setting_6"
         tag "$sampleid"
         publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{log,json,html,trimmed.fastq.gz,zip,html,pdf,txt}"
@@ -271,7 +271,7 @@ if (params.qualityfilter) {
         file "${sampleid}_umi_tools.log"
         file "${sampleid}_truseq_adapter_cutadapt.log"
         file "${sampleid}_umi_tools.log" into umi_tools_results
-        tuple val(sampleid), file("${sampleid}_umi_cleaned.fastq.gz") into rna_profile_ch, qc_post_qual_trimming_ch
+        tuple val(sampleid), file("${sampleid}_umi_cleaned.fastq.gz") into rna_profile_ch, qual_trimming_ch
         
 
         script:
@@ -294,13 +294,13 @@ if (params.qualityfilter) {
         """
     }
 
-    process QC_POST_QUAL_TRIMMING { 
+    process QUAL_TRIMMING_AND_QC { 
         label "setting_3"
         tag "$sampleid"
         publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{log,json,html,trimmed.fastq.gz,zip,html,pdf,txt}"
         
         input:
-        tuple val(sampleid), file(fastqfile) from qc_post_qual_trimming_ch
+        tuple val(sampleid), file(fastqfile) from qual_trimming_ch
 
         output:
         file "*_fastqc.{zip,html}"
