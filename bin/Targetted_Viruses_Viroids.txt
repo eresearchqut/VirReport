@@ -1,500 +1,495 @@
-Species
-African cassava mosaic begomovirus
-African cassava mosaic virus
-African peanut clump pecluvirus
-African peanut clump virus
-Agropyron mosaic potyvirus
-Agropyron mosaic virus
-Alfalfa mosaic virus
-Algerian navel orange virus
-American hop latent virus
-American plum line pattern virus
-Andean potato latent virus
-Andean potato mild mosaic virus
-Andean potato mottle virus
-Anthoxanthum mosaic potyvirus
-Anthoxanthum latent blanching hordeivirus
-Anthoxanthum latent blanching virus
-Apple dimple fruit viroid
-Apple fruit crinkle apscaviroid
-Apple fruit crinkle viroid
-Apple scar skin viroid
-Apricot latent foveavirus
-Apricot latent ringspot nepovirus
-Apricot latent ringspot virus
-Apricot latent virus
-Arabis mosaic nepovirus
-Arabis mosaic virus
-Arkansas fig virus 1
-Arkansas fig virus 2
-Arracacha virus B
-Artichoke Italian latent virus
-Asian prunus virus 1
-Asian prunus virus 2
-Asian prunus virus 3
-Avocado sunblotch viroid
-Azuki bean mosaic virus
-Bamboo mosaic potexvirus
-Bamboo mosaic virus
-Barley stripe mosaic hordeivirus
-Barley stripe mosaic virus
-Barley yellow dwarf virus
-Bean common mosaic virus
-Beet curly top virus
-Bermuda grass etched-line marafivirus
-Bermuda grass etched-line virus
-Bermuda grass grassy shoot phytoplasma
-Bermuda grass spiroplasma
-Bermuda grass yellow leaf phytoplasma
-Bidens mottle virus
-Blackberry chlorotic ringspot ilarvirus
-Blackberry chlorotic ringspot virus
-Blackberry leaf mottle associated virus
-Blackberry virus E
-Blackberry virus S
-Blackberry virus Y
-Blackberry yellow vein associated virus
-Blackcurrant reversion nepovirus
-Blackcurrant reversion virus
-Blackcurrant yellows
-Blueberry latent spherical nepovirus
-Blueberry latent spherical virus
-Blueberry leaf mottle nepovirus
-Blueberry leaf mottle virus
-Blueberry mosaic associated ophiovirus
-Blueberry mosaic associated virus
-Blueberry mosaic viroid
-Blueberry necrotic ring blotch virus
-Blueberry red ringspot soymovirus
-Blueberry red ringspot virus
-Blueberry scorch carlavirus
-Blueberry scorch virus
-Blueberry shock ilarvirus
-Blueberry shock virus
-Blueberry shoestring sobemovirus
-Blueberry shoestring virus
-Blueberry virus A
-Brachiaria white leaf phytoplasma
-Broad bean mottle virus
-Broad bean stain comovirus
-Broad bean stain virus
-Broad bean true mosaic comovirus
-Broad bean true mosaic virus
-Brome mosaic bromovirus
-Brome mosaic virus
-Canary (reed) mosaic potyvirus
-Carnation Italian ringspot tombusvirus
-Carnation Italian ringspot virus
-Cassava American latent nepovirus
-Cassava brown streak ipomovirus
-Cassava brown streak virus
-Cassava Colombian symptomless tentative potexvirus
-Cassava common mosaic potexvirus
-Cassava common mosaic virus
-Cassava frogskin virus
-Cassava green mottle nepovirus
-Cassava green mottle virus
-Cassava Ivorian bacilliform anulavirus
-Cassava Ivorian bacilliform virus
-Cassava vein mosaic cavemovirus
-Cassava vein mosaic virus
-Cassava virus X
-Cassava virus X potexvirus
-Caucasus prunus virus
-Cereal northern mosaic rhabdovirus
-Cereal northern mosaic virus
-Cherry A capillovirus
-Cherry associated luteovirus
-Cherry Hungarian rasp leaf virus
-Cherry leaf roll nepovirus
-Cherry leaf roll virus
-Cherry mottle leaf trichovirus
-Cherry mottle leaf virus
-Cherry rasp leaf nepovirus
-Cherry rasp leaf virus
-Cherry robigovirus 5
-Cherry rosette virus
-Cherry rusty mottle associated virus
-Cherry twisted leaf foveavirus
-Cherry twisted leaf robigovirus
-Cherry virus F
-Cherry virus T
-Cherry virus Trakiya
-Cherry virus Turkey
-Citrus apscaviroid V
-Citrus apscaviroid VI
-Citrus viroid-OS
-Citrus bark cracking cocadviroid
-Citrus viroid IV
-Citrus bark cracking viroid
-Citrus bent leaf apscaviroid
-Citrus viroid Ia
-Citrus viroid Ib
-Citrus bent leaf viroid
-Citrus cachexia
-Citrus cachexia viroid
-Citrus chlorotic dwarf associated virus
-Citrus concave gum associated virus
-Citrus dwarfing apscaviroid
-Citrus viroid-IIIa
-Citrus viroid-IIIb
-Citrus viroid-IIIc
-Citrus dwarfing viroid
-Citrus exocortis pospiviroid
-Citrus exocortis viroid
-Citrus leaf blotch citrivirus
-Citrus leaf blotch virus
-Citrus leaf rugose ilarvirus
-Citrus leaf rugose virus
-Citrus leprosis virus
-Citrus leprosis rhabdovirus
-Citrus leprosis virus N
-Citrus psorosis virus
-Citrus ringspot virus
-Citrus seed-borne virus
-Citrus sudden death associated virus
-Citrus sudden death virus
-Citrus tatter leaf virus
-Citrus tristeza closterovirus
-Citrus tristeza virus
-Citrus variegation ilarvirus
-Citrus variegation virus
-Citrus vein enation virus
-Citrus viroid-IIa
-Citrus viroid V
-Citrus viroid VI
-Citrus yellow mosaic badnavirus
-Citrus yellow mosaic virus
-Citrus yellow mottle virus
-Cocksfoot mild mosaic panicovirus
-Cocksfoot mild mosaic virus
-Cocksfoot streak potyvirus
-Cocksfoot streak virus
-Colocasia bobone disease-associated cytorhabdovirus
-Colocasia bobone disease associated virus
-Concave gum virus (Psorosis complex)
-Cotton blue disease (Luteovirus [suspected])
-Cotton leaf curl Gezira virus
-Cotton leaf curl virus
-Crinkly leaf virus
-Cucumber fruit mottle mosaic virus
-Cucumber green mottle mosaic virus
-Cucumber mosaic virus
-Cucumber mottle virus
-Cynodon chlorotic streak rhabdovirus
-Dasheen bacilliform badnavirus
-Dasheen mosaic potyvirus
-Dasheen mosaic virus
-East African cassava mosaic begomovirus
-East African cassava mosaic Cameroon begomovirus
-East African cassava mosaic Cameroon virus
-East African cassava mosaic Malawi begomovirus
-East African cassava mosaic Malawi virus
-East African cassava mosaic virus
-East African cassava mosaic Zanzibar begomovirus
-East African cassava mosaic Zanzibar virus
-East Asian passiflora potyvirus
-East Asian passiflora virus
-Eggplant mottled dwarf virus
-Elm mottle virus
-Epirus cherry virus
-Festuca leaf streak rhabdovirus
-Festuca necrosis closterovirus
-Fig fleck associated virus
-Fig fleck associated virus 1
-Fig fleck associated virus 2
-Fig leaf mottle associated virus 1
-Fig leaf mottle associated virus 2
-Fig mild mottle associated virus
-Foxtail mosaic potexvirus
-Foxtail mosaic virus
-Fragaria chiloensis latent virus
-Gooseberry vein banding associated badnavirus
-Gooseberry vein banding associated virus
-Grapevine Ajinashika virus
-Grapevine Anatolian ringspot virus
-Grapevine angular mosaic-associated virus
-Grapevine asteroid mosaic associated virus
-Grapevine berry inner necrosis virus
-Grapevine Bulgarian latent virus
-Grapevine chrome mosaic virus
-Grapevine deformation virus
-Grapevine fanleaf virus
-Grapevine leafroll associated virus-13
-Grapevine leafroll associated virus 7
-Grapevine leafroll associated virus-7
-Grapevine line pattern virus
-Grapevine red blotch-associated virus
-Grapevine red blotch virus
-Grapevine Roditis leaf discolouration-associated virus
-Grapevine Syrah virus 1
-Grapevine syrah virus-I 
-Grapevine Tunisian ringspot virus
-Grapevine vein clearing virus
-Grapevine virus B
-Grapevine virus E
-Grapevine virus F
-Groundnut bud necrosis virus
-Groundnut ringspot virus
-Guinea grass mosaic potyvirus
-Holcus lanatus yellowing rhabdovirus
-Holcus streak potyvirus
-Hop stunt hostuviroid
-Hop stunt viroid
-Humulus japonicus latent virus
-Impatiens necrotic spot virus
-Indian cassava mosaic begomovirus
-Indian cassava mosaic virus
-Indian peanut clump potyvirus
-Indian peanut clump virus
-Kyuri green mottle mosaic virus
-Lupinus mosaic virus
-Maize chlorotic mottle machlomovirus
-Maize chlorotic mottle potyvirus
-Maize chlorotic mottle virus
-Maize dwarf mosaic potyvirus
-Maize dwarf mosaic virus
-Maize mosaic nucleorhabdovirus
-Maize mosaic rhabdovirus B
-Maize rough dwarf fijivirus
-Maize rough dwarf virus
-Maize streak geminivirus
-Maize streak virus
-Maize white line mosaic virus
-Millet streak geminivirus
-Millet streak virus
-Miscanthus streak mastrevirus
-Miscanthus streak virus
-Molinia streak sobemovirus
-Moroccan watermelon mosaic potyvirus
-Moroccan watermelon mosaic virus
-Mulberry dwarf viroid like disease
-Mulberry green mosaic virus
-Mulberry latent carlavirus
-Mulberry mosaic leaf roll associated nepovirus
-Mulberry mosaic leaf roll associated virus
-Mulberry mosaic virus
-Mulberry ringspot nepovirus
-Mulberry small circular viroid like RNA
-Mulberry vein banding tospovirus
-Mulberry vein banding virus
-Mulberry yellow net vein virus
-Mungbean yellow mosaic virus
-Myrobalan latent ringspot nepovirus
-Myrobalan latent ringspot virus
-Nectarine marafivirus M
-Oat necrotic mottle potyvirus
-Oat necrotic mottle virus
-Olive latent 1 necrovirus
-Olive latent 1 sobemovirus
-Olive latent 2 oleavirus
-Olive latent 2 ourmiavirus
-Olive latent 3 marafivirus
-Olive latent ringspot nepovirus
-Olive latent ringspot virus
-Olive latent virus 1
-Olive latent virus 2
-Olive latent virus 3
-Olive leaf yellowing associated closterovirus
-Olive leaf yellowing associated virus
-Olive mild mosaic necrovirus
-Olive mild mosaic virus
-Olive vein yellowing associated potexvirus
-Olive yellow mottling and decline associated virus
-Panicum mosaic sobemovirus
-Panicum mosaic virus
-Panicum mosaic virus satellite
-Papaya apical necrosis rhabdovirus
-Papaya droopy necrosis rhabdovirus
-Papaya leaf crumple virus
-Papaya leaf curl geminivirus
-Papaya leaf curl virus
-Papaya leaf distortion mosaic potyvirus
-Papaya leaf distortion mosaic virus
-Papaya lethal yellowing sobemovirus
-Papaya lethal yellowing virus
-Papaya meleira virus
-Papaya mosaic potexvirus
-Papaya mosaic virus
-Papaya ringspot potyvirus
-Papaya ringspot virus
-Papaya ringspot virus P
-Passiflora chlorosis potyvirus
-Passiflora chlorosis virus
-Passionfruit crinkle potyvirus
-Passionfruit ringspot potyvirus
-Passionfruit severe leaf distortion begomovirus
-Passionfruit severe leaf distortion virus
-Passionfruit Sri Lankan mottle potyvirus
-Passionfruit vein clearing rhabdovirus
-Passionfruit yellow mosaic tymoviridae
-Passion fruit yellow mosaic virus
-Peach associated luteovirus
-Peach chlorotic leaf spot virus
-Peach chlorotic mottle virus
-Peach enation nepovirus
-Peach enation virus
-Peach leaf pitting associated virus
-Peach maravirus D
-Peach mosaic trichovirus
-Peach mosaic virus
-Peach rosette mosaic nepovirus
-Peach rosette mosaic virus
-Pea early browning tobravirus
-Pea early browning virus
-Pea enation mosaic virus
-Pea enation mosaic virus 1
-Pea enation mosaic virus 2
-Peanut bud necrosis virus
-Peanut clump furovirus
-Peanut clump pecluvirus
-Peanut clump virus
-Peanut stripe potyvirus
-Peanut stripe virus
-Peanut stunt cucumovirus
-Peanut stunt virus
-Pearl millet mosaic potyvirus
-Pea seed-borne mosaic virus
-Pepino mosaic virus
-Petunia asteroid mosaic tombusvirus
-Petunia asteroid mosaic virus
-Plum pox potyvirus
-Plum pox virus
-Potato 14R virus
-Potato black ringspot virus
-Potato deforming mosaic virus
-Potato latent virus
-Potato mop-top virus
-Potato rough dwarf virus
-Potato spindle tuber viroid
-Potato virus B
-Potato virus H
-Potato virus M
-Potato virus S
-Potato virus T
-Potato virus U
-Potato virus V
-Potato virus X
-Potato virus Y
-Potato yellow blotch virus
-Potato yellow dwarf virus
-Potato yellowing virus
-Potato yellow vein virus
-Prunus geminivirus A
-Prunus latent virus
-Prunus virus F
-Prunus virus I
-Prunus virus T
-Psorosis complex
-Radish mosaic virus
-Raspberry latent virus
-Raspberry leaf blotch virus
-Raspberry ringspot nepovirus
-Raspberry ringspot virus
-Raspberry vein chlorosis virus
-Red clover vein mosaic carlavirus
-Red clover vein mosaic virus
-Ribgrass mosaic virus
-Rice black streaked dwarf fijivirus
-Rice black streaked dwarf virus
-Rice dwarf virus
-Rice hoja blanca tenuivirus
-Rice stripe tenuivirus
-Rice stripe virus
-Rice tungro bacilliform badnavirus
-Rice tungro bacilliform virus
-Rice tungro spherical virus
-Rice tungro spherical waikavirus
-Rod-shaped viruses
-Rubus chlorotic mottle sobeomovirus
-Rubus yellow net virus
-Satsuma dwarf virus
-Satsuma dwarf virus,Satsuma dwarf sadwavirus
-Solanum apical leaf curling virus
-Sorghum mosaic potyvirus
-Sorghum mosaic virus
-South African cassava mosaic begomovirus
-South African cassava mosaic virus
-Stocky prune virus
-Strawberry chlorotic fleck associated virus
-Strawberry chlorotic fleck virus
-Strawberry crinivirus 3
-Strawberry crinivirus 4
-Strawberry latent C rhabdovirus
-Strawberry latent ringpot nepovirus
-Strawberry latent ringspot sadwavirus
-Strawberry latent ringspot virus
-Strawberry leaf curl virus
-Strawberry mild yellow edge virus
-strawberry mottle virus
-Strawberry polerovirus 1
-Strawberry pseudo mild yellow edge virus
-Strawberry vein banding virus
-Sudan watermelon mosaic virus
-Sunflower chlorotic mottle potyvirus
-Sunflower chlorotic mottle virus
-Sunflower mosaic potyvirus
-Sunflower mosaic virus
-Sweet potato caulimo-like virus
-Sweet potato caulimovirus
-Sweet potato caulimo-virus
-Sweet potato chlorotic fleck virus
-Sweet potato chlorotic stunt virus
-Sweet potato feathery mottle virus
-Sweet potato latent virus
-Sweet potato leaf curl virus
-Sweet potato leaf speckling virus
-Sweet potato mild speckling virus
-Sweet potato ringspot virus
-Sweet potato vein mosaic virus
-Sweet potato virus 2
-Sweet potato virus C
-Sweet potato virus C6
-Sweet potato yellow dwarf virus
-Taro reovirus
-Taro vein chlorosis rhabdovirus
-Tobacco mosaic virus
-Tobacco mosaic virus satellite
-Tobacco necrosis alphanecrovirus
-Tobacco necrosis virus
-Tobacco necrosis virus A
-Tobacco necrosis virus D
-Tobacco rattle virus
-Tobacco streak virus
-Tomato black ring nepovirus
-Tomato black ring virus
-Tomato black ring virus satellite
-Tomato brown rugose fruit virus
-Tomato bushy stunt tombusvirus
-Tomato bushy stunt virus
-Tomato chlorosis virus
-Tomato chlorotic spot virus
-Tomato infectious chlorosis virus
-Tomato leaf curl Albatinah begomovirus
-Tomato leaf curl New Delhi virus
-Tomato leaf curl virus
-Tomato mottle mosaic virus
-Tomato mottle Taino virus
-Tomato ringspot nepovirus
-Tomato ring spot virus
-Tomato ringspot virus
-Tomato yellow fruit ring virus
-Tomato yellow leaf curl Al-Batinah virus
-Tomato yellow leaf curl virus
-Tomato yellow mosaic virus
-Tomato zonate spot tospovirus
-Tomato zonate spot virus
-Tulare apple mosaic virus
-Turnip vein clearing virus
-Wasabi mottle virus
-Watermelon mosaic virus
-Wheat dwarf geminivirus A
-Wheat dwarf virus
-Wheat soilbome mosaic furovirus
-Wheat soilbome mosaic virus
-Wheat streak mosaic virus
-Wheat yellow leaf closterovirus
-Wild potato mosaic virus
-Youcai mosaic virus
-Zoysia mosaic potyvirus
-Zucchini green mottle mosaic virus
+Species	Commodities
+African cassava mosaic begomovirus	Cassava
+African cassava mosaic virus	Cassava
+African peanut clump pecluvirus	Clonal grasses
+African peanut clump virus	Clonal grasses
+Agropyron mosaic potyvirus	Clonal grasses
+Agropyron mosaic virus	Clonal grasses
+Alfalfa mosaic virus	Hops
+Algerian navel orange virus	Rutaceae
+American hop latent virus	Hops
+Andean potato latent virus	Potato
+Andean potato mild mosaic virus	Potato
+Anthoxanthum latent blanching hordeivirus	Clonal grasses
+Anthoxanthum latent blanching virus	Clonal grasses
+Anthoxanthum mosaic potyvirus	Clonal grasses
+Anthoxanthum mosaic virus	Clonal grasses
+Apple dimple fruit viroid	Pome
+Apple fruit crinkle apscaviroid	Hops/Pome
+Apple fruit crinkle viroid	Hops/Pome
+Apple scar skin viroid	Pome/Stonefruit
+Apricot latent ringspot nepovirus	Stonefruit
+Apricot latent ringspot virus	Stonefruit
+Arkansas fig virus 1	Figs
+Arkansas fig virus 2	Figs
+Artichoke Italian latent virus	Vitis
+Asian prunus foveavirus 1	Stonefruit
+Asian prunus foveavirus 2	Stonefruit
+Asian prunus foveavirus 3	Stonefruit
+Asian prunus virus 1	Stonefruit
+Asian prunus virus 2	Stonefruit
+Asian prunus virus 3	Stonefruit
+Avocado sunblotch viroid	Avocado
+Bamboo mosaic potexvirus	Clonal grasses
+Bamboo mosaic virus	Clonal grasses
+Barley stripe mosaic hordeivirus	Grains
+Barley stripe mosaic virus	Grains
+Barley yellow dwarf virus	Rice
+Barley yellow dwarf virus – rice infecting strain	Rice
+Bean common mosaic virus	Peanuts
+Beet curly top virus	Potato
+Bermuda grass etched line marafivirus	Clonal grasses
+Bermuda grass etched line virus	Clonal grasses
+Bidens mottle virus	Lupins
+Blackberry chlorotic ringspot ilarvirus	Rubus
+Blackberry chlorotic ringspot virus	Rubus
+Blackberry leaf mottle associated virus	Rubus
+Blackberry virus E	Rubus
+Blackberry virus S	Rubus
+Blackberry virus Y	Rubus
+Blackberry yellow vein associated virus	Rubus
+Blackberry yellow vein associated virus	Rubus
+Blackcurrant reversion nepovirus	Ribes
+Blackcurrant reversion virus	Ribes
+Blueberry latent spherical nepovirus	Blueberry
+Blueberry latent spherical virus	Blueberry
+Blueberry leaf mottle nepovirus	Blueberry/Vitis
+Blueberry leaf mottle virus	Blueberry/Vitis
+Blueberry mosaic associated ophiovirus	Blueberry
+Blueberry mosaic associated virus	Blueberry
+Blueberry mosaic viroid	Blueberry
+Blueberry necrotic ring blotch virus	Blueberry
+Blueberry red ringspot soymovirus	Blueberry
+Blueberry red ringspot virus	Blueberry
+Blueberry scorch carlavirus	Blueberry
+Blueberry scorch virus	Blueberry
+Blueberry shock ilarvirus	Blueberry
+Blueberry shock virus	Blueberry
+Blueberry shoestring sobemovirus	Blueberry
+Blueberry shoestring virus	Blueberry
+Blueberry virus A	Blueberry
+Broad bean mottle virus	Legumes
+Broad bean stain comovirus	Legumes
+Broad bean stain virus	Legumes
+Broad bean true mosaic comovirus	Legumes
+Broad bean true mosaic virus	Legumes
+Brome mosaic bromovirus	Clonal grasses
+Brome mosaic virus	Clonal grasses
+Canary reed mosaic potyvirus	Clonal grasses
+Canary reed mosaic virus	Clonal grasses
+Carnation Italian ringspot tombusvirus	Stonefruit
+Carnation Italian ringspot virus	Stonefruit
+Cassava American latent nepovirus	Cassava
+Cassava American latent virus	Cassava
+Cassava brown streak ipomovirus	Cassava
+Cassava brown streak virus	Cassava
+Cassava Colombian symptomless tentative potexvirus	Cassava
+Cassava Colombian symptomless tentative virus	Cassava
+Cassava common mosaic potexvirus	Cassava
+Cassava common mosaic virus	Cassava
+Cassava frogskin virus	Cassava
+Cassava green mottle nepovirus	Cassava
+Cassava green mottle virus	Cassava
+Cassava Ivorian bacilliform anulavirus	Cassava
+Cassava Ivorian bacilliform anulavirus	Cassava
+Cassava Ivorian bacilliform virus	Cassava
+Cassava Ivorian bacilliform virus	Cassava
+Cassava vein mosaic cavemovirus	Cassava
+Cassava vein mosaic virus	Cassava
+Cassava virus X potexvirus	Cassava
+Cassava virus X virus	Cassava
+Cassava_Colombian_symptomless_virus	Cassava
+Caucasus prunus virus	
+Cereal northern mosaic rhabdovirus	Clonal grasses
+Cereal northern mosaic virus	Clonal grasses
+Cheery rusty mottle associated virus	
+Cherry A capillovirus	Stonefruit
+Cherry A virus	Stonefruit
+Cherry associated luteovirus	
+Cherry associated virus	
+Cherry Hungarian rasp leaf virus	
+Cherry leaf roll nepovirus	Blueberry/Ribes/Elms/Vitis/Hops/Kiwifruit/Olives/Pome/Rubus/Stonefruit/Walnut
+Cherry leaf roll virus	Blueberry/Ribes/Elms/Vitis/Hops/Kiwifruit/Olives/Pome/Rubus/Stonefruit/Walnut
+Cherry leafroll virus	Blueberry/Ribes/Elms/Vitis/Hops/Kiwifruit/Olives/Pome/Rubus/Stonefruit/Walnut
+Cherry mottle leaf trichovirus	Stonefruit
+Cherry mottle leaf virus	Stonefruit
+Cherry rasp leaf nepovirus	Malus/Rubus/Stonefruit
+Cherry rasp leaf virus	Malus/Rubus/Stonefruit
+Cherry robigovirus 5	
+Cherry rosette virus	
+Cherry twisted leaf foveavirus	Stonefruit
+Cherry twisted leaf robigovirus	Stonefruit
+Cherry twisted leaf virus	Stonefruit
+Cherry virus F	
+Cherry virus T	
+Cherry virus Trakiya	
+Cherry virus Turkey	
+Citrus apscaviroid V	Rutaceae
+Citrus apscaviroid VI	Rutaceae
+Citrus bark cracking cocadviroid	Rutaceae
+Citrus bark cracking viroid	Rutaceae
+Citrus bent leaf apscaviroid	Rutaceae
+Citrus bent leaf viroid	Rutaceae
+Citrus cachexia viroid	Rutaceae
+Citrus chlorotic dwarf associated virus	Rutaceae
+Citrus concave gum associated virus	Rutaceae
+Citrus concave gum associated virus	Rutaceae
+Citrus dwarf viroid	Rutaceae
+Citrus dwarfing apscaviroid	Rutaceae
+Citrus dwarfing viroid	Rutaceae
+Citrus exocortis pospiviroid	Rutaceae
+Citrus exocortis viroid	Rutaceae
+Citrus gummy bark viroid strain cachexia	Citrus
+Citrus leaf blotch citrivirus	Rutaceae
+Citrus leaf blotch virus	Rutaceae
+Citrus leaf rugose ilarvirus	Rutaceae
+Citrus leaf rugose virus	Rutaceae
+Citrus leprosis rhabdovirus	Rutaceae
+Citrus leprosis virus	Rutaceae
+Citrus ringspot virus	Rutaceae
+Citrus seed borne virus	Rutaceae
+Citrus sudden death associated virus	Rutaceae
+Citrus sudden death associated virus	Rutaceae
+Citrus tatter leaf capillovirus	Rutaceae
+Citrus tatter leaf virus	Rutaceae
+Citrus tristeza closterovirus	Rutaceae
+Citrus tristeza virus	Rutaceae
+Citrus variegation ilarvirus	Rutaceae
+Citrus variegation virus	Rutaceae
+Citrus vein enation virus	Rutaceae
+Citrus viroid Ia	Rutaceae
+Citrus viroid Ib	Rutaceae
+Citrus viroid IIa	Rutaceae
+Citrus viroid IIb	Rutaceae
+Citrus viroid IIc	Rutaceae
+Citrus viroid III	Rutaceae
+Citrus viroid IIIa	Rutaceae
+Citrus viroid IIIa	Rutaceae
+Citrus viroid IIIb	Rutaceae
+Citrus viroid IIIb	Rutaceae
+Citrus viroid IIIc	Rutaceae
+Citrus viroid IIIc	Rutaceae
+Citrus viroid IV	Rutaceae
+Citrus viroid OS	Rutaceae
+Citrus viroid V	Rutaceae
+Citrus viroid VI	Rutaceae
+Citrus yellow mosaic badnavirus	Rutaceae
+Citrus yellow mosaic virus	Rutaceae
+Citrus yellow mottle virus	Rutaceae
+Cocksfoot mild mosaic panicovirus	Clonal grasses
+Cocksfoot mild mosaic virus	Clonal grasses
+Cocksfoot streak potyvirus	Clonal grasses
+Cocksfoot streak virus	Clonal grasses
+Colocasia bobone disease associated cytorhabdovirus	Taro
+Colocasia bobone disease associated virus	Taro
+Colocasia bobone disease associated virus	Taro
+Concave gum virus	Rutaceae
+Cotton leaf curl Gezira virus	Hibiscus/Papaya
+Cotton leaf curl virus	Hibiscus/Papaya
+Crinkly leaf virus	Rutaceae
+Cynodon chlorotic streak rhabdovirus	Clonal grasses
+Cynodon chlorotic streak virus	Clonal grasses
+Dasheen mosaic potyvirus	Taro
+Dasheen mosaic virus	Taro
+East African cassava mosaic begomovirus	Cassava
+East African cassava mosaic Cameroon begomovirus	Cassava
+East African cassava mosaic Cameroon virus	Cassava
+East African cassava mosaic Malawi begomovirus	Cassava
+East African cassava mosaic Malawi virus	Cassava
+East African cassava mosaic virus	Cassava
+East African cassava mosaic Zanzibar begomovirus	Cassava
+East African cassava mosaic Zanzibar virus	Cassava
+East Asian passiflora potyvirus	Passionfruit
+East Asian passiflora virus	Passionfruit
+Eggplant mottled dwarf virus	Potato
+Elm mottle virus	Elm
+Epirus cherry virus	
+Festuca leaf streak rhabdovirus	Clonal grasses
+Festuca leaf streak virus	Clonal grasses
+Festuca necrosis closterovirus	Clonal grasses
+Festuca necrosis virus	Clonal grasses
+Fig fleck associated virus	Figs
+Fig leaf mottle associated virus 1	Figs
+Fig leaf mottle associated virus 2	Figs
+Fig mild mottle associated virus	Figs
+Foxtail mosaic potexvirus	Clonal grasses/Grains
+Foxtail mosaic virus	Clonal grasses/Grains
+Fragaria chiloensis latent virus	Fragaria
+Gooseberry vein banding associated badnavirus	Ribes
+Gooseberry vein banding associated virus	Ribes
+Grapevine Ajinashika virus	Grapevines
+Grapevine Anatolian ringspot virus	Vitis
+Grapevine angular mosaic associated virus	Vitis
+Grapevine asteroid mosaic associated virus	Vitis
+Grapevine berry inner necrosis virus	Vitis
+Grapevine Bulgarian latent virus	Vitis
+Grapevine chrome mosaic virus	Vitis
+Grapevine deformation virus	Vitis
+Grapevine fanleaf virus	Vitis
+Grapevine leafroll associated virus 13	Vitis
+Grapevine leafroll associated virus 7	Vitis
+Grapevine line pattern virus	Vitis
+Grapevine red blotch associated virus	Vitis
+Grapevine red blotch virus	Vitis
+Grapevine Roditis leaf discolouration associated virus	Vitis
+Grapevine Roditis leaf discoloration associated virus	Vitis
+Grapevine Tunisian ringspot virus	Vitis
+Grapevine vein clearing virus	Vitis
+Grapevine virus B	Vitis
+Grapevine virus E	Vitis
+Groundnut bud necrosis virus	Catharanthus roseus/Potato/Taro
+Groundnut ringspot virus	Potato
+Guinea grass mosaic potyvirus	Clonal grasses
+Guinea grass mosaic virus	Clonal grasses
+Holcus lanatus yellowing rhabdovirus	Clonal grasses
+Holcus lanatus yellowing virus	Clonal grasses
+Holcus streak potyvirus	Clonal grasses
+Holcus streak virus	Clonal grasses
+Hop stunt hostuviroid	Rutaceae/Hops
+Hop stunt viroid	Rutaceae/Hops
+Humulus japonicus latent virus	Hops
+Indian cassava mosaic begomovirus	Cassava
+Indian cassava mosaic virus	Cassava
+Indian peanut clump potyvirus	Clonal grasses
+Indian peanut clump virus	Clonal grasses
+Konjac mosaic virus	Taro
+Lupinus mosaic virus	Lupins
+Maize chlorotic mottle machlomovirus	Clonal grasses/Grains
+Maize chlorotic mottle potyvirus	Clonal grasses/Grains
+Maize chlorotic mottle virus	Clonal grasses/Grains
+Maize dwarf mosaic potyvirus	Clonal grasses/Grains
+Maize dwarf mosaic virus	Clonal grasses/Grains
+Maize mosaic nucleorhabdovirus	Clonal grasses/Grains
+Maize mosaic rhabdovirus B	Clonal grasses
+Maize mosaic virus B	Clonal grasses
+Maize rough dwarf fijivirus	Clonal grasses
+Maize rough dwarf virus	Clonal grasses
+Maize streak geminivirus	Clonal grasses
+Maize streak virus	Clonal grasses
+Maize white line mosaic virus	Grains
+Millet streak geminivirus	Clonal grasses
+Millet streak virus	Clonal grasses
+Miscanthus streak mastrevirus	Clonal grasses
+Miscanthus streak virus	Clonal grasses
+Molinia streak sobemovirus	Clonal grasses
+Molinia streak virus	Clonal grasses
+Moroccan watermelon mosaic potyvirus	Papaya
+Moroccan watermelon mosaic virus	Papaya
+Mulberry green mosaic virus	Mulberry
+Mulberry latent carlavirus	Mulberry
+Mulberry latent virus	Mulberry
+Mulberry mosaic leaf roll associated nepovirus	Mulberry
+Mulberry mosaic leaf roll associated virus	Mulberry
+Mulberry mosaic virus	Mulberry
+Mulberry ringspot nepovirus	Mulberry
+Mulberry ringspot virus	Mulberry
+Mulberry vein banding tospovirus	Mulberry
+Mulberry vein banding virus	Mulberry
+Mulberry yellow net vein virus	Mulberry
+Myrobalan latent ringspot nepovirus	Stonefruit
+Myrobalan latent ringspot virus	Stonefruit
+Nectarine marafivirus M	
+Oat necrotic mottle potyvirus	Clonal grasses
+Oat necrotic mottle virus	Clonal grasses
+Olive latent 1 sobemovirus	Olives
+Olive latent 2 ourmiavirus	Olives
+Olive latent ringspot nepovirus	Olives
+Olive latent ringspot virus	Olives
+Olive latent virus 1	Olives
+Olive latent virus 2	Olives
+Olive latent virus 3	Olives
+Olive leaf yellowing associated closterovirus	Olives
+Olive leaf yellowing associated virus	Olives
+Olive mild mosaic necrovirus	Olives
+Olive mild mosaic virus	Olives
+Olive semi latent virus	Olives
+Olive semilatent virus	Olives
+Olive vein yellowing associated potexvirus	Olives
+Olive vein yellowing associated virus	Olives
+Olive yellow mottling and decline associated virus	Olives
+Panicum mosaic sobemovirus	Clonal grasses
+Panicum mosaic virus	Clonal grasses
+Papaya apical necrosis rhabdovirus	Papaya
+Papaya apical necrosis virus	Papaya
+Papaya droopy necrosis rhabdovirus	Papaya
+Papaya droopy necrosis virus	Papaya
+Papaya leaf crumple virus	Catharanthus roseus
+Papaya leaf curl geminivirus	Papaya
+Papaya leaf curl virus	Papaya
+Papaya leaf distortion mosaic potyvirus	Papaya
+Papaya leaf distortion mosaic virus	Papaya
+Papaya lethal yellowing sobemovirus	Papaya
+Papaya lethal yellowing virus	Papaya
+Papaya meleira virus	Papaya
+Papaya mosaic potexvirus	Papaya
+Papaya mosaic virus	Papaya
+Papaya ringspot potyvirus	Papaya
+Papaya ringspot potyvirus – Type P3	Papaya
+Papaya ringspot virus	Papaya
+Passiflora chlorosis potyvirus	Passionfruit
+Passiflora chlorosis virus	Passionfruit
+Passion fruit yellow mosaic virus	Passionfruit
+Passionfruit crinkle potyvirus	Passionfruit
+Passionfruit crinkle virus	Passionfruit
+Passionfruit ringspot potyvirus	Passionfruit
+Passionfruit ringspot virus	Passionfruit
+Passionfruit severe leaf distortion begomovirus	Passionfruit
+Passionfruit severe leaf distortion virus	Passionfruit
+Passionfruit Sri Lankan mottle potyvirus	Passionfruit
+Passionfruit Sri Lankan mottle virus	Passionfruit
+Passionfruit vein clearing rhabdovirus	Passionfruit
+Passionfruit vein clearing virus	Passionfruit
+Passionfruit yellow mosaic tymoviridae	Passionfruit
+Passionfruit yellow mosaic tymovirus	Passionfruit
+Passionfruit yellow mosaic virus	Passionfruit
+Pea early browning tobravirus	Legumes/Lupins
+Pea early browning virus	Legumes/Lupins
+Pea early browning virus	Legumes/Lupins
+Pea enation mosaic virus	Lupins
+Pea seed borne mosaic virus	Legumes
+Peach associated luteovirus	
+Peach associated virus	
+Peach chlorotic leaf spot virus	
+Peach chlorotic mottle virus	
+Peach enation nepovirus	Stonefruit
+Peach enation virus	Stonefruit
+Peach leaf pitting associated virus	
+Peach maravirus D	
+Peach mosaic trichovirus	Stonefruit
+Peach mosaic virus	Stonefruit
+Peach rosette mosaic nepovirus	Blueberry/Vitis/Stonefruit
+Peach rosette mosaic virus	Blueberry/Vitis/Stonefruit
+Peach virus D	
+Peanut bud necrosis virus	Peanuts
+Peanut clump furovirus	Grains/Peanuts
+Peanut clump pecluvirus	Grains/Peanuts
+Peanut clump virus	Grains
+Peanut stripe potyvirus	Lupins/Peanuts
+Peanut stripe virus	Lupins/Peanuts
+Peanut stunt cucumovirus	Lupins/Peanuts
+Peanut stunt virus	Lupins/Peanuts
+Pearl millet mosaic potyvirus	Clonal grasses
+Pearl millet mosaic virus	Clonal grasses
+Pepino mosaic virus	Potato
+Petunia asteroid mosaic tombusvirus	Vitis/Stonefruit
+Petunia asteroid mosaic virus	Vitis/Stonefruit
+Plum pox potyvirus	Stonefruit
+Plum pox virus	Stonefruit
+Potato black ringspot virus	Potato
+Potato deforming mosaic virus	Potato
+Potato latent virus	Potato
+Potato mop top virus	Potato
+Potato rough dwarf virus	Potato
+Potato spindle tuber viroid	Potato
+Potato virus B	Potato
+Potato virus H	Potato
+Potato virus M	Potato
+Potato virus S	Potato
+Potato virus S – Andean strain	Potato
+Potato virus V	Potato
+Potato virus Y	Potato
+Potato yellow blotch virus	Potato
+Potato yellow dwarf nucleorhabdovirus	Potato
+Potato yellow dwarf virus	Potato
+Potato yellow vein virus	Catharanthus roseus/Potato
+Potato yellowing virus	Potato
+Prunus geminivirus A	
+Prunus latent virus	
+Prunus virus I	
+Prunus virus T	
+Radish mosaic virus	Brassica oleracea
+Raspberry latent virus	Rubus
+Raspberry leaf blotch virus	Rubus
+Raspberry ringspot nepovirus	Ribes/Vitis/Stonefruit/Fragaria
+Raspberry ringspot virus	Ribes/Vitis/Stonefruit/Fragaria
+Raspberry vein chlorosis virus	Rubus
+Red clover vein mosaic carlavirus	Legumes
+Red clover vein mosaic virus	Legumes
+Rice black streaked dwarf fijivirus	Clonal grasses/Rice
+Rice black streaked dwarf virus	Clonal grasses/Rice
+Rice dwarf virus	Clonal grasses/Rice
+Rice hoja blanca tenuivirus	Clonal grasses/Rice
+Rice hoja blanca virus	Clonal grasses/Rice
+Rice stripe tenuivirus	Clonal grasses/Rice
+Rice stripe virus	Clonal grasses/Rice
+Rice tungro bacilliform badnavirus	Clonal grasses/Rice
+Rice tungro bacilliform virus	Clonal grasses/Rice
+Rice tungro spherical virus	Clonal grasses/Rice
+Rice tungro spherical waikavirus	Clonal grasses/Rice
+Rubus yellow net virus	Rubus
+Satsuma dwarf sadwavirus	Rutaceae
+Satsuma dwarf virus	Rutaceae
+Solanum apical leaf curling virus	Potato
+Sorghum mosaic potyvirus	Grains
+Sorghum mosaic virus	Grains
+South African cassava mosaic begomovirus	Cassava
+South African cassava mosaic virus	Cassava
+Stocky prune virus	Stonefruit
+Strawberry chlorotic fleck associated virus	Fragaria
+Strawberry chlorotic fleck virus	Fragaria
+Strawberry crinivirus 3	Fragaria
+Strawberry crinivirus 4	Fragaria
+Strawberry latent C rhabdovirus	Fragaria
+Strawberry latent C virus	Fragaria
+Strawberry latent ringspot nepovirus	Ribes/Rubus/Hops/Blueberry/Vitis/Olives/Stonefruit/Fragaria/Prunus
+Strawberry latent ringspot sadwavirus	Ribes/Rubus/Hops/Blueberry/Vitis/Olives/Stonefruit/Fragaria/Prunus
+Strawberry latent ringspot virus	Ribes/Rubus/Hops/Blueberry/Vitis/Olives/Stonefruit/Fragaria/Prunus
+Strawberry leaf curl virus	Fragaria
+Strawberry polerovirus 1	Fragaria
+Strawberry pseudo mild yellow edge virus	Fragaria
+Sunflower chlorotic mottle potyvirus	Sunflower
+Sunflower chlorotic mottle virus	Sunflower
+Sunflower mosaic potyvirus	Sunflower
+Sunflower mosaic virus	Sunflower
+Sweet potato caulimovirus	Sweet potato
+Sweet potato chlorotic fleck virus	Sweet potato
+Sweet potato chlorotic stunt virus	Sweet potato
+Sweet potato latent virus	Sweet potato
+Sweet potato leaf curl virus	Sweet potato
+Sweet potato leaf speckling virus	Sweet potato
+Sweet potato mild speckling virus	Sweet potato
+Sweet potato mild speckling virus C8	Sweet potato
+Sweet potato ringspot virus	Sweet potato
+Sweet potato vein mosaic virus	Sweet potato
+Sweet potato virus	Sweet potato
+Sweet potato virus 2	Sweet potato
+Sweet potato virus C6	Sweet potato
+Sweet potato yellow dwarf virus	Sweet potato
+Taro bacilliform CH virus	Taro
+Taro reovirus	Taro
+Taro vein chlorosis rhabdovirus	Taro
+Taro vein chlorosis virus	Taro
+Taro virus	Taro
+Tobacco necrosis alphanecrovirus	Vitis/Hops/Rubus/Stonefruit
+Tobacco necrosis virus	Vitis/Hops/Rubus/Stonefruit
+Tobacco necrosis virus A	Potato
+Tobacco necrosis virus D	Potato/Fragaria
+Tomato black ring nepovirus	Ribes/Vitis/Lupins/Potato/Rubus/Stonefruit/Fragaria
+Tomato black ring virus	Ribes/Vitis/Lupins/Potato/Rubus/Stonefruit/Fragaria
+Tomato bushy stunt tombusvirus	Malus
+Tomato bushy stunt virus	Malus
+Tomato chlorosis virus	Potato
+Tomato chlorotic spot virus	Catharanthus roseus/Potato
+Tomato leaf curl Albatinah begomovirus	Papaya
+Tomato leaf curl Albatinah virus	Papaya
+Tomato leaf curl New Delhi virus	Potato
+Tomato mottle Taino virus	Potato
+Tomato ring spot virus	Blueberry/Ribes/Vitis/Pome/Rubus/Stonefruit/Fragaria
+Tomato ringspot nepovirus	Blueberry/Ribes/Vitis/Pome/Rubus/Stonefruit/Fragaria
+Tomato ringspot virus	Blueberry/Ribes/Vitis/Pome/Rubus/Stonefruit/Fragaria
+Tomato yellow fruit ring virus	Potato
+Tomato yellow mosaic virus	Potato
+Tomato zonate spot tospovirus	Taro
+Tomato zonate spot virus	Taro
+Tulare apple mosaic virus	Hazelnuts
+Wheat dwarf geminivirus A	Clonal grasses
+Wheat dwarf virus	Clonal grasses
+Wheat dwarf virus A	Clonal grasses
+Wheat soilbome mosaic furovirus	Clonal grasses
+Wheat soilbome mosaic virus	Clonal grasses
+Wheat streak mosaic virus	Grains
+Wheat yellow leaf closterovirus	Clonal grasses
+Wheat yellow leaf virus	Clonal grasses
+Wild potato mosaic virus	Potato
+Zoysia mosaic potyvirus	Clonal grasses
+Zoysia mosaic virus	Clonal grasses

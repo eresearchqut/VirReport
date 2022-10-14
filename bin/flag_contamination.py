@@ -41,9 +41,9 @@ def main():
     
     if viral_db == "true":
         if dedup == "true":
-            run_data = run_data[["Sample","Species","sacc","naccs","length","slen","cov","av-pident","stitle", "qseqids", "contig_ind_lengths", "cumulative_contig_len", "contig_lenth_min", "contig_lenth_max", "ICTV_information", "Mean read depth","Read count","Dedup read count","Dup %","FPKM","PCT_5X","PCT_10X",]]
+            run_data = run_data[["Sample","Species","sacc","naccs","length","slen","cov","av-pident","stitle", "qseqids", "contig_ind_lengths", "cumulative_contig_len", "contig_lenth_min", "contig_lenth_max", "ICTV_information", "Mean read depth","Read count","Dedup read count","Dup %","FPKM","PCT_5X","PCT_10X"]]
         else:
-            run_data = run_data[["Sample","Species","sacc","naccs","length","slen","cov","av-pident","stitle", "qseqids", "contig_ind_lengths", "cumulative_contig_len", "contig_lenth_min", "contig_lenth_max", "ICTV_information", "Mean read depth","Read count","RPM","FPKM","PCT_5X","PCT_10X",]]
+            run_data = run_data[["Sample","Species","sacc","naccs","length","slen","cov","av-pident","stitle", "qseqids", "contig_ind_lengths", "cumulative_contig_len", "contig_lenth_min", "contig_lenth_max", "ICTV_information", "Mean read depth","Read count","RPM","FPKM","PCT_5X","PCT_10X"]]
         
         run_data["FPKM"] = run_data["FPKM"].astype(float)
         run_data["FPKM_max"] = run_data.groupby(["Species"])["FPKM"].transform(max)
@@ -71,7 +71,7 @@ def main():
                 grouped_summary = pd.merge(sampleinfo_data, grouped_summary, on="Sample", how='outer').fillna('NA')
             
             run_data.to_csv("VirReport_detection_summary_" + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
-            grouped_summary.to_csv("VirReport_detection_summary_collapsed" + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")  
+            grouped_summary.to_csv("VirReport_detection_summary_collapsed_" + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")  
         
         else:
             run_data.to_csv("VirReport_detection_summary_" + readsize + "_viral_db_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
@@ -81,18 +81,12 @@ def main():
             run_data = run_data[["Sample","Species","sacc","naccs","length","slen","cov","av-pident","stitle","qseqids","contig_ind_lengths","cumulative_contig_len","contig_lenth_min","contig_lenth_max","Mean read depth","Read count","Dedup read count","Dup %","FPKM","PCT_5X","PCT_10X"]]
         else:
             run_data = run_data[["Sample","Species","sacc","naccs","length","slen","cov","av-pident","stitle","qseqids","contig_ind_lengths","cumulative_contig_len","contig_lenth_min","contig_lenth_max","Mean read depth","Read count","FPKM","PCT_5X","PCT_10X"]]
-        #testing both FPKM and RPM
-        if method == "FPKM":
-            run_data["FPKM_max"] = run_data.groupby(["Species"])["FPKM"].transform(max)
-            run_data["threshold_value"]=run_data["FPKM_max"]*threshold
-            run_data["contamination_flag"] = np.where(run_data["FPKM"] <= run_data["threshold_value"], True, False)
-            run_data["contamination_flag"] = np.where(run_data["FPKM_max"] <= 10, "NA", run_data["contamination_flag"])
+
+        run_data["FPKM_max"] = run_data.groupby(["Species"])["FPKM"].transform(max)
+        run_data["threshold_value"]=run_data["FPKM_max"]*threshold
+        run_data["contamination_flag"] = np.where(run_data["FPKM"] <= run_data["threshold_value"], True, False)
+        run_data["contamination_flag"] = np.where(run_data["FPKM_max"] <= 10, "NA", run_data["contamination_flag"])
         
-        elif method == "read_counts_normalised":
-            run_data["FPKM_max"] = run_data.groupby(["Species"])["read_counts_normalised"].transform(max)
-            run_data["threshold_value"]=run_data["FPKM_max"]*threshold
-            run_data["contamination_flag"] = np.where(run_data["read_counts_normalised"] <= run_data["threshold_value"], True, False)
-            run_data["contamination_flag"] = np.where(run_data["FPKM_max"] <= 10, "NA", run_data["contamination_flag"])
         
         run_data = run_data.sort_values(["Sample", "Species"], ascending = (True, True))
 
@@ -122,7 +116,7 @@ def main():
                 grouped_summary = pd.merge(sampleinfo_data, grouped_summary, on="Sample", how='outer').fillna('NA')
             
             run_data.to_csv("VirReport_detection_summary_"  + readsize + "_ncbi_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
-            grouped_summary.to_csv("VirReport_detection_summary_"  + readsize + "_ncbi_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
+            grouped_summary.to_csv("VirReport_detection_summary_collapsed_"  + readsize + "_ncbi_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
             
         else:
             run_data.to_csv("VirReport_detection_summary_" + readsize + "_ncbi_" + timestr + ".txt", index=None, sep="\t",float_format="%.2f")
