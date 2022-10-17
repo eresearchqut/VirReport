@@ -530,7 +530,7 @@ process DENOVO_ASSEMBLY {
     file "${sampleid}_spades_log"
     file "${sampleid}_cap3_${size_range}.fasta"
 
-    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}.fasta") into blastn_nt_cap3_ch, blast_nt_viral_db_cap3_ch
+    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}.fasta") into blastn_nt_cap3_ch, blastn_viral_db_cap3_ch
     tuple val(sampleid), file("${sampleid}_cap3_${size_range}.fasta") into getorf_ch
     
     script:
@@ -573,19 +573,19 @@ process DENOVO_ASSEMBLY {
 }
 
 if (params.virreport_viral_db) {
-    process BLAST_NT_VIRAL_DB_CAP3 {
+    process BLASTN_VIRAL_DB_CAP3 {
         label "setting_4"
         publishDir "${params.outdir}/01_VirReport/${sampleid}/blastn/viral_db", mode: 'link', overwrite: true, pattern: "*{vs_viral_db.bls,.txt}"
         tag "$sampleid"
         containerOptions "${bindOptions}"
 
         input:
-        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}.fasta") from blast_nt_viral_db_cap3_ch
+        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}.fasta") from blastn_viral_db_cap3_ch
         
         output:
         file "${sampleid}_cap3_${size_range}_blastn_vs_viral_db.bls"
         file "${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls"
-        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}.fasta"), file("${sampleid}_cap3_${size_range}_blastn_vs_viral_db.bls"), file("${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls") into filter_blast_nt_viral_db_cap3_ch
+        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}.fasta"), file("${sampleid}_cap3_${size_range}_blastn_vs_viral_db.bls"), file("${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls") into filter_blastn_viral_db_cap3_ch
 
         script:
         """
@@ -610,12 +610,12 @@ if (params.virreport_viral_db) {
         """
     }
 
-    process FILTER_BLAST_NT_VIRAL_DB_CAP3 {
+    process FILTER_BLASTN_VIRAL_DB_CAP3 {
         publishDir "${params.outdir}/01_VirReport/${sampleid}/blastn/viral_db", mode: 'link', overwrite: true, pattern: "*{.txt}"
         tag "$sampleid"
 
         input:
-        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}.fasta"), file("${sampleid}_cap3_${size_range}_blastn_vs_viral_db.bls"), file("${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls") from filter_blast_nt_viral_db_cap3_ch
+        tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${size_range}.fasta"), file("${sampleid}_cap3_${size_range}_blastn_vs_viral_db.bls"), file("${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls") from filter_blastn_viral_db_cap3_ch
 
         output:
         file "summary_${sampleid}_cap3_${size_range}_*_vs_viral_db.bls_viruses_viroids_ICTV*.txt"
@@ -896,9 +896,9 @@ if (params.virreport_ncbi) {
             
             output:
             file "${cap3_fasta.baseName}_blastx_vs_NT.bls"
-            file "${cap3_fasta.baseName}_blastx_vs_NT_top5Hits.txt"
-            file "${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids_final.txt"
-            file "summary_${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids_final.txt"
+            file "${cap3_fasta.baseName}_blastx_vs_NT_topHits.txt"
+            file "${cap3_fasta.baseName}_blastx_vs_NT_topHits_virus_viroids_final.txt"
+            file "summary_${cap3_fasta.baseName}_blastx_vs_NT_topHits_virus_viroids_final.txt"
             
             script:
             """
@@ -937,15 +937,15 @@ if (params.virreport_ncbi) {
             cut -f1 ${cap3_fasta.baseName}_blastx_vs_NT.bls  | sed 's/ //' | sort | uniq > ${cap3_fasta.baseName}.ids
             
             #fetch top blastn hits
-            touch  ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits.txt
+            touch  ${cap3_fasta.baseName}_blastx_vs_NT_topHits.txt
             for i in `cat ${cap3_fasta.baseName}.ids`; do
-                grep \$i ${cap3_fasta.baseName}}_blastx_vs_NT.bls | head -n5 >> ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits.txt;
+                grep \$i ${cap3_fasta.baseName}}_blastx_vs_NT.bls | head -n1 >> ${cap3_fasta.baseName}_blastx_vs_NT_topHits.txt;
             done
-            grep -i "Virus" ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits.txt > ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids.txt  || [[ \$? == 1 ]]
-            grep -i "Viroid" ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits.txt >> ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids.txt  || [[ \$? == 1 ]]
-            sed 's/ /_/g' ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids.txt  |  awk -v OFS='\\t' '{ print \$2,\$1,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10,\$11,\$12,\$13,\$14,\$15,\$16,\$17,\$18,\$19,\$20}' > ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids_final.txt
+            grep -i "Virus" ${cap3_fasta.baseName}_blastx_vs_NT_topHits.txt > ${cap3_fasta.baseName}_blastx_vs_NT_topHits_virus_viroids.txt  || [[ \$? == 1 ]]
+            grep -i "Viroid" ${cap3_fasta.baseName}_blastx_vs_NT_topHits.txt >> ${cap3_fasta.baseName}_blastx_vs_NT_topHits_virus_viroids.txt  || [[ \$? == 1 ]]
+            sed 's/ /_/g' ${cap3_fasta.baseName}_blastx_vs_NT_topHits_virus_viroids.txt  |  awk -v OFS='\\t' '{ print \$2,\$1,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10,\$11,\$12,\$13,\$14,\$15,\$16,\$17,\$18,\$19,\$20}' > ${cap3_fasta.baseName}_blastx_vs_NT_topHits_virus_viroids_final.txt
             
-            java -jar ${projectDir}/bin/BlastTools.jar -t blastp ${cap3_fasta.baseName}_blastx_vs_NT_top5Hits_virus_viroids_final.txt
+            java -jar ${projectDir}/bin/BlastTools.jar -t blastp ${cap3_fasta.baseName}_blastx_vs_NT_topHits_virus_viroids_final.txt
             rm taxdb.btd
             rm taxdb.bti
             """

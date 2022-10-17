@@ -21,8 +21,8 @@ The VirReport workflow will perform the following steps by default:
 
 - Searches against a local virus database:
   * Run megablast homology searches on de novo assembly against local virus and viroid database. Homology searches against blastn are also run in parallel for comparison with the megablast algorithm (**BLAST_NT_VIRAL_DB_CAP3**)
-  * Retain top megablast hit and restrict results to virus and viroid matches. Summarise results by grouping all the de novo contigs matching to the same viral hit and deriving the cumulative blast coverage and percent ID for each viral hit (**FILTER_BLAST_NT_VIRAL_DB_CAP3**)
-  * Align reads to top hit, derive coverage statistics, consensus sequence and VCF matching to top blast hit (**FILTER_BLAST_NT_VIRAL_DB_CAP3, COVSTATS_VIRAL_DB**)
+  * Retain top megablast hit and restrict results to virus and viroid matches. Summarise results by grouping all the de novo contigs matching to the same viral hit and deriving the cumulative blast coverage and percent ID for each viral hit (**FILTER_BLASTN_VIRAL_DB_CAP3**)
+  * Align reads to top hit, derive coverage statistics, consensus sequence and VCF matching to top blast hit (**FILTER_BLASTN_VIRAL_DB_CAP3, COVSTATS_VIRAL_DB**)
   * Run tblastn homolgy search on predicted ORF >= 90 bp derived using getORF (**TBLASTN_VIRAL_DB**)
 
 The pipeline can perform additional optional steps, which include:
@@ -31,7 +31,7 @@ The pipeline can perform additional optional steps, which include:
   * Align reads to top hit, derive coverage statistics, consensus sequence and VCF matching to top blast hits (**COVSTATS_NT**)
   * Run blastx homolgy search on contigs >= 90 bp long for which no match was obtained in the megablast search. Summarise the blastx results and restrict to virus and viroid matches (**BLASTX**)
   
-- A quality filtering step on raw fastq files (currently the workflow only processes samples prepared using QIAGEN QIAseq miRNA library kit). After performing quality filtering (**FASTQC_RAW, ADAPTER_AND_QUAL_TRIMMING, QC_POST_QUAL_TRIMMING, DERIVE_USABLE_READS**). the pipeline will also derive a qc report (QCREPORT). An RNA souce profile can be included as part of this step (**RNA_SOURCE_PROFILE, RNA_SOURCE_PROFILE_REPORT**)
+- A quality filtering step on raw fastq files (currently the workflow only processes samples prepared using QIAGEN QIAseq miRNA library kit). After performing quality filtering (**FASTQC_RAW, ADAPTER_TRIMMING, QUAL_TRIMMING_AND_QC, DERIVE_USABLE_READS**). the pipeline will also derive a qc report (QCREPORT). An RNA souce profile can be included as part of this step (**RNA_SOURCE_PROFILE, RNA_SOURCE_PROFILE_REPORT**)
 
 - VirusDetect version 1.8 can also be run in parallel. A summary of the top virus/viroid blastn hits will be separately output (**VIRUS_DETECT, VIRUS_IDENTIFY, VIRUS_DETECT_BLASTN_SUMMARY, VIRUS_DETECT_BLASTN_SUMMARY_FILTERED**)
 
@@ -356,7 +356,7 @@ For example: sample_name_21-22nt.blastn.summary.txt and sample_name_21-22nt.blas
 ## Credits
 Roberto Barrero, 14/03/2019  
 Desmond Schmidt, 2/7/2019  
-Converted to Nextflow by Craig Windell, 11/2020  
+Converted to Nextflow by Craig Windell and Maely Gauthier 11/2020  
 Modified by Maely Gauthier 12/2021
 
 # Citations
