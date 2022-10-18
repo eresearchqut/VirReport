@@ -15,12 +15,12 @@ The VirReport workflow will perform the following steps by default:
 
 - Retain reads of a given length (21-22 nt long by default) from fastq file(s) provided in index.csv file (**READPROCESSING**)  
 
-- De novo assembly using both Velvet and SPAdes. The contigs obtained are collapsed into scaffolds using cap3. By default, only contigs > 30 bp will be retained (**DENOVO_ASSEMBLY**)
+- De novo assembly using both Velvet and SPAdes. The contigs obtained are collapsed into scaffolds using cap3. By default, only contigs > 40 bp will be retained (**DENOVO_ASSEMBLY**)
 
 - Run megablast homology search against either a local virus database or NCBI NT/NR databases:
 
 - Searches against a local virus database:
-  * Run megablast homology searches on de novo assembly against local virus and viroid database. Homology searches against blastn are also run in parallel for comparison with the megablast algorithm (**BLAST_NT_VIRAL_DB_CAP3**)
+  * Run megablast homology searches on de novo assembly against local virus and viroid database. Homology searches against blastn are also run in parallel for comparison with the megablast algorithm (**BLASTN_VIRAL_DB_CAP3**)
   * Retain top megablast hit and restrict results to virus and viroid matches. Summarise results by grouping all the de novo contigs matching to the same viral hit and deriving the cumulative blast coverage and percent ID for each viral hit (**FILTER_BLASTN_VIRAL_DB_CAP3**)
   * Align reads to top hit, derive coverage statistics, consensus sequence and VCF matching to top blast hit (**FILTER_BLASTN_VIRAL_DB_CAP3, COVSTATS_VIRAL_DB**)
   * Run tblastn homolgy search on predicted ORF >= 90 bp derived using getORF (**TBLASTN_VIRAL_DB**)
@@ -331,7 +331,7 @@ results/
 ```     
 - 00_quality_filtering/sample_name: this folder will output FASTQC of raw or filtered fastq files, cutadapt and umi_tools log files, a quality_trimmed.fastq.gz file and by default a fastq.gz file including reads only matching the size specified in the nextflow.config file
 
-- 00_quality_filter/qc_report: this folder contains QC summaries for all samples included in the index_example.csv file
+- 00_quality_filtering/qc_report: this folder contains QC summaries for all samples included in the index_example.csv file
 
 - 01_VirReport/sample_name/assembly: fasta file which includes the assembled contigs before and after CAP3. The sample_name_cap3_21-22nt.fasta will be used  for homology searches in the next steps.
 
