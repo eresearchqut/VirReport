@@ -37,41 +37,33 @@ def helpMessage () {
         MT019,/user/folder/MT019_sRNA.fastq
 
       --blast_db_dir '[path/to/files]'                  Path to the blast NT and/or NR database file base name
-                                                        '/work/eresearch_bio/reference/blastDB'
+                                                        [none]
 
-      
-      --blast_viral_db                                    Run blastn and megablast homology search on cap3 de novo assembly against a virus and viroid database
+      --blast_viral_db                                  Run blastn and megablast homology search on cap3 de novo assembly against a virus and viroid database
                                                         [False]
 
       --blast_viral_nt_db '[path/to/file]'              Path to the viral nucleotide database file base name. Required if --blast_viral_db option is specified
-                                                        '/work/hia_mt18005/databases/PVirDB/PVirDB_ver2022_06_03/PVirDB_ver20220603pub.fasta'
+                                                        [none]
       
       --blastn_evalue '[value]'                         Blastn evalue.
                                                         '0.0001'
 
       --blastn_method ['blastn/megablast']              Specify blastn homology search on cap3 de novo assembly againts NCBI NT
                                                         [default megablast]
-
-      --blastp [True/False]                             Predict ORF from de novo assembled contigs and run blastP againts NCBI NR
-                                                        [False]
-
-      --blastp_evalue '[value]'                         Blastp evalue. Required if --blastp option is specified
-                                                        '0.0001'
                     
       --blastx [True/False]                             Run blastX againts NCBI NR
                                                         [False]
 
-      --bowtie_db_dir                                   Path to the bowtie indices (for RNA source step and filtering of unusable reads)
-      
+      --bowtie_db_dir                                   Path to the bowtie indices (for RNA source step and filtering of non-informative reads)
       
       --cap3_len '[value]'                              Trim value used in the CAP3 step.
-                                                        '30'
+                                                        '40'
 
       --contamination_detection [True/False]            Run false positive prediction due to cross-sample contamination for detections 
                                                         obtained via blastn search against NT
                                                         [False]
 
-      --contamination_detection_viral_db                 Run false positive prediction due to cross-sample contamination for detections 
+      --contamination_detection_viral_db                Run false positive prediction due to cross-sample contamination for detections 
                                                         obtained via blastn search against a viral database
                                                         [False]
 
@@ -104,6 +96,9 @@ def helpMessage () {
       --qualityfilter [True/False]                      Perform adapter and quality filtering of fastq files
                                                         [False]
 
+      --rna_source_profile                              Evaluates the sRNA library content
+                                                        [False]
+
       --spadesmem  '[value]'                            Memory usage for SPAdes de novo assembler
                                                         [60]               
       
@@ -113,9 +108,6 @@ def helpMessage () {
       --targets_file '[path/to/folder]'                 File specifying the name of the viruses/viroids of interest to filter from the blast results output
                                                         ['Targetted_Viruses_Viroids.txt']
       
-      --tblastn                                         tblastn homology search on predicted ORFs from getorf against to a viral database
-                                                        [False]
-      
       --tblastn_evalue                                  tblastn evalue. Required if --tblatsn option is specified
                                                         '0.0001'
       
@@ -123,8 +115,19 @@ def helpMessage () {
                                                         [False]
       
       --virusdetect_db_path '[path/to/filebasename]'    Path to the virusdetect blast virus database base name
+                                                        [none]
       
-      
+    ####
+    Internal SSG usage only
+      --diagno                                          Additional information will be added to each viral detection to facilitate interpretation 
+                                                        [False]
+      --synthetic_oligos                                Reads will be aligned to specific synthetic oligos
+                                                        [False]
+      --sampleinfo                                      Appends additional sample information to final summary to facilitate diagnostics reporting
+                                                        [False]
+      --sampleinfo_path                                 Path_to_sample_info to be appended
+                                                        [none]
+
     """.stripIndent()
 }
 // Show help message
@@ -939,7 +942,7 @@ if (params.virreport_ncbi) {
             #fetch top blastn hits
             touch  ${cap3_fasta.baseName}_blastx_vs_NT_topHits.txt
             for i in `cat ${cap3_fasta.baseName}.ids`; do
-                grep \$i ${cap3_fasta.baseName}}_blastx_vs_NT.bls | head -n1 >> ${cap3_fasta.baseName}_blastx_vs_NT_topHits.txt;
+                grep \$i ${cap3_fasta.baseName}_blastx_vs_NT.bls | head -n1 >> ${cap3_fasta.baseName}_blastx_vs_NT_topHits.txt;
             done
             grep -i "Virus" ${cap3_fasta.baseName}_blastx_vs_NT_topHits.txt > ${cap3_fasta.baseName}_blastx_vs_NT_topHits_virus_viroids.txt  || [[ \$? == 1 ]]
             grep -i "Viroid" ${cap3_fasta.baseName}_blastx_vs_NT_topHits.txt >> ${cap3_fasta.baseName}_blastx_vs_NT_topHits_virus_viroids.txt  || [[ \$? == 1 ]]
