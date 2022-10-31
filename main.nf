@@ -698,7 +698,7 @@ if (params.virreport_viral_db) {
 
     process COVSTATS_VIRAL_DB {
         tag "$sampleid"
-        label "setting_5"
+        label "setting_6"
         publishDir "${params.outdir}/01_VirReport/${sampleid}/alignments/viral_db", mode: 'link', overwrite: true
         containerOptions "${bindOptions}"
         
