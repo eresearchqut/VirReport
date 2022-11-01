@@ -66,9 +66,6 @@ def helpMessage () {
       --contamination_detection_viral_db                Run false positive prediction due to cross-sample contamination for detections 
                                                         obtained via blastn search against a viral database
                                                         [False]
-
-      --contamination_detection_method '[value]'        Either use FPKM or RPM for cross-contamination detection 
-
       
       --contamination_flag '[value]'                    Threshold value to predict false positives due to cross-sample contamination. 
                                                         Required if --contamination_detection option is specified
@@ -482,8 +479,12 @@ if (params.qualityfilter) {
         
         script:
         """
-        seq_run_qc_report.py
-        
+        if [[ ${params.sampleinfo} == true ]]; then
+            seq_run_qc_report.py --sampleinfopath ${params.sampleinfo_path} --samplesheetpath ${params.samplesheet_path}
+        else
+            seq_run_qc_report.py 
+        fi
+
         grouped_bar_chart.py
         """
     }
@@ -638,7 +639,7 @@ if (params.virreport_viral_db) {
                 #summarise the blast files
                 java -jar ${projectDir}/bin/BlastTools.jar -t blastn \${var}.txt
 
-                sequence_length.py --virus_list summary_\${var}.txt --contig_fasta ${sampleid}_cap3_${size_range}.fasta --sample_name ${sampleid} --read_size ${size_range} --out  summary_\${var}_with_contig_lengths.txt
+                sequence_length.py --virus_list summary_\${var}.txt --contig_fasta ${sampleid}_cap3_${size_range}.fasta --out summary_\${var}_with_contig_lengths.txt
 
                 #only retain hits to plant viruses
                 c1grep  "virus\\|viroid\\|Endogenous" summary_\${var}_with_contig_lengths.txt > summary_\${var}_filtered.txt
@@ -711,7 +712,7 @@ if (params.virreport_viral_db) {
         
         script:
         """
-        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --blastdbpath ${blast_viral_db_dir}/${blast_viral_db_name} --dedup ${params.dedup} --mode viral_db --cpu ${task.cpus} --diagno ${params.diagno}
+        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --blastdbpath ${blast_viral_db_dir}/${blast_viral_db_name} --dedup ${params.dedup} --mode viral_db --cpu ${task.cpus}
         """
     }
     if (params.contamination_detection_viral_db) {
@@ -729,9 +730,9 @@ if (params.virreport_viral_db) {
             script:
             """
             if ${params.sampleinfo}; then
-                flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --viral_db true --diagno ${params.diagno} --dedup ${params.dedup} --sampleinfo ${params.sampleinfo_path}
+                flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --viral_db true --diagno ${params.diagno} --dedup ${params.dedup} --sampleinfo ${params.sampleinfo_path}
             else
-                flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --viral_db true --diagno ${params.diagno} --dedup ${params.dedup}
+                flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --viral_db true --diagno ${params.diagno} --dedup ${params.dedup}
             fi
             """
         }
@@ -841,7 +842,7 @@ if (params.virreport_ncbi) {
         rm taxdb.btd
         rm taxdb.bti
         
-        sequence_length.py --virus_list summary_${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids.txt --contig_fasta ${cap3_fasta.baseName}.fasta --sample_name ${sampleid} --read_size ${size_range} --out summary_${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt
+        sequence_length.py --virus_list summary_${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids.txt --contig_fasta ${cap3_fasta.baseName}.fasta --out summary_${cap3_fasta.baseName}_blastn_vs_NT_top5Hits_virus_viroids_final.txt
         """
     }
 
@@ -860,7 +861,7 @@ if (params.virreport_ncbi) {
         
         script:
         """
-        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --dedup ${params.dedup} --cpu ${task.cpus} --mode ncbi --diagno ${params.diagno}
+        filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --dedup ${params.dedup} --cpu ${task.cpus} --mode ncbi
         
         """
     }
@@ -880,9 +881,9 @@ if (params.virreport_ncbi) {
             script:
             """
             if [[ ${params.sampleinfo} == true ]]; then
-                flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --dedup ${params.dedup} --diagno ${params.diagno} --targets ${params.targets_file} --sampleinfopath ${params.sampleinfo_path}
+                flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --dedup ${params.dedup} --diagno ${params.diagno} --targets ${params.targets_file} --sampleinfopath ${params.sampleinfo_path}
             else
-                flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --method ${params.contamination_detection_method} --dedup ${params.dedup} --diagno ${params.diagno} --targets ${params.targets_file}
+                flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --dedup ${params.dedup} --diagno ${params.diagno} --targets ${params.targets_file}
             fi
             """
         }

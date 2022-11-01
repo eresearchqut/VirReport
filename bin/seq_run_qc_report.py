@@ -1,5 +1,7 @@
 #!/usr/bin/env python
+import argparse
 import pandas as pd
+import numpy as np
 from functools import reduce
 import glob
 import re
@@ -7,6 +9,12 @@ import os
 import time
 
 def main():
+    parser = argparse.ArgumentParser(description="Derive a qc report")
+    parser.add_argument("--sampleinfopath", type=str)
+    parser.add_argument("--samplesheetpath", type=str)
+    args = parser.parse_args()
+    sampleinfo = args.sampleinfopath
+    samplesheet = args.samplesheetpath
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
 
@@ -134,15 +142,50 @@ def main():
         f.close()
         raw_read_counts_dict[sample].append(usable_reads_24) 
     
-    run_data_df = pd.DataFrame([([k] + v) for k, v in raw_read_counts_dict.items()], columns=['sample','raw_reads','umi_cleaned_reads', 'quality filtered reads > 18bp', 'total filtered bases', 'q20 bases', 'q30 bases', 'gc content', 'usable reads type', 'usable reads 18-25 nt', 'usable reads 21-22nt', 'usable reads 24nt'])
-    print(run_data_df.dtypes)
+    run_data_df = pd.DataFrame([([k] + v) for k, v in raw_read_counts_dict.items()], columns=['Sample','raw_reads','umi_cleaned_reads', 'quality_filtered_reads_>_18bp', 'total_filtered_bases', 'q20_bases', 'q30_bases', 'percent_gc_content', 'informative_reads_type', 'informative_reads_18-25_nt', 'informative_reads_21-22_nt', 'informative_reads_24_nt'])
+    
+    run_data_df['percent_UMI_incorporation'] = run_data_df['umi_cleaned_reads'] / run_data_df['raw_reads'] * 100
+    run_data_df['percent_quality_filtered'] = run_data_df['quality_filtered_reads_>_18bp'] / run_data_df['raw_reads'] * 100
+    run_data_df['percent_informative_reads_18-25_nt'] = run_data_df['informative_reads_18-25_nt'] / run_data_df['raw_reads'] * 100
+    run_data_df['percent_informative_reads_21-22_nt'] = run_data_df['informative_reads_21-22_nt'] / run_data_df['raw_reads'] * 100
+    
+    #set flags
+    run_data_df['raw_reads_flag'] = np.where((run_data_df['raw_reads'] < 30000000), "Less than 30M raw reads", "")
+    run_data_df['UMI_incorporation_flag'] = np.where((run_data_df['percent_UMI_incorporation'] < 50), "Low % of reads with UMIs recovered","")
+    run_data_df['quality_filtered_flag'] = np.where((run_data_df['percent_quality_filtered'] < 50), "Low % of quality filtered reads recovered", "")
+    run_data_df['informative_reads_flag'] = np.where((run_data_df['informative_reads_21-22_nt'] < 4000000), "Less than 4M informative 21-22nt reads recovered","")
+    #merge flags
+    run_data_df['flags'] = run_data_df['informative_reads_flag'] + ', ' + run_data_df['UMI_incorporation_flag'] + ', ' + run_data_df['quality_filtered_flag'] + ', ' + run_data_df['raw_reads_flag']
+    pattern = '|'.join([', , , ', ', , ', r', $'])
+    run_data_df['flags'] = run_data_df['flags'].str.replace(pattern,"")
+    run_data_df.drop(columns=['informative_reads_flag', 'UMI_incorporation_flag', 'quality_filtered_flag', 'raw_reads_flag'], inplace=True)
 
-    run_data_df.set_index('sample')
+    #print(run_data_df.dtypes)
+
+    run_data_df.set_index('Sample')
     #For all columns in the dataframe that are of dtype int64, add commas
     run_data_df.update(run_data_df.select_dtypes(include=['int64']).applymap('{:,}'.format))
     #Retain 2 decimal point format for GC content column
-    run_data_df.loc[:, 'gc content'] = run_data_df['gc content'].map('{:.2f}'.format)
-    run_data_df = run_data_df.sort_values("sample")
+    run_data_df.loc[:, 'percent_gc_content'] = run_data_df['percent_gc_content'].map('{:.2f}'.format)
+    run_data_df.loc[:, 'percent_UMI_incorporation'] = run_data_df['percent_UMI_incorporation'].map('{:.2f}'.format)
+    run_data_df.loc[:, 'percent_quality_filtered'] = run_data_df['percent_quality_filtered'].map('{:.2f}'.format)
+    run_data_df.loc[:, 'percent_informative_reads_18-25_nt'] = run_data_df['percent_informative_reads_18-25_nt'].map('{:.2f}'.format)
+    run_data_df.loc[:, 'percent_informative_reads_21-22_nt'] = run_data_df['percent_informative_reads_21-22_nt'].map('{:.2f}'.format)
+    run_data_df = run_data_df.sort_values("Sample")     
+
+    if sampleinfo is not None:
+        sampleinfo_data = pd.read_csv(sampleinfo, header=0, sep="\t",index_col=None)
+        #run_data_df = pd.merge(sampleinfo_data, run_data_df, on="Sample", how='outer').fillna('NA')
+        
+        samplesheet_df = pd.read_csv(samplesheet, header=0,index_col=None, skiprows=14)
+        print(samplesheet_df)
+        samplesheet_df["Sample"] = samplesheet_df["Sample_Name"]
+        samplesheet_df["UDI1"] = samplesheet_df["index"]
+        samplesheet_df["UDI2"] = samplesheet_df["index2"]
+        samplesheet_df = samplesheet_df[["Sample", "UDI1", "UDI2"]]
+        sampleinfo_data = pd.merge(sampleinfo_data, samplesheet_df, on="Sample", how='outer').fillna('NA')
+        run_data_df = pd.merge(sampleinfo_data, run_data_df, on="Sample", how='outer').fillna('NA')
+
     run_data_df.to_csv("run_qc_report_" + timestr + ".txt", index = None, sep="\t")
 
 if __name__ == '__main__':

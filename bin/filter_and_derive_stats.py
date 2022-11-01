@@ -23,7 +23,6 @@ def main():
     parser.add_argument("--dedup", type=str)
     parser.add_argument("--cpu", type=str)
     parser.add_argument("--mode", type=str)
-    parser.add_argument("--diagno", type=str)
     args = parser.parse_args()
     
     results_path = args.results
@@ -36,7 +35,6 @@ def main():
     dedup = args.dedup
     cpus = args.cpu
     mode = args.mode
-    diagno = args.diagno
 
     
     if mode == "ncbi":
@@ -44,16 +42,16 @@ def main():
         if len(raw_data) == 0:
             print("DataFrame is empty!")
             csv_file1 = open(sample + "_" + read_size + "_all_targets_with_scores.txt", "w")
-            csv_file1.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tSpecies\tRNA_type\tSpecies_updated\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score")
+            csv_file1.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tlongest_contig_fasta\nSpecies\tRNA_type\tSpecies_updated\tnaccs_score\tlength_score\tavpid_score\tcov_score\tcompleteness_score\ttotal_score")
             csv_file1.close()
             csv_file2 = open(sample + "_" + read_size + "_top_scoring_targets.txt", "w")
-            csv_file2.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tSpecies\tRNA_type\tSpecies_updated\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score")       
+            csv_file2.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tlongest_contig_fasta\tSpecies\tRNA_type\tSpecies_updated\tnaccs_score\tlength_score\tavpid_score\tcov_score\tcompleteness_score\ttotal_score") 
             csv_file2.close()
             csv_file3 = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats.txt", "w")
             if dedup == "true": 
-                csv_file3.write("Sample\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tSpecies\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score\tMean read depth\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_10X\tPCT_20X")
+                csv_file3.write("Sample\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tlongest_contig_fasta\tSpecies\tnaccs_score\tlength_score\tavpid_score\tcov_score\tcompleteness_score\ttotal_score\tmean_read_depth\tread_count\tdedup_read_count\tduplication_rate\tRPM\tFPKM\tPCT_1X\tPCT_10X\tPCT_20X\tconsensus_fasta")
             else:
-                csv_file3.write("Sample\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tSpecies\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score\tMean read depth\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_10X\tPCT_20X")
+                csv_file3.write("Sample\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tlongest_contig_fasta\tSpecies\tnaccs_score\tlength_score\tavpid_score\tcov_score\tcompleteness_score\ttotal_score\tmean_read_depth\tread_count\tRPM\tFPKM\tPCT_1X\tPCT_10X\tPCT_20X\tconsensus_fasta")
             csv_file3.close()
             exit ()
 
@@ -111,7 +109,6 @@ def main():
         
         raw_data["Species_updated"] = raw_data[["Species", "RNA_type"]].agg(" ".join, axis=1)
         #final_data = final_data[~((final_data["Species"].duplicated(keep=False))&(final_data["RNA_type"].str.contains("NaN")))]
-        #raw_data["Species_updated"] = raw_data[~((raw_data[["Species", "RNA_type"]].agg(" ".join, axis=1))&(raw_data["Species"].str.contains("RNA")))]
 
         raw_data["Species_updated"] = raw_data["Species_updated"].astype(str).str.replace("NaN", "")
         
@@ -127,16 +124,16 @@ def main():
         if len(raw_data.Species.value_counts()) == 0:
             print ("Dataframe has no targetted viruses or viroids")
             csv_file1 = open(sample + "_" + read_size + "_all_targets_with_scores.txt", "w")
-            csv_file1.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tSpecies\tRNA_type\tSpecies_updated\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score")
+            csv_file1.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tlongest_contig_fasta\nSpecies\tRNA_type\tSpecies_updated\tnaccs_score\tlength_score\tavpid_score\tcov_score\tcompleteness_score\ttotal_score")
             csv_file1.close()
             csv_file2 = open(sample + "_" + read_size + "_top_scoring_targets.txt", "w")
-            csv_file2.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tSpecies\tRNA_type\tSpecies\tnaccs_score\tlength_score\tavpid_score\tcov_score\tgenome_score\tcompleteness_score\ttotal_score")       
+            csv_file2.write("sacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tlongest_contig_fasta\tSpecies\tRNA_type\tSpecies_updated\tnaccs_score\tlength_score\tavpid_score\tcov_score\tcompleteness_score\ttotal_score")
             csv_file2.close()
             csv_file3 = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats.txt", "w")
             if dedup == "true":
-                csv_file3.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tMean read depth\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
+                csv_file3.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tlongest_contig_fasta\tmean_read_depth\tread_count\tdedup_read_count\tduplication_rate\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X\tconsensus_fasta")
             else:
-                csv_file3.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tMean read depth\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
+                csv_file3.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tlongest_contig_fasta\tmean_read_depth\tread_count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X\tconsensus_fasta")
             csv_file3.close()
             exit ()
 
@@ -153,10 +150,9 @@ def main():
         raw_data["cov"] = raw_data["cov"].astype(float)
         raw_data["cov_score"] = raw_data.groupby("Species_updated").apply(max_cov)
 
-        raw_data["genome_score"] = raw_data["stitle"].apply(genome_score)
         raw_data["completeness_score"] = raw_data["stitle"].apply(completeness_score)
         
-        raw_data["total_score"] = raw_data["length_score"] + raw_data["naccs_score"] + raw_data["avpid_score"] + raw_data["cov_score"] + raw_data["genome_score"] + raw_data["completeness_score"].astype(int)
+        raw_data["total_score"] = raw_data["length_score"] + raw_data["naccs_score"] + raw_data["avpid_score"] + raw_data["cov_score"] + raw_data["completeness_score"].astype(int)
         
         print("Output all hits that match species of interest")
         raw_data.to_csv(sample + "_" + read_size + "_all_targets_with_scores.txt", index=None, sep="\t" )
@@ -215,41 +211,35 @@ def main():
         target_dict = pd.Series(filtered_data.Species_updated.values,index=filtered_data.sacc).to_dict()
         print(filtered_data)
         print (target_dict)
-        filtered_data = filtered_data[["sacc","Species","Species_updated","naccs","length","slen","cov","av-pident","stitle","qseqids","contig_ind_lengths","cumulative_contig_len","contig_lenth_min","contig_lenth_max","total_score"]]
+        filtered_data = filtered_data[["sacc","Species","Species_updated","naccs","length","slen","cov","av-pident","stitle","qseqids","contig_ind_lengths","cumulative_contig_len","contig_lenth_min","contig_lenth_max","longest_contig_fasta","total_score"]]
         print(filtered_data)
-        cov_stats (blastdbpath, cpus, dedup, fastqfiltbysize, filtered_data, rawfastq, read_size, sample, target_dict, mode, diagno)
+        #cov_stats (blastdbpath, cpus, dedup, fastqfiltbysize, filtered_data, rawfastq, read_size, sample, target_dict, mode, diagno)
+        cov_stats (blastdbpath, cpus, dedup, fastqfiltbysize, filtered_data, rawfastq, read_size, sample, target_dict, mode)
 
     elif mode == "viral_db":
         final_data = pd.read_csv(results_path, header=0, sep="\t",index_col=None)
         final_data = final_data.rename(columns={"Species": "Species_updated"})
         if len(final_data) == 0:
             print("DataFrame is empty!")
-            if diagno == "true":
+            #if diagno == "true":
                 #extension = ("_top_scoring_targets_with_cov_stats_viral_db.txt", "_top_scoring_targets_with_cov_stats_viral_db_regulated.txt", "_top_scoring_targets_with_cov_stats_viral_db_endemic.txt")
                 #for ext in extension:
-                outfile = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_viral_db.txt", 'w')
-                if dedup == "true":
-                    outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean read depth\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
-                else:
-                    outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean read depth\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
-                outfile.close()
+            outfile = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_viral_db.txt", 'w')
+            if dedup == "true":
+                outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tlongest_contig_fasta\tICTV_information\tmean_read_depth\tread_count\tdedup_read_count\tduplication_rate\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X\tconsensus_fasta")
             else:
-                outfile = open(sample + "_" + read_size + "_top_scoring_targets_with_cov_stats_viral_db.txt", "w")
-                if dedup == "true":
-                    outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean read depth\tRead count\tDedup read count\tDup %\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
-                else:
-                    outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tICTV_information\tMean read depth\tRead count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X")
-                outfile.close()
-            
+                outfile.write("Sample\tSpecies\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tlongest_contig_fasta\tICTV_information\tmean_read_depth\tread_count\tRPM\tFPKM\tPCT_1X\tPCT_5X\tPCT_10X\tPCT_20X\tconsensus_fasta")
+            outfile.close()
+
             exit ()
         final_data["stitle"] = final_data["stitle"].str.replace("\._", "_")
         target_dict = {}
         target_dict = pd.Series(final_data.Species_updated.values,index=final_data.sacc).to_dict()
         print (target_dict)
 
-        cov_stats (blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, read_size, sample, target_dict, mode, diagno)
+        cov_stats (blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, read_size, sample, target_dict, mode)
 
-def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, read_size, sample, target_dict, mode, diagno):
+def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, read_size, sample, target_dict, mode):
     print("Align reads and derive coverage and depth for best hit")
     rawfastq_read_counts = (len(open(rawfastq).readlines(  ))/4)
 
@@ -264,6 +254,7 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
     PCT_20X_dict = {}
     read_counts_dict = {}
     rpm_dict = {}
+    consensus_dict = {}
 
     read_counts_dedup_df = pd.DataFrame()
     dup_pc_df = pd.DataFrame()
@@ -275,6 +266,7 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
     PCT_5X_df = pd.DataFrame()
     PCT_10X_df = pd.DataFrame()
     PCT_20X_df = pd.DataFrame()
+    consensus_df = pd.DataFrame()
 
     
     for refid, refspname in target_dict.items():
@@ -285,7 +277,7 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
 
             print("Extract sequence from blast database")
             fastafile = (sample + "_" + read_size + "_" + combinedid + ".fa").replace(" ","_")
-            #
+            
             if mode == "ncbi":
                 single_fasta_entry = open(fastafile, "w")
                 command_line = ["blastdbcmd","-db", blastdbpath, "-entry", refid, \
@@ -380,8 +372,8 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
                 dup_pc = round(100-(int(dedup_read_counts)*100/int(read_counts)))
                 dup_pc_dict[refspname] = dup_pc
                 
-                read_counts_dedup_df = pd.DataFrame(dedup_read_counts_dict.items(),columns=["Species_updated", "Dedup read count"]) 
-                dup_pc_df = pd.DataFrame(dup_pc_dict.items(),columns=["Species_updated", "Dup %"])
+                read_counts_dedup_df = pd.DataFrame(dedup_read_counts_dict.items(),columns=["Species_updated", "dedup_read_count"]) 
+                dup_pc_df = pd.DataFrame(dup_pc_dict.items(),columns=["Species_updated", "duplication_rate"])
                 finalbamoutput = dedupbamoutput
                 finalbamindex = dedupbamindex
                 final_read_counts = dedup_read_counts            
@@ -447,6 +439,19 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
             consensuscall = ["bcftools", "consensus", "-f",  maskedfasta, vcfout, "-o", consensus]
             subprocess.call(consensuscall)
 
+            consensus_seq = ""
+            with open(consensus, 'r') as f:
+                for line in f:
+                    if line[0] == ">":
+                        consensus_seq += line.strip()
+                        consensus_seq += ' '
+                    else:
+                        consensus_seq += line.strip()
+
+            consensus_seq = consensus_seq.replace('"', '')
+            consensus_dict[refspname] = consensus_seq
+            print(consensus_seq)
+
             subprocess.call(["rm","-r", pileup])
             subprocess.call(["rm","-r", vcfout])
             subprocess.call(["rm","-r", genomecovbed])
@@ -488,14 +493,15 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
             rpm_dict[refspname] = rpm
             fpkm_dict[refspname] = fpkm
 
-            cov_df = pd.DataFrame(cov_dict.items(),columns=["Species_updated", "Mean read depth"])
-            read_counts_df = pd.DataFrame(read_counts_dict.items(),columns=["Species_updated", "Read count"])
+            cov_df = pd.DataFrame(cov_dict.items(),columns=["Species_updated", "mean_read_depth"])
+            read_counts_df = pd.DataFrame(read_counts_dict.items(),columns=["Species_updated", "read_count"])
             rpm_df = pd.DataFrame(rpm_dict.items(),columns=["Species_updated", "RPM"])
             fpkm_df = pd.DataFrame(fpkm_dict.items(),columns=["Species_updated", "FPKM"])
             PCT_1X_df = pd.DataFrame(PCT_1X_dict.items(),columns=["Species_updated", "PCT_1X"])
             PCT_5X_df = pd.DataFrame(PCT_5X_dict.items(),columns=["Species_updated", "PCT_5X"])
             PCT_10X_df = pd.DataFrame(PCT_10X_dict.items(),columns=["Species_updated", "PCT_10X"])
             PCT_20X_df = pd.DataFrame(PCT_20X_dict.items(),columns=["Species_updated", "PCT_20X"])
+            consensus_df = pd.DataFrame(consensus_dict.items(),columns=["Species_updated", "consensus_fasta"])
 
             project_files = glob(index + "*ebwt") + glob(index + ".vcf.gz*")
             for fl in project_files:
@@ -506,19 +512,19 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
     print("Deriving summary table with coverage statistics")
 
     if read_counts_dedup_df.empty:
-        dfs = [final_data, cov_df, read_counts_df, rpm_df, fpkm_df, PCT_1X_df, PCT_5X_df, PCT_10X_df, PCT_20X_df]
+        dfs = [final_data, cov_df, read_counts_df, rpm_df, fpkm_df, PCT_1X_df, PCT_5X_df, PCT_10X_df, PCT_20X_df, consensus_df]
     else:
-        dfs = [final_data, cov_df, read_counts_df, read_counts_dedup_df, dup_pc_df, rpm_df, fpkm_df, PCT_1X_df, PCT_5X_df, PCT_10X_df, PCT_20X_df]
+        dfs = [final_data, cov_df, read_counts_df, read_counts_dedup_df, dup_pc_df, rpm_df, fpkm_df, PCT_1X_df, PCT_5X_df, PCT_10X_df, PCT_20X_df, consensus_df]
 
     full_table = reduce(lambda left,right: pd.merge(left,right,on=["Species_updated"],how='outer'), dfs)
 
-    full_table["Mean read depth"] = full_table["Mean read depth"].astype(float)
+    full_table["mean_read_depth"] = full_table["mean_read_depth"].astype(float)
     full_table["PCT_1X"] = full_table["PCT_1X"].astype(float)
     full_table["PCT_5X"] = full_table["PCT_5X"].astype(float)
     full_table["PCT_10X"] = full_table["PCT_10X"].astype(float)
     full_table["PCT_20X"] = full_table["PCT_20X"].astype(float)
-    if "Dup %" in full_table.columns:
-        full_table["Dup %"] = full_table["Dup %"].astype(float)
+    if "duplication_rate" in full_table.columns:
+        full_table["duplication_rate"] = full_table["duplication_rate"].astype(float)
     full_table.insert(0, "Sample", sample)
 
     if mode == 'ncbi':
@@ -559,10 +565,8 @@ def max_cov(df):
                         "0")
     return pd.DataFrame(labels, index=df.index).astype(int)
 
-def genome_score(x):
-    if "nearly complete sequence" in str(x):
-        return -3
-    elif "complete sequence" in str(x):
+def completeness_score(x):
+    if "complete sequence" in str(x):
         return 3
     elif "complete genome" in str(x):
         return 3
@@ -572,17 +576,15 @@ def genome_score(x):
         return 3
     elif "polyprotein 2 gene complete cds" in str(x):
         return 3
-    else:   
-        return 0    
-
-def completeness_score(x):
-    if "partial"in str(x):
-        return -2
+    elif "nearly complete sequence" in str(x):
+        return -3
+    if "partial" in str(x):
+        return -3
     elif "polymerase protein" in str(x):
-        return -2
+        return -3
     elif "RNA-dependent RNA polymerase" in str(x):
-        return -2
-    else:
+        return -3
+    else:   
         return 0
 
 if __name__ == "__main__":
