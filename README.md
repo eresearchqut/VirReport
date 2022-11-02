@@ -182,24 +182,24 @@ The pipeline can perform additional optional steps, which include:
 
     --blastn_method: The blastn homology search can be specified as blastn instead of megablast using --blastn_method blastn
       
-    --blastn_evalue and --blastp_evalue: specifies the evalue parameter to use during blast analyses (by deafult 0.0001)
+    --blastn_evalue and --blastx_evalue: specifies the evalue parameter to use during blast analyses (by deafult 0.0001)
      
     --targets: A text file with the taxonomy of the viruses/virioids of interest can be provided and only these will be retained in the megablast summary results derived at the COVSTATS_NT step using NCBI NT database.
     --blastx: if set to false, it will skip the blastx step performed when searching against local NCBI NT and NR databases 
       
     --orf_minsize and --orf_circ_minsize: correspond to the minimal open reading frames getorf retains that will be used in the tblastn homology search against the virus database (by default 90 bp) 
-    --contamination_detection and contamination_detection_viral_db: Run cross-sample contamination prediction (CONTAMINATION_DETECTION and/or CONTAMINATION_DETECTION_VIRAL_DB) 
+    --detection_reporting_nt and detection_reporting_viral_db: Run cross-sample contamination prediction and derive a summary of the detections (DETECTION_REPORT_NT and/or DETECTION_REPORT_VIRAL_DB) 
   ```
 
   To enable these options, they can either be included in the nextflow run command: 
   ```
-  nextflow run eresearchqut/VirReport -profile {singularity, docker or conda} --indexfile index_example.csv --contamination_detection --virusdetect
+  nextflow run eresearchqut/VirReport -profile {singularity, docker or conda} --indexfile index_example.csv --detection_reporting_nt --virusdetect
   ```
   or the parameter in the nextflow.config file can be udpated. For instance:
   ```
   params {
     virusdetect = true
-    contamination_detection = true
+    detection_reporting_nt = true
   }
   ```
 
@@ -303,8 +303,8 @@ results/
 │   │           ├── sample_name_cap3_21-22nt_getorf.all_tblastn_vs_viral_db_out.bls
 │   │           └── sample_name_cap3_21-22nt_getorf.all_tblastn_vs_viral_db_top5Hits_virus_viroids_final.txt
 │   └── Summary
-│       ├── run_top_scoring_targets_with_cov_stats_with_cont_flag_FPKM_0.01_21-22nt.txt
-│       └── run_top_scoring_targets_with_cov_stats_with_cont_flag_FPKM_0.01_21-22nt_viral_db.txt
+│       ├── VirReport_detection_summary_21-22nt_ncbi_[date].txt
+│       └── VirReport_detection_summary_21-22nt_viral_db_[date].txt
 └── 02_VirusDetect
     └── sample_name
     │   ├── blastn.reference.fa
@@ -347,7 +347,7 @@ sample_name_cap3_21-22nt_megablast_vs_viral_db.bls, summary_sample_name_cap3_21-
 For example: sample_name_21-22nt_top_scoring_targets_with_cov_stats.txt, sample_name_21-22nt_GenBankID_virus_name.consensus.fasta 
 
 - 01_VirReport/Summary: this folder contains a summary of results for all samples included in the index.csv file. The summay table includes a cross-contamination prediction flag. 
-For example: run_top_scoring_targets_with_cov_stats_with_cont_flag_21-22nt_0.01.txt
+For example: VirReport_detection_summary_21-22nt_ncbi_[date_time].txt
 
 - 02_VirusDetect/sample_name: this folder includes a results folder with blastn and blastx summary. 
 For example: sample_name_21-22nt.blastn.summary.txt and sample_name_21-22nt.blastx.summary.txt

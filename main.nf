@@ -710,21 +710,21 @@ if (params.virreport_viral_db) {
 
         output:
         file "${sampleid}_${params.minlen}-${params.maxlen}*"
-        file("${sampleid}_${size_range}_top_scoring_targets_with_cov_stats_viral_db.txt") into contamination_flag_viral_db
+        file("${sampleid}_${size_range}_top_scoring_targets_with_cov_stats_viral_db.txt") into detection_summary_viral_db
         
         script:
         """
         filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --blastdbpath ${blast_viral_db_dir}/${blast_viral_db_name} --dedup ${params.dedup} --mode viral_db --cpu ${task.cpus}
         """
     }
-    if (params.contamination_detection_viral_db) {
-        process CONTAMINATION_DETECTION_VIRAL_DB {
+    if (params.detection_reporting_viral_db) {
+        process DETECTION_REPORT_VIRAL_DB {
             label "local"
             publishDir "${params.outdir}/01_VirReport/Summary", mode: 'link', overwrite: true
             containerOptions "${bindOptions}"
 
             input:
-            file ('*') from contamination_flag_viral_db.collect().ifEmpty([])
+            file ('*') from detection_summary_viral_db.collect().ifEmpty([])
 
             output:
             file "VirReport_detection_summary*viral_db*.txt"
@@ -732,9 +732,9 @@ if (params.virreport_viral_db) {
             script:
             """
             if ${params.sampleinfo}; then
-                flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --viral_db true --diagno ${params.diagno} --dedup ${params.dedup} --sampleinfo ${params.sampleinfo_path}
+                detection_report.py --read_size ${size_range} --threshold ${params.contamination_flag} --viral_db true --diagno ${params.diagno} --dedup ${params.dedup} --sampleinfo ${params.sampleinfo_path}
             else
-                flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --viral_db true --diagno ${params.diagno} --dedup ${params.dedup}
+                detection_report.py --read_size ${size_range} --threshold ${params.contamination_flag} --viral_db true --diagno ${params.diagno} --dedup ${params.dedup}
             fi
             """
         }
@@ -859,7 +859,7 @@ if (params.virreport_ncbi) {
 
         output:
         file "${sampleid}_${size_range}*"
-        file("${sampleid}_${size_range}_top_scoring_targets_*with_cov_stats.txt") into contamination_flag
+        file("${sampleid}_${size_range}_top_scoring_targets_*with_cov_stats.txt") into detection_summary_nt
         
         script:
         """
@@ -868,14 +868,14 @@ if (params.virreport_ncbi) {
         """
     }
 
-    if (params.contamination_detection) {
-        process CONTAMINATION_DETECTION {
+    if (params.detection_reporting_nt) {
+        process DETECTION_REPORT_NT {
             label "local"
             publishDir "${params.outdir}/01_VirReport/Summary", mode: 'link', overwrite: true
             containerOptions "${bindOptions}"
 
             input:
-            file ('*') from contamination_flag.collect().ifEmpty([])
+            file ('*') from detection_summary_nt.collect().ifEmpty([])
 
             output:
             file "VirReport_detection_summary*.txt"
@@ -883,9 +883,9 @@ if (params.virreport_ncbi) {
             script:
             """
             if [[ ${params.sampleinfo} == true ]]; then
-                flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --dedup ${params.dedup} --diagno ${params.diagno} --targets ${params.targets_file} --sampleinfopath ${params.sampleinfo_path}
+                detection_report.py --read_size ${size_range} --threshold ${params.contamination_flag} --dedup ${params.dedup} --diagno ${params.diagno} --targets ${params.targets_file} --sampleinfopath ${params.sampleinfo_path}
             else
-                flag_contamination.py --read_size ${size_range} --threshold ${params.contamination_flag} --dedup ${params.dedup} --diagno ${params.diagno} --targets ${params.targets_file}
+                detection_report.py --read_size ${size_range} --threshold ${params.contamination_flag} --dedup ${params.dedup} --diagno ${params.diagno} --targets ${params.targets_file}
             fi
             """
         }
@@ -1095,25 +1095,6 @@ if (params.virusdetect) {
         summary_virus_detect.py --read_size ${size_range}
         """
     }
-/*
-    process VIRUS_DETECT_BLASTN_SUMMARY_FILTERED {
-        publishDir "${params.outdir}/02_VirusDetect/Summary", mode: 'link', overwrite: true
-        label "local"
-
-        input:
-        file ('*') from virusdetectblastnsummaryfiltered_flag.collect().ifEmpty([])
-
-        output:
-        file ("run_summary_top_scoring_targets_virusdetect_21-22nt_filtered.txt")
-
-        script:
-        """
-        touch run_summary_top_scoring_targets_virusdetect_21-22nt_filtered.txt
-        echo "Sample\tReference\tLength\tCoverage (%)\t#contig\tDepth\tDepth (Norm)\t%Identity\t%Iden Max\t%Iden Min\tGenus\tDescription\tSpecies" >> run_summary_top_scoring_targets_virusdetect_21-22nt_filtered.txt
-        [ -n "\$(find -name '*nt.blastn.summary.filtered.txt' | head -1)" ] && cat *nt.blastn.summary.filtered.txt | sort -k1,1 -k13,13 | grep -v "%Identity" >> run_summary_top_scoring_targets_virusdetect_21-22nt_filtered.txt
-        """
-    }
-*/
 }
 
 if (params.synthetic_oligos) {

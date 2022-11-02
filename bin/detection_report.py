@@ -62,7 +62,7 @@ def main():
 
             grouped_summary=run_data[['Sample', 'viral_species']]
             grouped_summary = grouped_summary.groupby('Sample', as_index=False).agg(','.join)
-            grouped_summary["Species"] = grouped_summary["viral_species"].str.replace(",",", ")
+            grouped_summary["viral_species"] = grouped_summary["viral_species"].str.replace(",",", ")
 
             if sampleinfo is not None:
                 sampleinfo_data = pd.read_csv(sampleinfo, header=0, sep="\t",index_col=None)
