@@ -124,6 +124,8 @@ def helpMessage () {
                                                         [False]
       --sampleinfo_path                                 Path_to_sample_info to be appended
                                                         [none]
+      --samplesheet_path                                Path_to_sample_sheet to be appended
+                                                        [none]
 
     """.stripIndent()
 }
@@ -1124,11 +1126,31 @@ if (params.synthetic_oligos) {
         tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size) from synthetic_oligos_ch
 
         output:
-        file ("${sampleid}_${size_range}*")
+        file ("${sampleid}_${size_range}_synthetic_oligos_stats.txt")
+        file "${sampleid}_${size_range}_synthetic_oligos_stats.txt" into synthetic_oligo_results
 
         script:
         """
         synthetic_oligos.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize ${fastq_filt_by_size} --read_size ${size_range}
+        """
+    }
+
+    process SYNTHETIC_OLIGO_SUMMARY {
+        publishDir "${params.outdir}/01_VirReport/Summary", mode: 'link'
+
+        input:
+        file ('*') from synthetic_oligo_results.collect().ifEmpty([])
+
+        output:
+        file "synthetic_oligo_summary*.txt"
+        
+        script:
+        """
+        if [[ ${params.sampleinfo} == true ]]; then
+            synthetic_oligos_summary.py --sampleinfopath ${params.sampleinfo_path}
+        else
+            synthetic_oligos_summary.py
+        fi
         """
     }
 }

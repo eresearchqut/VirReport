@@ -142,7 +142,7 @@ def main():
         f.close()
         raw_read_counts_dict[sample].append(usable_reads_24) 
     
-    run_data_df = pd.DataFrame([([k] + v) for k, v in raw_read_counts_dict.items()], columns=['Sample','raw_reads','umi_cleaned_reads', 'quality_filtered_reads_>_18bp', 'total_filtered_bases', 'q20_bases', 'q30_bases', 'percent_gc_content', 'informative_reads_type', 'informative_reads_18-25_nt', 'informative_reads_21-22_nt', 'informative_reads_24_nt'])
+    run_data_df = pd.DataFrame([([k] + v) for k, v in raw_read_counts_dict.items()], columns=['Sample','raw_reads','umi_cleaned_reads', 'quality_filtered_reads_>_18bp', 'total_filtered_bases', 'q20_bases', 'q30_bases', 'percent_gc_content', 'informative_reads_reads', 'informative_reads_18-25_nt', 'informative_reads_21-22_nt', 'informative_reads_24_nt'])
     
     run_data_df['percent_UMI_incorporation'] = run_data_df['umi_cleaned_reads'] / run_data_df['raw_reads'] * 100
     run_data_df['percent_quality_filtered'] = run_data_df['quality_filtered_reads_>_18bp'] / run_data_df['raw_reads'] * 100
@@ -156,7 +156,7 @@ def main():
     run_data_df['informative_reads_flag'] = np.where((run_data_df['informative_reads_21-22_nt'] < 4000000), "Less than 4M informative 21-22nt reads recovered","")
     #merge flags
     run_data_df['flags'] = run_data_df['informative_reads_flag'] + ', ' + run_data_df['UMI_incorporation_flag'] + ', ' + run_data_df['quality_filtered_flag'] + ', ' + run_data_df['raw_reads_flag']
-    pattern = '|'.join([', , , ', ', , ', r', $'])
+    pattern = '|'.join([', , , ', ', , ', r', $', r'^, '])
     run_data_df['flags'] = run_data_df['flags'].str.replace(pattern,"")
     run_data_df.drop(columns=['informative_reads_flag', 'UMI_incorporation_flag', 'quality_filtered_flag', 'raw_reads_flag'], inplace=True)
 
