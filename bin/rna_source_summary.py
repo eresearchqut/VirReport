@@ -20,7 +20,7 @@ def main():
         total_reads = ()
         rRNA = ()
         mt_pt_other = ()
-        plant_miRNA = ()
+        miRNA = ()
         plant_tRNA = ()
         plant_nc = ()
         artefacts = ()
@@ -50,8 +50,8 @@ def main():
                     line = next(f)
                     line = next(f)
                     elements = line.split("# reads with at least one alignment: ")
-                    plant_miRNA = elements[1].strip()
-                    plant_miRNA = int(re.sub(r' \(.*\)', '', plant_miRNA).strip())
+                    miRNA = elements[1].strip()
+                    miRNA = int(re.sub(r' \(.*\)', '', miRNA).strip())
                 
                 elif ("plant_tRNA alignment:") in line:
                     line = next(f)
@@ -89,14 +89,14 @@ def main():
                     
         f.close()
         read_origin_dict[sample] = [rRNA, plant_tRNA, mt_pt_other, plant_nc, artefacts,\
-                                    plant_miRNA, viral, leftover, total_reads]
+                                    miRNA, viral, leftover, total_reads]
         #sort dictionary by key (ie sample name)
         read_origin_dict = collections.OrderedDict(sorted(read_origin_dict.items()))
     
     #convert dictionary into pandas df
     read_origin_df = pd.DataFrame([([k] + v) for k, v in read_origin_dict.items()], columns=['sample','rRNA_total', 
                                 'plant_tRNA', 'mitochondrial_and_plastid_genes', 'plant_non_coding_RNA',
-                                'PhiX_and_artefacts', 'plant_miRNA', 'virus_and_viroids', 'leftover', 'total_reads'])              
+                                'PhiX_and_artefacts', 'miRNA', 'virus_and_viroids', 'leftover', 'total_reads'])              
     
     read_origin_df = read_origin_df.set_index(read_origin_df.columns[0])
     read_origin_df = read_origin_df.sort_index(ascending=True)
@@ -115,10 +115,10 @@ def main():
 
     column_names = ['rRNA_total',  'plant_tRNA']
     pc_df['rRNA_and_tRNA']= pc_df[column_names].sum(axis=1)
-    column_names = ['plant_miRNA',  'virus_and_viroids']
-    pc_df['plant_miRNA/vsiRNA']= pc_df[column_names].sum(axis=1)
+    column_names = ['miRNA',  'virus_and_viroids']
+    pc_df['miRNA/vsiRNA']= pc_df[column_names].sum(axis=1)
     pc_df['rRNA/tRNA_flag'] = pc_df['rRNA_and_tRNA'].apply(lambda x: 'High % of rRNA/tRNA' if x >= 50 else '')
-    pc_df['plant_miRNA/vsiRNA_flag'] = pc_df['plant_miRNA'].apply(lambda x: 'Low % of plant_miRNA/vsiRNA' if x <= 10 else '')
+    pc_df['miRNA/vsiRNA_flag'] = pc_df['miRNA'].apply(lambda x: 'Low % of miRNA/vsiRNA' if x <= 10 else '')
     print(pc_df)
     pc_df.to_csv('read_origin_pc_summary.' + timestr + '.txt', sep="\t", float_format="%.2f")
 
