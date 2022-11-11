@@ -150,6 +150,10 @@ if (params.sampleinfo_path != null) {
     sampleinfo_dir = file(params.sampleinfo_path).parent
     sampleinfo_name = file(params.sampleinfo_path).name
 }
+if (params.samplesheet_path != null) {
+    samplesheet_dir = file(params.samplesheet_path).parent
+    samplesheet_name = file(params.samplesheet_path).name
+}
 
 
 switch (workflow.containerEngine) {
@@ -170,6 +174,9 @@ switch (workflow.containerEngine) {
         if (params.sampleinfo_path != null) {
             bindbuild = (bindbuild + "-v ${sampleinfo_dir}:${sampleinfo_dir} ")
         }
+        if (params.samplesheet_path != null) {
+            bindbuild = (bindbuild + "-v ${samplesheet_dir}:${samplesheet_dir} ")
+        }
         bindOptions = bindbuild;
         break;
     case "singularity":
@@ -188,6 +195,9 @@ switch (workflow.containerEngine) {
         }
         if (params.sampleinfo_path != null) {
             bindbuild = (bindbuild + "-B ${sampleinfo_dir} ")
+        }
+        if (params.samplesheet_path != null) {
+            bindbuild = (bindbuild + "-B ${samplesheet_dir} ")
         }
         bindOptions = bindbuild;
         break;
@@ -1101,7 +1111,7 @@ if (params.synthetic_oligos) {
     process SYNTHETIC_OLIGOS {
         tag "$sampleid"
         label "setting_6"
-        publishDir "${params.outdir}/01_VirReport/${sampleid}/synthetic_oligos", mode: 'link', overwrite: true
+        publishDir "${params.outdir}/00_quality_filtering/${sampleid}/synthetic_oligos", mode: 'link', overwrite: true
         
         input:
         tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size) from synthetic_oligos_ch
@@ -1117,7 +1127,7 @@ if (params.synthetic_oligos) {
     }
 
     process SYNTHETIC_OLIGO_SUMMARY {
-        publishDir "${params.outdir}/01_VirReport/Summary", mode: 'link'
+        publishDir "${params.outdir}/00_quality_filtering/Summary", mode: 'link'
 
         input:
         file ('*') from synthetic_oligo_results.collect().ifEmpty([])
