@@ -49,9 +49,9 @@ def main():
         run_data = run_data.drop(columns=["FPKM_max", "threshold_value"])
 
         if diagno == "true":
-            run_data['Evidence_category'] = np.where((run_data['av-pident'] >= 90) & (run_data['PCT_10X'] >= 0.7) & (run_data['length'] >= 45), "KNOWN",
-                                        np.where((run_data['av-pident'] >= 90) & (run_data['PCT_10X'] >= 0.1) & (run_data['PCT_10X'] < 0.7) & (run_data['contig_lenth_max'] >= 45), "KNOWN_FRAGMENT",
-                                        np.where((run_data['av-pident'] < 90) & (run_data['av-pident'] >= 60) & (run_data['PCT_10X'] >= 0.1) & (run_data['length'] >= 45) & (run_data['contig_lenth_max'] >= 200), "CANDIDATE_NOVEL","EXCLUDE")))
+            run_data['Evidence_category'] = np.where((run_data['av-pident'] >= 85) & (run_data['PCT_10X'] >= 0.7) & (run_data['length'] >= 45), "KNOWN",
+                                        np.where((run_data['av-pident'] >= 85) & (run_data['PCT_10X'] >= 0.1) & (run_data['PCT_10X'] < 0.7) & (run_data['contig_lenth_max'] >= 45), "KNOWN_FRAGMENT",
+                                        np.where((run_data['av-pident'] < 85) & (run_data['av-pident'] >= 60) & (run_data['PCT_10X'] >= 0.1) & (run_data['length'] >= 45) & (run_data['contig_lenth_max'] >= 200), "CANDIDATE_NOVEL","EXCLUDE")))
             run_data = run_data.sort_values(["Sample", "Species"], ascending = (True, True))
             run_data.rename(columns={'Species': 'viral_species'}, inplace=True)
             run_data.drop_duplicates()
