@@ -457,6 +457,11 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
             subprocess.call(["rm","-r", genomecovbed])
             subprocess.call(["rm","-r", zerocovbed])
             subprocess.call(["rm","-r", maskedfasta])
+            subprocess.call(["rm","-r", bcfnormout])
+            subprocess.call(["rm","-r", bcfnormout + '.csi'])
+            subprocess.call(["rm","-r", bcfnormoutfiltout])
+            subprocess.call(["rm","-r", bcfnormoutfiltout + '.csi'])
+            
 
             # Derive Picard statistics 
             print("Running picard")
