@@ -110,6 +110,7 @@ def main():
 
     pc_df.plot.barh(stacked=True, color=['#000000', '#C5C9C7', '#808080', 'purple', 'yellow', '#069AF3', '#15B01A', '#E6E6FA'], figsize=(8,15)).legend(loc='lower center',bbox_to_anchor=(0.5, -0.3))
     plt.tight_layout()
+    plt.savefig('read_RNA_source.' + timestr + '.png', format="png")
     plt.savefig('read_RNA_source.' + timestr + '.pdf', format="pdf")
     plt.close()
 

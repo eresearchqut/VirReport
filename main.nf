@@ -309,7 +309,7 @@ if (params.qualityfilter) {
     process QUAL_TRIMMING_AND_QC { 
         label "setting_3"
         tag "$sampleid"
-        publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{log,json,html,trimmed.fastq.gz,zip,html,pdf,txt}"
+        publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{log,json,html,trimmed.fastq.gz,zip,html,png,pdf,txt}"
         
         input:
         tuple val(sampleid), file(fastqfile) from qual_trimming_ch
@@ -319,6 +319,7 @@ if (params.qualityfilter) {
         file "${sampleid}_fastp.json"
         file "${sampleid}_fastp.html"
         file "${sampleid}_read_length_dist.pdf"
+        file "${sampleid}_read_length_dist.png"
         file "${sampleid}_read_length_dist.txt"
         file "${sampleid}_quality_trimmed.fastq.gz"
         file "${sampleid}_qual_filtering_cutadapt.log"
@@ -358,6 +359,7 @@ if (params.qualityfilter) {
         read_length_dist.py --input ${sampleid}_quality_trimmed.fasta
         
         mv ${sampleid}_quality_trimmed.fasta_read_length_dist.txt ${sampleid}_read_length_dist.txt
+        mv ${sampleid}_quality_trimmed.fasta_read_length_dist.png ${sampleid}_read_length_dist.png
         mv ${sampleid}_quality_trimmed.fasta_read_length_dist.pdf ${sampleid}_read_length_dist.pdf
         rm ${sampleid}_quality_trimmed_temp.fastq
         """
@@ -420,6 +422,7 @@ if (params.qualityfilter) {
             file "read_origin_pc_summary*.txt"
             file "read_origin_counts*.txt"
             file "read_RNA_source*.pdf"
+            file "read_RNA_source*.png"
             file "read_origin_detailed_pc*.txt"
 
             script:
