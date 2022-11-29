@@ -1130,7 +1130,7 @@ if (params.synthetic_oligos) {
     }
 
     process SYNTHETIC_OLIGO_SUMMARY {
-        publishDir "${params.outdir}/00_quality_filtering/Summary", mode: 'link'
+        publishDir "${params.outdir}/00_quality_filtering/qc_report", mode: 'link'
 
         input:
         file ('*') from synthetic_oligo_results.collect().ifEmpty([])
