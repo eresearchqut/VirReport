@@ -85,3 +85,4 @@ else:
     run_data.plot.barh(ax=a, subplots=True, fontsize=7)
 
 fig.savefig('run_read_size_distribution.' + timestr + '.pdf', format='pdf')
+fig.savefig('run_read_size_distribution.' + timestr + '.png', format='png')

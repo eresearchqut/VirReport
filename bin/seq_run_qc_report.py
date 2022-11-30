@@ -150,7 +150,7 @@ def main():
     run_data_df['percent_informative_reads_21-22_nt'] = run_data_df['informative_reads_21-22_nt'] / run_data_df['raw_reads'] * 100
     
     #set flags
-    run_data_df['raw_reads_flag'] = np.where((run_data_df['raw_reads'] < 30000000), "Less than 30M raw reads", "")
+    run_data_df['raw_reads_flag'] = np.where((run_data_df['raw_reads'] < 40000000), "Less than 40M raw reads", "")
     run_data_df['UMI_incorporation_flag'] = np.where((run_data_df['percent_UMI_incorporation'] < 50), "Low % of reads with UMIs recovered","")
     run_data_df['quality_filtered_flag'] = np.where((run_data_df['percent_quality_filtered'] < 50), "Low % of quality filtered reads recovered", "")
     run_data_df['informative_reads_flag'] = np.where((run_data_df['informative_reads_21-22_nt'] < 4000000), "Less than 4M informative 21-22nt reads recovered","")

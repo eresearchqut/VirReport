@@ -119,7 +119,7 @@ def main():
     column_names = ['miRNA',  'virus_and_viroids']
     pc_df['miRNA/vsiRNA']= pc_df[column_names].sum(axis=1)
     pc_df['rRNA/tRNA_flag'] = pc_df['rRNA_and_tRNA'].apply(lambda x: 'High % of rRNA/tRNA' if x >= 50 else '')
-    pc_df['miRNA/vsiRNA_flag'] = pc_df['miRNA'].apply(lambda x: 'Low % of miRNA/vsiRNA' if x <= 10 else '')
+    pc_df['miRNA/vsiRNA_flag'] = pc_df['miRNA/vsiRNA'].apply(lambda x: 'Low % of miRNA/vsiRNA' if x <= 10 else '')
     print(pc_df)
     pc_df.to_csv('read_origin_pc_summary.' + timestr + '.txt', sep="\t", float_format="%.2f")
 

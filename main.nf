@@ -491,6 +491,7 @@ if (params.qualityfilter) {
         output:
         file "run_qc_report*.txt"
         file "run_read_size_distribution*.pdf"
+        file "run_read_size_distribution*.png"
         
         script:
         """
