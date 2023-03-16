@@ -357,7 +357,7 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
 
             if dedup == "true":
                 print("Deduping bam file")
-                umitools_dedup = ["umi_tools", "dedup", "-I", sortedbamoutput, "-L", umi_dedup_log]
+                umitools_dedup = ["umi_tools", "dedup", "-I", sortedbamoutput, "--method", "unique",  "-L", umi_dedup_log]
                 subprocess.call(umitools_dedup, stdout=open(dedupbamoutput,"w"))
                 
                 print("Indexing dedup bam file")
