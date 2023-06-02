@@ -15,7 +15,7 @@ import time
 def main():
     timestr = time.strftime("%Y%m%d-%H%M%S")
     read_origin_dict = {}
-    for umitools_out in glob.glob("*_bowtie.log"):
+    for umitools_out in glob.glob("*bowtie.log"):
         sample = ()
         total_reads = ()
         rRNA = ()
@@ -27,9 +27,12 @@ def main():
         viral = ()
         leftover = ()
 
-        sample = umitools_out.replace('_bowtie.log', '')
+        #sample = umitools_out.replace('_bowtie.log', '')
         with open(umitools_out, 'r') as f:
+            sample = f.readline().strip('\n')
+            print(sample)
             for line in f:
+                
                 if ("rRNA alignment:") in line:
                     line = next(f)
                     elements = line.split("# reads processed: ")
