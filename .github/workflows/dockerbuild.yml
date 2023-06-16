@@ -1,9 +1,6 @@
 name: VirReport docker image build
 # This builds the docker image and pushes it to GitHub packages
-on:
-  push:
-    tags:
-      - '*'
+on: workflow_dispatch
 
 jobs:
   build_push:
