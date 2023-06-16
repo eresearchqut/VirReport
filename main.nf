@@ -29,7 +29,7 @@ def helpMessage () {
     nextflow run eresearchqut/virreport -profile ...
 
     Mandatory arguments:
-       -profile '[docker, singularity, conda]'      Profile to use. Choose docker, or singularity, or conda
+       -profile '[docker, singularity]'             Profile to use. Choose docker or singularity
 
     Optional arguments:
       --indexfile '[path/to/file]'                  Path to the csv file that contains the list of

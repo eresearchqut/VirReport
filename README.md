@@ -6,7 +6,7 @@ eresearchqut/VirReport is a bioinformatics pipeline based upon the scientific wo
 
 The pipeline can either perform blast homology searches against a virus database or/and a local copy of NCBI nr and nt databases.
 
-**Pipeline prerequisites:** java 11 or later, Nextflow, and Docker/Singularity/Conda to suit your environment.
+**Pipeline prerequisites:** java 11 or later, Nextflow, and Docker/Singularity to suit your environment.
 
 ## Pipeline summary
 ![diagram pipeline](docs/images/diagram_pipeline.jpeg)
@@ -39,20 +39,20 @@ The pipeline can perform additional optional steps, which include:
 ## Run the Pipeline
 1. Install Nextflow [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation)
 
-2. Install [`Docker`](https://docs.docker.com/get-docker/), [`Singularity`](https://docs.sylabs.io/guides/3.0/user-guide/quick_start.html#quick-installation-steps) or [`Conda`](https://conda.io/miniconda.html) to suit your environment.
+2. Install [`Docker`](https://docs.docker.com/get-docker/) or [`Singularity`](https://docs.sylabs.io/guides/3.0/user-guide/quick_start.html#quick-installation-steps) to suit your environment.
 
 3. Download the pipeline and test it on minimal datatests:
 
   This command will test your installation on a single quality filtered fastq file derived from a sample infected with citrus exocortis viroid and will run VirReport using a mock ncbi database:
 
   ```bash
-  nextflow -c conf/test.config run eresearchqut/VirReport -profile test,{docker, singularity or conda}
+  nextflow -c conf/test.config run eresearchqut/VirReport -profile test,{docker or singularity}
   ```
 
   This command will test your installation on a pair of raw fastq files derived from a sample infected with citrus tristeza virus and will run VirReport using a mock viral database:
 
   ```bash
-  nextflow -c conf/test2.config run eresearchqut/VirReport -profile test2,{docker, singularity or conda}
+  nextflow -c conf/test2.config run eresearchqut/VirReport -profile test2,{docker or singularity}
   ```
 
   Running these test datasets requires 2 cpus and 8 Gb mem and should take 5 mins to complete.
@@ -73,14 +73,13 @@ The pipeline can perform additional optional steps, which include:
   
 - Run the command:
   ```bash
-  nextflow run eresearchqut/VirReport -profile {docker, singularity or conda} --indexfile index_example.csv
+  nextflow run eresearchqut/VirReport -profile {docker or singularity} --indexfile index_example.csv
   ```  
   setting the profile parameter to one of
   ```
   docker
   singularity
-  conda
-  ```  
+    ```  
   to suit your environment.
 
 - By default the pipeline will only retain 21-22 nt long sRNA reads for downstream analysis but you can change this range in the nextflow.config file. For instance this set of parameters will target 21-25nt long reads:
@@ -116,7 +115,7 @@ The pipeline can perform additional optional steps, which include:
     ```
     or add it in your nextflow command:  
     ```
-    nextflow run eresearchqut/VirReport -profile {docker, singularity or conda} --virreport_ncbi
+    nextflow run eresearchqut/VirReport -profile {docker or singularity} --virreport_ncbi
     ```  
     Download these locally, following the detailed steps available at https://www.ncbi.nlm.nih.gov/books/NBK569850/. 
     Create a folder where you will store your NCBI databases. It is good practice to include the date of download. For instance:  
@@ -193,7 +192,7 @@ The pipeline can perform additional optional steps, which include:
 
   To enable these options, they can either be included in the nextflow run command: 
   ```
-  nextflow run eresearchqut/VirReport -profile {singularity, docker or conda} --indexfile index_example.csv --detection_reporting_nt --virusdetect
+  nextflow run eresearchqut/VirReport -profile {singularity or docker} --indexfile index_example.csv --detection_reporting_nt --virusdetect
   ```
   or the parameter in the nextflow.config file can be udpated. For instance:
   ```
