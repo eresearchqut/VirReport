@@ -76,9 +76,6 @@ def helpMessage () {
 
       --dedup                                           Use UMI-tools dedup to remove duplicate reads  
       
-      --ictvinfo '[path/to/dir]'                        Path to ICTV info file. Required if --blast_viral_db option is specified
-                                                        ['ICTV_taxonomy_MinIdentity_Species.tsv']
-
       --maxlen '[value]'                                Maximum read length to extract
       ['22']
 
@@ -638,13 +635,13 @@ process FILTER_BLASTN_VIRAL_DB_CAP3 {
         file("${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls")
 
     output:
-    file "summary_${sampleid}_cap3_${size_range}_*_vs_viral_db.bls_viruses_viroids_ICTV*.txt"
+    file "summary_${sampleid}_cap3_${size_range}_*_vs_viral_db.bls_viruses_viroids*.txt"
     file "summary_${sampleid}_cap3_${size_range}_*_vs_viral_db.bls_filtered.txt"
 
     tuple val(sampleid),
           file(fastqfile),
           file(fastq_filt_by_size),
-          file("summary_${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls_viruses_viroids_ICTV.txt"),
+          file("summary_${sampleid}_cap3_${size_range}_megablast_vs_viral_db.bls_viruses_viroids.txt"),
           emit: viral_db_blast_results
     
     script:
@@ -670,16 +667,8 @@ process FILTER_BLASTN_VIRAL_DB_CAP3 {
             
             if [[ ! -s summary_\${var}_filtered.txt ]]
             then
-                if [[ ${params.diagno} == true ]]; then
-                    #for FILE in summary_\${var}_viruses_viroids_ICTV.txt summary_\${var}_viruses_viroids_ICTV_endemic.txt summary_\${var}_viruses_viroids_ICTV_regulated.txt;
-                    for FILE in summary_\${var}_viruses_viroids_ICTV.txt;
-                        do
-                            echo -e "Species\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tICTV_information" > "\${FILE}"
-                        done
-                else
-                    echo -e "Species\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max\tICTV_information" > summary_\${var}_viruses_viroids_ICTV.txt;   
-                fi
-
+                echo -e "Species\tsacc\tnaccs\tlength\tslen\tcov\tav-pident\tstitle\tqseqids\tcontig_ind_lengths\tcumulative_contig_len\tcontig_lenth_min\tcontig_lenth_max" > summary_\${var}_viruses_viroids.txt;
+                exit 0
             else
                 #fetch unique virus/viroid species name from Blast summary reports
                 cat summary_\${var}_filtered.txt | awk '{print \$7}' | awk -F "|" '{print \$2}'| sort | uniq | sed 's/Species://' > \${var}_uniq.ids
@@ -701,17 +690,11 @@ process FILTER_BLASTN_VIRAL_DB_CAP3 {
                 awk '{print \$7}' summary_\${var}_viruses_viroids.txt | awk -F "|" '{print \$2}' | sed 's/Species://' | sed 1d > wanted.names
             
                 #add species to report
-                paste wanted.names \${var}_filtered.txt | sort > summary_\${var}_viruses_viroids.MOD
-
-                #fetch ICTV information
-                grep -w -F -f wanted.names ${projectDir}/bin/${params.ictvinfo} | sort > wanted.ICTV
-
-                #join reports with ICTV information
-                join -a1 -1 1 -2 1 -t '\t' summary_\${var}_viruses_viroids.MOD wanted.ICTV |  awk '\$4>=40' > summary_\${var}_viruses_viroids_ICTV
+                paste wanted.names \${var}_filtered.txt | sort |  awk '\$4>=40' > summary_\${var}_viruses_viroids.tmp.txt
 
                 #report 2
-                awk '{print "Species" "\\t" \$0 "\\t"  "ICTV_information" }' header > header2
-                cat header2 summary_\${var}_viruses_viroids_ICTV | awk -F"\\t" '\$1!=""&&\$2!=""&&\$3!=""' > summary_\${var}_viruses_viroids_ICTV.txt
+                awk '{print "Species" "\\t" \$0 }' header > header2
+                cat header2 summary_\${var}_viruses_viroids.tmp.txt | awk -F"\\t" '\$1!=""&&\$2!=""&&\$3!=""' > summary_\${var}_viruses_viroids.txt
 
             fi
         done
@@ -1127,8 +1110,8 @@ process SYNTHETIC_OLIGOS {
     tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size)
 
     output:
-    file ("${sampleid}_${size_range}_synthetic_oligos_stats.txt")
-    file "${sampleid}_${size_range}_synthetic_oligos_stats.txt", emit: synthetic_oligo_results
+    file("${sampleid}_${size_range}_synthetic_oligos_stats.txt")
+    path("${sampleid}_${size_range}_synthetic_oligos_stats.txt"), emit: synthetic_oligo_results
 
     script:
     """
@@ -1141,8 +1124,7 @@ process SYNTHETIC_OLIGO_SUMMARY {
     containerOptions "${bindOptions}"
 
     input:
-    path("*blastn.summary.spp.txt")
-    path("*blastn.summary.filtered.spp.txt")
+    path("*synthetic_oligos_stats.txt")
 
     output:
     file "synthetic_oligo_summary*.txt"
@@ -1181,12 +1163,11 @@ workflow {
       RNA_SOURCE_PROFILE(ADAPTER_TRIMMING.out.adapter_trimmed)
       RNA_SOURCE_PROFILE_REPORT(RNA_SOURCE_PROFILE.out.rna_source_bowtie_results.collect().ifEmpty([]))
       }
+    DERIVE_USABLE_READS(QUAL_TRIMMING_AND_QC.out.qual_trimmed)
     if (params.synthetic_oligos) {
       SYNTHETIC_OLIGOS(DERIVE_USABLE_READS.out.usable_reads)
-      SYNTHETIC_OLIGO_SUMMARY(SYNTHETIC_OLIGOS.out.synthetic_oligo_results)
+      SYNTHETIC_OLIGO_SUMMARY(SYNTHETIC_OLIGOS.out.synthetic_oligo_results.collect().ifEmpty([]))
     }
-    DERIVE_USABLE_READS(QUAL_TRIMMING_AND_QC.out.qual_trimmed)
-
     ch_multiqc_files = Channel.empty()
     ch_multiqc_files = ch_multiqc_files.mix(QUAL_TRIMMING_AND_QC.out.cutadapt_qual_filt_results.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(QUAL_TRIMMING_AND_QC.out.fastp_results.collect().ifEmpty([]))
