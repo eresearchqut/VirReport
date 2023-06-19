@@ -39,7 +39,7 @@ def main():
     
     if viral_db == "true":
         if dedup == "true":
-            run_data = run_data[[run_data = run_data[["Sample","Species","sacc","naccs","length","slen","cov","av-pident","stitle","qseqids","contig_ind_lengths","cumulative_contig_len","contig_lenth_min","contig_lenth_max","longest_contig_fasta","mean_read_depth","read_count","dedup_read_count","duplication_rate","FPKM","PCT_5X","PCT_10X", "consensus_fasta"]]
+            run_data = run_data[["Sample","Species","sacc","naccs","length","slen","cov","av-pident","stitle","qseqids","contig_ind_lengths","cumulative_contig_len","contig_lenth_min","contig_lenth_max","longest_contig_fasta","mean_read_depth","read_count","dedup_read_count","duplication_rate","FPKM","PCT_5X","PCT_10X", "consensus_fasta"]]
         else:
             run_data = run_data[["Sample","Species","sacc","naccs","length","slen","cov","av-pident","stitle", "qseqids","contig_ind_lengths","cumulative_contig_len","contig_lenth_min","contig_lenth_max","longest_contig_fasta","mean_read_depth","read_count","RPM","FPKM","PCT_5X","PCT_10X","consensus_fasta"]]
         
