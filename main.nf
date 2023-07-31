@@ -406,7 +406,7 @@ process RNA_SOURCE_PROFILE_REPORT {
 }
 
 process DERIVE_USABLE_READS {
-    label "setting_3"
+    label "setting_4"
     tag "$sampleid"
     publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{.log,.fastq.gz}"
     containerOptions "${bindOptions}"
