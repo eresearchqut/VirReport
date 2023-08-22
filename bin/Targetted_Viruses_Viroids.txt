@@ -53,7 +53,7 @@ Blackberry yellow vein associated virus	Rubus
 Blackcurrant reversion nepovirus	Ribes
 Blackcurrant reversion virus	Ribes
 Blueberry fruit drop associated virus	Blueberry
-Blueberry green mosaic-associated virus	Blueberry
+Blueberry green mosaic associated virus	Blueberry
 Blueberry latent spherical nepovirus	Blueberry
 Blueberry latent spherical virus	Blueberry
 Blueberry leaf mottle nepovirus	Blueberry/Vitis
