@@ -499,6 +499,7 @@ Tomato yellow mosaic virus	Potato
 Tomato zonate spot tospovirus	Taro
 Tomato zonate spot virus	Taro
 Tulare apple mosaic virus	Hazelnuts/Pome
+Vaccinivirus cadovaccinii	Blueberry
 Wheat dwarf geminivirus A	Clonal grasses
 Wheat dwarf virus	Clonal grasses
 Wheat dwarf virus A	Clonal grasses
