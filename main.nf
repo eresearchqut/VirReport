@@ -408,7 +408,7 @@ process RNA_SOURCE_PROFILE_REPORT {
 process DERIVE_USABLE_READS {
     label "setting_4"
     tag "$sampleid"
-    publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{.log,.fastq.gz}"
+    publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{.log,.fastq.gz,*.txt}"
     containerOptions "${bindOptions}"
     
     input:
@@ -418,6 +418,7 @@ process DERIVE_USABLE_READS {
     path("${sampleid}*_cutadapt.log")
     path("${sampleid}_blacklist_filter.log")
     path("${sampleid}_${params.minlen}-${params.maxlen}nt.fastq.gz")
+    path("blacklist_size.txt")
     
     tuple val(sampleid),
           path(fastqfile),
@@ -436,6 +437,8 @@ process DERIVE_USABLE_READS {
             -x ${params.bowtie_db_dir}/blacklist \
             ${fastqfile} \
             ${sampleid}_blacklist_match 2>${sampleid}_blacklist_filter.log
+
+    grep -c '>' ${params.bowtie_db_dir}/blacklist > blacklist_size.txt
 
     cutadapt -j ${task.cpus} -m 18 -M 25 -o ${sampleid}_18-25nt.fastq.gz ${sampleid}_cleaned.fastq > ${sampleid}_18-25nt_cutadapt.log
     cutadapt -j ${task.cpus} -m 21 -M 22 -o ${sampleid}_21-22nt.fastq ${sampleid}_cleaned.fastq > ${sampleid}_21-22nt_cutadapt.log
