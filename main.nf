@@ -408,7 +408,7 @@ process RNA_SOURCE_PROFILE_REPORT {
 process DERIVE_USABLE_READS {
     label "setting_4"
     tag "$sampleid"
-    publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{.log,.fastq.gz,*.txt}"
+    publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{.log,.fastq.gz}"
     containerOptions "${bindOptions}"
     
     input:
@@ -418,7 +418,6 @@ process DERIVE_USABLE_READS {
     path("${sampleid}*_cutadapt.log")
     path("${sampleid}_blacklist_filter.log")
     path("${sampleid}_${params.minlen}-${params.maxlen}nt.fastq.gz")
-    path("blacklist_size.txt")
     
     tuple val(sampleid),
           path(fastqfile),
@@ -437,8 +436,6 @@ process DERIVE_USABLE_READS {
             -x ${params.bowtie_db_dir}/blacklist \
             ${fastqfile} \
             ${sampleid}_blacklist_match 2>${sampleid}_blacklist_filter.log
-
-    grep -c '>' ${params.bowtie_db_dir}/blacklist > blacklist_size.txt
 
     cutadapt -j ${task.cpus} -m 18 -M 25 -o ${sampleid}_18-25nt.fastq.gz ${sampleid}_cleaned.fastq > ${sampleid}_18-25nt_cutadapt.log
     cutadapt -j ${task.cpus} -m 21 -M 22 -o ${sampleid}_21-22nt.fastq ${sampleid}_cleaned.fastq > ${sampleid}_21-22nt_cutadapt.log
@@ -545,6 +542,7 @@ process DENOVO_ASSEMBLY {
     script:
     """
     #run velvet de novo assembler
+    export OMP_NUM_THREADS=2
     echo 'Starting velvet de novo assembly';
     velveth ${sampleid}_velvet_${size_range}_k15 15 -short -fastq ${fastq_filt_by_size}
     velvetg ${sampleid}_velvet_${size_range}_k15 -exp_cov 2
