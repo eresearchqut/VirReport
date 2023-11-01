@@ -18,18 +18,26 @@ def main():
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
     
-    df = pd.DataFrame(columns=['Sample', 'Synthetic oligos', 'Read count', 'Dedup read count', 'FPKM', 'Dup %'])
+    synthetic_df = pd.DataFrame(columns=['Sample', 'Synthetic oligos', 'Read count', 'Dedup read count', 'FPKM', 'Dup %'])
     
     for synthetic_oligo_count in glob.glob("*synthetic_oligos_stats.txt"):
         individual_df = pd.read_csv(synthetic_oligo_count, header=0,index_col=None,sep="\t")
-        df = df.append(individual_df, ignore_index=True)
-    
-    
+        synthetic_df = synthetic_df.append(individual_df, ignore_index=True)
+
+    synthetic_flag(synthetic_df,'0.01')
+    print(synthetic_df)
 
     if sampleinfo is not None:
         sampleinfo_data = pd.read_csv(sampleinfo, header=0, sep="\t",index_col=None)
-        df = pd.merge(sampleinfo_data, df, on="Sample", how='outer').fillna('NA')
-    print(df)
-    df.to_csv("synthetic_oligo_summary_" + timestr + ".txt", index = None, sep="\t")
+        synthetic_df = pd.merge(sampleinfo_data, synthetic_df, on="Sample", how='outer').fillna('NA')
+    
+    synthetic_df.to_csv("synthetic_oligo_summary_" + timestr + ".txt", index = None, sep="\t")
+
+def synthetic_flag(df, threshold):
+    df["FPKM"] = df["FPKM"].astype(float)
+    max_fpkm = df["FPKM"].max().astype(float)
+    print(max_fpkm)
+    df['1pcflag'] = np.where((df['FPKM'] <= float(threshold) * max_fpkm), "FLAG", "")
+
 if __name__ == '__main__':
     main()
