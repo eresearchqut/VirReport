@@ -24,7 +24,7 @@ def main():
         individual_df = pd.read_csv(synthetic_oligo_count, header=0,index_col=None,sep="\t")
         synthetic_df = synthetic_df.append(individual_df, ignore_index=True)
 
-    synthetic_flag(synthetic_df,'0.01')
+    synthetic_flag(synthetic_df, 5)
     print(synthetic_df)
 
     if sampleinfo is not None:
@@ -35,9 +35,9 @@ def main():
 
 def synthetic_flag(df, threshold):
     df["FPKM"] = df["FPKM"].astype(float)
-    max_fpkm = df["FPKM"].max().astype(float)
-    print(max_fpkm)
-    df['1pcflag'] = np.where((df['FPKM'] <= float(threshold) * max_fpkm), "FLAG", "")
+    mean_fpkm = df["FPKM"].median().astype(float)
+    print(mean_fpkm)
+    df['5Xflag'] = np.where((df['FPKM'] < (  mean_fpkm / threshold )) ^ (df['FPKM'] > (mean_fpkm * threshold)), "FLAG", "")
 
 if __name__ == '__main__':
     main()
