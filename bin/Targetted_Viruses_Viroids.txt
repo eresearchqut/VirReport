@@ -392,7 +392,7 @@ Petunia asteroid mosaic tombusvirus	Vitis/Stonefruit
 Petunia asteroid mosaic virus	Vitis/Stonefruit
 Plum pox potyvirus	Stonefruit
 Plum pox virus	Stonefruit
-Plum viroid 1 Stonefruit
+Plum viroid 1	Stonefruit
 Potato black ringspot virus	Potato
 Potato deforming mosaic virus	Potato
 Potato latent virus	Potato
