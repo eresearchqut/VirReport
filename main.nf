@@ -206,7 +206,7 @@ switch (workflow.containerEngine) {
 
 process FASTQC_RAW {
     tag "$sampleid"
-    publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link'
+    publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'copy'
 
     input:
     tuple val(sampleid), file(fastqfile_path)
@@ -224,7 +224,7 @@ process MERGE_LANES {
     tag "$sampleid"
 
     input:
-    tuple val(sampleid), file(samplepath)
+    tuple val(sampleid), path(samplepath)
     
     output:
     tuple val(sampleid), file("${sampleid}_R1.merged.fastq.gz"), emit: merged
@@ -257,7 +257,8 @@ process ADAPTER_TRIMMING {
     path("${sampleid}_umi_tools.log")
     path("${sampleid}_truseq_adapter_cutadapt.log")
     path("${sampleid}_umi_tools.log"), emit: umi_tools_results
-    tuple val(sampleid), path("${sampleid}_umi_cleaned.fastq.gz"), emit: adapter_trimmed
+    tuple val(sampleid), path(fastqfile), path("${sampleid}_umi_cleaned.fastq.gz"), emit: adapter_trimmed
+    tuple val(sampleid), path("${sampleid}_umi_cleaned.fastq.gz"), emit: adapter_trimmed2
     
 
     script:
@@ -286,7 +287,7 @@ process QUAL_TRIMMING_AND_QC {
     publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{log,json,html,trimmed.fastq.gz,zip,html,png,pdf,txt}"
     
     input:
-    tuple val(sampleid), path(fastqfile)
+    tuple val(sampleid), path(fastqfile), path(fastq_filt_by_size)
 
     output:
     file "*_fastqc.{zip,html}"
@@ -299,7 +300,7 @@ process QUAL_TRIMMING_AND_QC {
     file "${sampleid}_qual_filtering_cutadapt.log"
 
     path("${sampleid}_qual_filtering_cutadapt.log"), emit: cutadapt_qual_filt_results
-    tuple val(sampleid), path("${sampleid}_quality_trimmed.fastq"), emit: qual_trimmed
+    tuple val(sampleid), file(fastqfile), path("${sampleid}_quality_trimmed.fastq"), emit: qual_trimmed
     path("${sampleid}_fastp.json"), emit: fastp_results
     path("${sampleid}_read_length_dist.txt"), emit: read_length_dist_results
 
@@ -342,7 +343,7 @@ process QUAL_TRIMMING_AND_QC {
 process RNA_SOURCE_PROFILE {
     label "setting_2"
     tag "$sampleid"
-    publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link',overwrite: true, pattern: "*{log}"
+    publishDir "${params.outdir}/00_quality_filtering/${sampleid}", mode: 'link', overwrite: true, pattern: "*{log}"
     containerOptions "${bindOptions}"
 
     input:
@@ -382,7 +383,7 @@ process RNA_SOURCE_PROFILE {
     done
     
     rm *cleaned_sRNA.fq
-"""
+    """
 }
 
 process RNA_SOURCE_PROFILE_REPORT {
@@ -412,7 +413,7 @@ process DERIVE_USABLE_READS {
     containerOptions "${bindOptions}"
     
     input:
-    tuple val(sampleid), file(fastqfile)
+    tuple val(sampleid), file(fastqfile), file(qual_trimmed_fastqfile)
     
     output:
     path("${sampleid}*_cutadapt.log")
@@ -434,7 +435,7 @@ process DERIVE_USABLE_READS {
     bowtie -q -v 1 \
             -k 1 --un ${sampleid}_cleaned.fastq -p ${task.cpus} \
             -x ${params.bowtie_db_dir}/blacklist \
-            ${fastqfile} \
+            ${qual_trimmed_fastqfile} \
             ${sampleid}_blacklist_match 2>${sampleid}_blacklist_filter.log
 
     cutadapt -j ${task.cpus} -m 18 -M 25 -o ${sampleid}_18-25nt.fastq.gz ${sampleid}_cleaned.fastq > ${sampleid}_18-25nt_cutadapt.log
@@ -461,7 +462,7 @@ file("*qual_filtering_cutadapt.log")
     */
 
 process QCREPORT {
-    publishDir "${params.outdir}/00_quality_filtering/qc_report", mode: 'link'
+    publishDir "${params.outdir}/00_quality_filtering/qc_report", mode: 'link', overwrite: true
     containerOptions "${bindOptions}"
 
     input:
@@ -704,7 +705,7 @@ process FILTER_BLASTN_VIRAL_DB_CAP3 {
 
 process COVSTATS_VIRAL_DB {
     tag "$sampleid"
-    label "setting_6"
+    label "setting_7"
     publishDir "${params.outdir}/01_VirReport/${sampleid}/alignments/viral_db", mode: 'link', overwrite: true, pattern: "*{.fa*,.fasta,metrics.txt,scores.txt,targets.txt,stats.txt,log.txt,.bcf*,.vcf.gz*,.bam*}"
     containerOptions "${bindOptions}"
     
@@ -716,7 +717,8 @@ process COVSTATS_VIRAL_DB {
     
     script:
     """
-    filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --blastdbpath ${blast_viral_db_dir}/${blast_viral_db_name} --dedup ${params.dedup} --mode viral_db --cpu ${task.cpus}
+    gunzip -c ${fastqfile} > ${fastqfile.baseName}
+    filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile.baseName} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --blastdbpath ${blast_viral_db_dir}/${blast_viral_db_name} --dedup ${params.dedup} --mode viral_db --cpu ${task.cpus}
     """
 }
 
@@ -860,7 +862,7 @@ process BLASTN_NT_CAP3 {
 
 process COVSTATS_NT {
     tag "$sampleid"
-    label "setting_6"
+    label "setting_7"
     publishDir "${params.outdir}/01_VirReport/${sampleid}/alignments/NT", mode: 'link', overwrite: true, pattern: "*{.fa*,.fasta,metrics.txt,scores.txt,targets.txt,stats.txt,log.txt,.bcf*,.vcf.gz*,.bam*}"
     containerOptions "${bindOptions}"
     
@@ -873,7 +875,8 @@ process COVSTATS_NT {
     
     script:
     """
-    filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --dedup ${params.dedup} --cpu ${task.cpus} --mode ncbi
+    gunzip -c ${fastqfile} > ${fastqfile.baseName}
+    filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile.baseName} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --dedup ${params.dedup} --cpu ${task.cpus} --mode ncbi
     
     """
 }
@@ -901,7 +904,7 @@ process DETECTION_REPORT_NT {
 
 //blastx jobs runs out of memory if only given 64Gb
 process BLASTX {
-    label "setting_2"
+    label "setting_8"
     publishDir "${params.outdir}/01_VirReport/${sampleid}/blastx/NT", mode: 'link', overwrite: true
     tag "$sampleid"
     containerOptions "${bindOptions}"
@@ -1104,19 +1107,20 @@ process VIRUS_DETECT_BLASTN_SUMMARY {
 
 process SYNTHETIC_OLIGOS {
     tag "$sampleid"
-    label "setting_6"
-    publishDir "${params.outdir}/00_quality_filtering/${sampleid}/synthetic_oligos", mode: 'link', overwrite: true
+    label "setting_2"
+    publishDir "${params.outdir}/00_quality_filtering/${sampleid}/synthetic_oligos", mode: 'copy', overwrite: true
     
     input:
-    tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size)
+    tuple val(sampleid), file(fastqfile), file(qual_filtered_fastqfile)
 
     output:
     file("${sampleid}_${size_range}_synthetic_oligos_stats.txt")
     path("${sampleid}_${size_range}_synthetic_oligos_stats.txt"), emit: synthetic_oligo_results
-
+    
     script:
     """
-    synthetic_oligos.py --sample ${sampleid} --rawfastq ${fastqfile} --fastqfiltbysize ${fastq_filt_by_size} --read_size ${size_range}
+    gunzip -c ${fastqfile} > ${fastqfile.baseName}
+    synthetic_oligos.py --sample ${sampleid} --rawfastq ${fastqfile.baseName} --fastqfiltbysize ${qual_filtered_fastqfile} --read_size ${size_range}
     """
 }
 
@@ -1161,14 +1165,15 @@ workflow {
     ADAPTER_TRIMMING(MERGE_LANES.out.merged)
     QUAL_TRIMMING_AND_QC(ADAPTER_TRIMMING.out.adapter_trimmed)
     if (params.rna_source_profile) {
-      RNA_SOURCE_PROFILE(ADAPTER_TRIMMING.out.adapter_trimmed)
+      RNA_SOURCE_PROFILE(ADAPTER_TRIMMING.out.adapter_trimmed2)
       RNA_SOURCE_PROFILE_REPORT(RNA_SOURCE_PROFILE.out.rna_source_bowtie_results.collect().ifEmpty([]))
       }
-    DERIVE_USABLE_READS(QUAL_TRIMMING_AND_QC.out.qual_trimmed)
     if (params.synthetic_oligos) {
-      SYNTHETIC_OLIGOS(DERIVE_USABLE_READS.out.usable_reads)
+      SYNTHETIC_OLIGOS(QUAL_TRIMMING_AND_QC.out.qual_trimmed)
       SYNTHETIC_OLIGO_SUMMARY(SYNTHETIC_OLIGOS.out.synthetic_oligo_results.collect().ifEmpty([]))
     }
+    DERIVE_USABLE_READS(QUAL_TRIMMING_AND_QC.out.qual_trimmed)
+    
     ch_multiqc_files = Channel.empty()
     ch_multiqc_files = ch_multiqc_files.mix(QUAL_TRIMMING_AND_QC.out.cutadapt_qual_filt_results.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(QUAL_TRIMMING_AND_QC.out.fastp_results.collect().ifEmpty([]))

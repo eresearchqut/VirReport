@@ -177,7 +177,11 @@ def main():
         sampleinfo_data = pd.read_csv(sampleinfo, header=0, sep="\t",index_col=None)
         #run_data_df = pd.merge(sampleinfo_data, run_data_df, on="Sample", how='outer').fillna('NA')
         
-        samplesheet_df = pd.read_csv(samplesheet, header=0,index_col=None, skiprows=14)
+        #samplesheet_df = pd.read_csv(samplesheet, header=0,index_col=None, skiprows=14)
+        samplesheet_df = pd.read_csv(samplesheet, skip_blank_lines = False, header = None)
+        start =  samplesheet_df.loc[samplesheet_df[0] == 'Sample_ID'].index[0]
+        samplesheet_df = pd.read_csv(samplesheet, skiprows = start)
+
         print(samplesheet_df)
         samplesheet_df["Sample"] = samplesheet_df["Sample_Name"]
         samplesheet_df["UDI1"] = samplesheet_df["index"]
