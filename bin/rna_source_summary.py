@@ -42,6 +42,20 @@ def main():
                     rRNA = elements2[1].strip()
                     rRNA = int(re.sub(r' \(.*\)', '', rRNA).strip())
 
+                elif ("miRNA alignment:") in line:
+                    line = next(f)
+                    line = next(f)
+                    elements = line.split("# reads with at least one alignment: ")
+                    miRNA = elements[1].strip()
+                    miRNA = int(re.sub(r' \(.*\)', '', miRNA).strip())
+
+                elif ("plant_tRNA alignment:") in line:
+                    line = next(f)
+                    line = next(f)
+                    elements = line.split("# reads with at least one alignment: ")
+                    plant_tRNA = elements[1].strip()
+                    plant_tRNA = int(re.sub(r' \(.*\)', '', plant_tRNA).strip())
+
                 elif ("plant_pt_mt_other_genes alignment:") in line:
                     line = next(f)
                     line = next(f)
@@ -55,14 +69,6 @@ def main():
                     elements = line.split("# reads with at least one alignment: ")
                     miRNA = elements[1].strip()
                     miRNA = int(re.sub(r' \(.*\)', '', miRNA).strip())
-                
-                elif ("plant_tRNA alignment:") in line:
-                    line = next(f)
-                    line = next(f)
-                    elements = line.split("# reads with at least one alignment: ")
-                    plant_tRNA = elements[1].strip()
-                    plant_tRNA = int(re.sub(r' \(.*\)', '', plant_tRNA).strip())
-
                 
                 elif ("plant_noncoding alignment:") in line:
                     line = next(f)

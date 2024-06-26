@@ -359,4 +359,4 @@ Converted to Nextflow by Craig Windell and Maely Gauthier 11/2020
 Modified by Maely Gauthier 12/2021
 
 # Citations
-If you use nf-core/rnaseq for your analysis, please cite it using the following doi: 10.3390/biology11020263
+If you use VirReport for your analysis, please cite it using the following doi: 10.3390/biology11020263

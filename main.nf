@@ -364,12 +364,12 @@ process RNA_SOURCE_PROFILE {
     echo ${sampleid} > ${sampleid}_bowtie.log;
 
     count=1
-    for rnatype in rRNA plant_pt_mt_other_genes miRNA plant_tRNA plant_noncoding artefacts plant_virus_viroid; do
+    for rnatype in rRNA miRNA plant_tRNA plant_pt_mt_other_genes plant_noncoding artefacts plant_virus_viroid; do
         if [[ \${count} == 1 ]]; then
             fastqfile=${sampleid}_quality_trimmed_temp2.fastq
         fi
         echo \${rnatype} alignment: >> ${sampleid}_bowtie.log;
-        bowtie -q -v 2 -k 1 -p ${task.cpus} \
+        bowtie -q -v 1 -k 1 -p ${task.cpus} \
             --un ${sampleid}_\${rnatype}_cleaned_sRNA.fq \
             -x ${params.bowtie_db_dir}/\${rnatype} \
             \${fastqfile} \
@@ -705,7 +705,7 @@ process FILTER_BLASTN_VIRAL_DB_CAP3 {
 
 process COVSTATS_VIRAL_DB {
     tag "$sampleid"
-    label "setting_7"
+    label "setting_2"
     publishDir "${params.outdir}/01_VirReport/${sampleid}/alignments/viral_db", mode: 'link', overwrite: true, pattern: "*{.fa*,.fasta,metrics.txt,scores.txt,targets.txt,stats.txt,log.txt,.bcf*,.vcf.gz*,.bam*}"
     containerOptions "${bindOptions}"
     
@@ -717,14 +717,19 @@ process COVSTATS_VIRAL_DB {
     
     script:
     """
-    gunzip -c ${fastqfile} > ${fastqfile.baseName}
-    filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile.baseName} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --blastdbpath ${blast_viral_db_dir}/${blast_viral_db_name} --dedup ${params.dedup} --mode viral_db --cpu ${task.cpus}
+     if [[ ${fastqfile} == *.gz ]];
+    then
+        gunzip -c ${fastqfile} > qfilt.fastq
+    else
+        ln ${fastqfile} qfilt.fastq
+    fi
+    filter_and_derive_stats.py --sample ${sampleid} --rawfastq qfilt.fastq --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --blastdbpath ${blast_viral_db_dir}/${blast_viral_db_name} --dedup ${params.dedup} --mode viral_db --cpu ${task.cpus}
     """
 }
 
 process DETECTION_REPORT_VIRAL_DB {
     label "local"
-    publishDir "${params.outdir}/01_VirReport/Summary", mode: 'link', overwrite: true
+    publishDir "${params.outdir}/01_VirReport/Summary", mode: 'copy', overwrite: true
     containerOptions "${bindOptions}"
 
     input:
@@ -862,7 +867,7 @@ process BLASTN_NT_CAP3 {
 
 process COVSTATS_NT {
     tag "$sampleid"
-    label "setting_7"
+    label "setting_2"
     publishDir "${params.outdir}/01_VirReport/${sampleid}/alignments/NT", mode: 'link', overwrite: true, pattern: "*{.fa*,.fasta,metrics.txt,scores.txt,targets.txt,stats.txt,log.txt,.bcf*,.vcf.gz*,.bam*}"
     containerOptions "${bindOptions}"
     
@@ -875,15 +880,20 @@ process COVSTATS_NT {
     
     script:
     """
-    gunzip -c ${fastqfile} > ${fastqfile.baseName}
-    filter_and_derive_stats.py --sample ${sampleid} --rawfastq ${fastqfile.baseName} --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --dedup ${params.dedup} --cpu ${task.cpus} --mode ncbi
+    if [[ ${fastqfile} == *.gz ]];
+    then
+        gunzip -c ${fastqfile} > qfilt.fastq
+    else
+        ln ${fastqfile} qfilt.fastq
+    fi
+    filter_and_derive_stats.py --sample ${sampleid} --rawfastq qfilt.fastq --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${size_range} --taxonomy ${taxonomy} --blastdbpath ${blastn_db_name} --dedup ${params.dedup} --cpu ${task.cpus} --mode ncbi
     
     """
 }
 
 process DETECTION_REPORT_NT {
     label "local"
-    publishDir "${params.outdir}/01_VirReport/Summary", mode: 'link', overwrite: true
+    publishDir "${params.outdir}/01_VirReport/Summary", mode: 'copy', overwrite: true
     containerOptions "${bindOptions}"
 
     input:
