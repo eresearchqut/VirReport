@@ -14,7 +14,7 @@ Anthoxanthum latent blanching hordeivirus	Clonal grasses
 Anthoxanthum latent blanching virus	Clonal grasses
 Anthoxanthum mosaic potyvirus	Clonal grasses
 Anthoxanthum mosaic virus	Clonal grasses
-Apple dimple fruit viroid	Pome/Figs/Punica
+Apple dimple fruit viroid	Pome/Figs/Pomegranate
 Apple fruit crinkle apscaviroid	Hops/Pome
 Apple fruit crinkle viroid	Hops/Pome
 Apple hammerhead viroid	Pome
