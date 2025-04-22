@@ -2,7 +2,7 @@
 
 
 ## Introduction
-eresearchqut/VirReport is a bioinformatics pipeline based upon the scientific workflow manager Nextflow. It was designed to help phytosanitary diagnostics of viruses and viroid pathogens in quarantine facilities. It takes small RNA-Seq fastq files as input. These can either be in raw format (currently only samples specifically prepared with the QIAGEN QIAseq miRNA library kit can be processed this way) or quality-filtered.
+eresearchqut/VirReport is a bioinformatics pipeline based upon the scientific workflow manager Nextflow. It was designed to help phytosanitary diagnostics of viruses and viroid pathogens in quarantine facilities. It takes small RNA-Seq fastq.gz files as input. These can either be in raw format (currently only samples specifically prepared with the QIAGEN QIAseq miRNA library kit can be processed this way) or quality-filtered.
 
 The pipeline can either perform blast homology searches against a virus database or/and a local copy of NCBI nr and nt databases.
 
@@ -13,7 +13,7 @@ The pipeline can either perform blast homology searches against a virus database
 
 The VirReport workflow will perform the following steps by default:
 
-- Retain reads of a given length (21-22 nt long by default) from fastq file(s) provided in index.csv file (**READPROCESSING**)  
+- Retain reads of a given length (21-22 nt long by default) from fastq.gz file(s) provided in index.csv file (**READPROCESSING**)  
 
 - De novo assembly using both Velvet and SPAdes. The contigs obtained are collapsed into scaffolds using cap3. By default, only contigs > 40 bp will be retained (**DENOVO_ASSEMBLY**)
 
@@ -31,7 +31,7 @@ The pipeline can perform additional optional steps, which include:
   * Align reads to top hit, derive coverage statistics, consensus sequence and VCF matching to top blast hits (**COVSTATS_NT**)
   * Run blastx homolgy search on contigs >= 90 bp long for which no match was obtained in the megablast search. Summarise the blastx results and restrict to virus and viroid matches (**BLASTX**)
   
-- A quality filtering step on raw fastq files (currently the workflow only processes samples prepared using QIAGEN QIAseq miRNA library kit). After performing quality filtering (**FASTQC_RAW, ADAPTER_TRIMMING, QUAL_TRIMMING_AND_QC, DERIVE_USABLE_READS**). the pipeline will also derive a qc report (QCREPORT). An RNA souce profile can be included as part of this step (**RNA_SOURCE_PROFILE, RNA_SOURCE_PROFILE_REPORT**)
+- A quality filtering step on raw fastq.gz files (currently the workflow only processes samples prepared using QIAGEN QIAseq miRNA library kit). After performing quality filtering (**FASTQC_RAW, ADAPTER_TRIMMING, QUAL_TRIMMING_AND_QC, DERIVE_USABLE_READS**). the pipeline will also derive a qc report (QCREPORT). An RNA souce profile can be included as part of this step (**RNA_SOURCE_PROFILE, RNA_SOURCE_PROFILE_REPORT**)
 
 - VirusDetect version 1.8 can also be run in parallel. A summary of the top virus/viroid blastn hits will be separately output (**VIRUS_DETECT, VIRUS_IDENTIFY, VIRUS_DETECT_BLASTN_SUMMARY, VIRUS_DETECT_BLASTN_SUMMARY_FILTERED**)
 
@@ -43,16 +43,16 @@ The pipeline can perform additional optional steps, which include:
 
 3. Download the pipeline and test it on minimal datatests:
 
-  This command will test your installation on a single quality filtered fastq file derived from a sample infected with citrus exocortis viroid and will run VirReport using a mock ncbi database:
+  This command will test your installation on a single quality filtered fastq.gz file derived from a sample infected with citrus exocortis viroid and will run VirReport using a mock ncbi database:
 
   ```bash
-  nextflow -c conf/test.config run eresearchqut/VirReport -profile test,{docker or singularity}
+  nextflow run eresearchqut/VirReport -profile test,{docker or singularity}
   ```
 
-  This command will test your installation on a pair of raw fastq files derived from a sample infected with citrus tristeza virus and will run VirReport using a mock viral database:
+  This command will test your installation on a pair of raw fastq.gz files derived from a sample infected with citrus tristeza virus and will run VirReport using a mock viral database:
 
   ```bash
-  nextflow -c conf/test2.config run eresearchqut/VirReport -profile test2,{docker or singularity}
+  nextflow run eresearchqut/VirReport -profile test2,{docker or singularity}
   ```
 
   Running these test datasets requires 2 cpus and 8 Gb mem and should take 5 mins to complete.
@@ -146,12 +146,16 @@ The pipeline can perform additional optional steps, which include:
   ```
 
 
-- If you want to run the initial qualityfilter step on raw fastq files, you will need to set the `--qualityfilter` paramater to `true` in the config.file and specify the path to the directory which holds the required bowtie indices (using the `--bowtie_db_dir` parameter) to: 1) filter non-informative reads (using the **blacklist** bowtie indices for the DERIVE_USABLE_READS process) and 2) derive the origin of the filtered reads obtained (optional RNA_SOURCE_PROFILE process). The required fasta files are available at https://github.com/maelyg/bowtie_indices.git and bowtie indices can be built from these using the command:
+- If you want to run the initial qualityfilter step on raw fastq files, you will need to set the `--qualityfilter` paramater to `true` in the config.file and specify the path to the directory which holds the required bowtie indices (using the `--bowtie_db_dir` parameter) to: 1) filter non-informative reads (using the **blacklist** bowtie indices for the DERIVE_USABLE_READS process) and 2) derive the origin of the filtered reads obtained (optional RNA_SOURCE_PROFILE process). The required fasta files are available at https://github.com/maelyg/bowtie_indices.git. You can download these using the following command:  
 
   ```
   git clone https://github.com/maelyg/bowtie_indices.git
   gunzip blacklist_v2.fasta.gz
-  bowtie-build -f blacklist_v2.fasta blasklist
+  ```
+
+You will end up with 7 fasta files. You will need to use bowtie to build the required indices using the bowtie-build command. So for instance, to build the rRNA index, you will have to run:
+  ```
+  bowtie-build -f rRNA.fasta rRNA
   ```
 
   The location of the directory in which the bowtie indices are located will need to be specified in the nextflow.config file:
