@@ -307,7 +307,7 @@ process QUAL_TRIMMING_AND_QC {
     script:
     """
     cutadapt -j ${task.cpus} \
-            --trim-n --max-n 0 -m 18 -q 30 \
+            --max-n 0 -m 18 -q 30 \
             -o ${sampleid}_quality_trimmed.fastq \
             ${sampleid}_umi_cleaned.fastq.gz > ${sampleid}_qual_filtering_cutadapt.log
 
@@ -325,7 +325,7 @@ process QUAL_TRIMMING_AND_QC {
     
     #derive distribution for quality filtered reads > 5 bp long
     cutadapt -j ${task.cpus} \
-            --trim-n --max-n 0 -m 5 -q 30 \
+            --max-n 0 -m 5 -q 30 \
             -o ${sampleid}_quality_trimmed_temp.fastq \
             ${sampleid}_umi_cleaned.fastq.gz
     
@@ -356,7 +356,7 @@ process RNA_SOURCE_PROFILE {
     script:
     """
     cutadapt -j ${task.cpus} \
-            --trim-n --max-n 0 -m 15 -q 30 \
+            --max-n 0 -m 15 -q 30 \
             -o ${sampleid}_quality_trimmed_temp2.fastq \
             ${sampleid}_umi_cleaned.fastq.gz
 
