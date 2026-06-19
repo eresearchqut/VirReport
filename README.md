@@ -357,10 +357,7 @@ For example: sample_name_21-22nt.blastn.summary.txt and sample_name_21-22nt.blas
 
  
 ## Credits
-Roberto Barrero, 14/03/2019  
-Desmond Schmidt, 2/7/2019  
-Converted to Nextflow by Craig Windell and Maely Gauthier 11/2020  
-Modified by Maely Gauthier 12/2021
+Marie-Emilie Gauthier
 
 # Citations
 If you use VirReport for your analysis, please cite it using the following doi: 10.3390/biology11020263
