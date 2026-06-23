@@ -30,13 +30,15 @@ def helpMessage () {
         sampleid,samplepath
         MT019,/user/folder/MT019_sRNA.fastq
 
-      --blast_db_dir '[path/to/files]'                  Path to the blast NT and/or NR database file base name
+      --run_viral_db_blast [True/False]                 Run blastn search against a viral database
+                                                        [True]
+      --run_nt_blast [True/False]                       Run blastn search against NCBI NT
+                                                        [False]                                                 
+      
+      --blastn_db_path '[path/to/files]'                Path to the blast NT and/or NR database file base name
                                                         [none]
 
-      --blast_viral_db                                  Run blastn and megablast homology search on cap3 de novo assembly against a virus and viroid database
-                                                        [False]
-
-      --blast_viral_nt_db '[path/to/file]'              Path to the viral nucleotide database file base name. Required if --blast_viral_db option is specified
+      --blastn_viral_db_path '[path/to/file]'           Path to the viral nucleotide database file base name. Required if --blast_viral_db option is specified
                                                         [none]
       
       --blastn_evalue '[value]'                         Blastn evalue.
@@ -45,9 +47,18 @@ def helpMessage () {
       --blastn_method ['blastn/megablast']              Specify blastn homology search on cap3 de novo assembly againts NCBI NT
                                                         [default megablast]
                     
-      --blastx [True/False]                             Run blastX againts NCBI NR
+      --run_blastx [True/False]                         Run blastX againts NCBI NR
                                                         [False]
 
+      --blastp_db_path '[path/to/files]'                Path to the blast protein database file base name. Required if --blastx option is specified
+                                                        [none]
+
+      --report_viral_db_detections [True/False]         Derive output summarising blastn detections obtained against the viral database
+                                                        [False]
+      
+      --report_nt_detections [True/False]               Derive output summarising blastn detections obtained against NCBI NT
+                                                        [False]
+      
       --bowtie_db_dir                                   Path to the bowtie indices (for RNA source step and filtering of non-informative reads)
       
       --cap3_len '[value]'                              Trim value used in the CAP3 step.
@@ -99,17 +110,17 @@ def helpMessage () {
       --tblastn_evalue                                  tblastn evalue. Required if --tblatsn option is specified
                                                         '0.0001'
       
-      --virusdetect [True/False]                        Run VirusDetect
+      --run_virus_detect [True/False]                   Run VirusDetect
                                                         [False]
       
-      --virusdetect_db_path '[path/to/filebasename]'    Path to the virusdetect blast virus database base name
+      --virus_detect_db_path '[path/to/filebasename]'   Path to the VirusDetect blast virus database base name
                                                         [none]
       
     ####
     Internal SSG usage only
       --diagno                                          Additional information will be added to each viral detection to facilitate interpretation 
                                                         [False]
-      --synthetic_oligos                                Reads will be aligned to specific synthetic oligos
+      --synthetic_oligo_screen                          Reads will be aligned to specific synthetic oligos
                                                         [False]
       --sampleinfo                                      Appends additional sample information to final summary to facilitate diagnostics reporting
                                                         [False]
@@ -373,6 +384,8 @@ process QCREPORT {
 
     input:
     path multiqc_files
+    path sample_sheet_path
+    path sample_info_path
 
     output:
     path("run_qc_report*.txt")
@@ -381,8 +394,8 @@ process QCREPORT {
     
     script:
     """
-    if [[ ${params.sampleinfo} == true ]]; then
-        seq_run_qc_report.py --sampleinfopath ${params.sampleinfo_path} --samplesheetpath ${params.samplesheet_path}
+    if [[ ${params.use_sampleinfo} == true ]]; then
+        seq_run_qc_report.py --sampleinfopath ${sample_info_path} --samplesheetpath ${sample_sheet_path}
     else
         seq_run_qc_report.py 
     fi
@@ -494,7 +507,7 @@ process BLASTN_VIRAL_DB_CAP3 {
 
     input:
     tuple val(sampleid), file(fastqfile), file(fastq_filt_by_size), file("${sampleid}_cap3_${params.size_range}.fasta")
-    path(db)
+    tuple path(db_dir), val(db_name)
 
     output:
     file "${sampleid}_cap3_${params.size_range}_blastn_vs_viral_db.bls"
@@ -513,7 +526,7 @@ process BLASTN_VIRAL_DB_CAP3 {
     #1. blastn search
     blastn -task blastn \
         -query ${sampleid}_cap3_${params.size_range}.fasta \
-        -db ${db} \
+        -db ${db_dir}/${db_name} \
         -out ${sampleid}_cap3_${params.size_range}_blastn_vs_viral_db.bls \
         -evalue ${params.blastn_evalue} \
         -num_threads ${task.cpus} \
@@ -522,7 +535,7 @@ process BLASTN_VIRAL_DB_CAP3 {
 
     #2. megablast search
     blastn -query ${sampleid}_cap3_${params.size_range}.fasta \
-        -db ${db} \
+        -db ${db_dir}/${db_name} \
         -out ${sampleid}_cap3_${params.size_range}_megablast_vs_viral_db.bls \
         -evalue ${params.blastn_evalue} \
         -num_threads ${task.cpus} \
@@ -619,7 +632,7 @@ process COVSTATS_VIRAL_DB {
     
     input:
     tuple val(sampleid), path(fastqfile), path(fastq_filt_by_size), path(samplefile)
-    path(db)
+    tuple path(db_dir), val(db_name)
 
     output:
     path("${sampleid}_${params.size_range}*")
@@ -633,7 +646,7 @@ process COVSTATS_VIRAL_DB {
     else
         ln ${fastqfile} qfilt.fastq
     fi
-    filter_and_derive_stats.py --sample ${sampleid} --rawfastq qfilt.fastq --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${params.size_range} --blastdbpath ${db} --dedup ${params.dedup} --mode viral_db --cpu ${task.cpus}
+    filter_and_derive_stats.py --sample ${sampleid} --rawfastq qfilt.fastq --fastqfiltbysize  ${fastq_filt_by_size} --results ${samplefile} --read_size ${params.size_range} --blastdbpath ${db_dir}/${db_name} --dedup ${params.dedup} --mode viral_db --cpu ${task.cpus}
     """
 }
 
@@ -643,14 +656,15 @@ process DETECTION_REPORT_VIRAL_DB {
 
     input:
     file ('*')
+    path sample_info_path
 
     output:
     path("VirReport_detection_summary*viral_db*.txt")
 
     script:
     """
-    if ${params.sampleinfo}; then
-        detection_report.py --read_size ${params.size_range} --threshold ${params.contamination_flag} --viral_db true --diagno ${params.diagno} --dedup ${params.dedup} --sampleinfo ${params.sampleinfo_path}
+    if ${params.use_sampleinfo}; then
+        detection_report.py --read_size ${params.size_range} --threshold ${params.contamination_flag} --viral_db true --diagno ${params.diagno} --dedup ${params.dedup} --sampleinfo ${sample_info_path}
     else
         detection_report.py --read_size ${params.size_range} --threshold ${params.contamination_flag} --viral_db true --diagno ${params.diagno} --dedup ${params.dedup}
     fi
@@ -664,7 +678,7 @@ process TBLASTN_VIRAL_DB {
 
     input:
     tuple val(sampleid), file(cap3_fasta)
-    path(db)
+    tuple path(db_dir), val(db_name)
     
     output:
     path("${sampleid}_cap3_${params.size_range}_getorf.all.fasta")
@@ -679,7 +693,7 @@ process TBLASTN_VIRAL_DB {
     #cat ${sampleid}_cap3_${params.size_range}_getorf.all.fasta | grep ">" | sed 's/>//' | awk '{print \$1}' > ${sampleid}_cap3_${params.size_range}_getorf.all.fasta.ids
 
     tblastn -query ${sampleid}_cap3_${params.size_range}_getorf.all.fasta \
-        -db ${db} \
+        -db ${db_dir}/${db_name} \
         -evalue ${params.tblastn_evalue} \
         -out ${sampleid}_cap3_${params.size_range}_getorf.all_tblastn_vs_viral_db_out.bls \
         -num_threads ${task.cpus} \
@@ -806,14 +820,15 @@ process DETECTION_REPORT_NT {
 
     input:
     path('*')
+    path(sample_info_path)
 
     output:
     file "VirReport_detection_summary*.txt"
 
     script:
     """
-    if [[ ${params.sampleinfo} == true ]]; then
-        detection_report.py --read_size ${params.size_range} --threshold ${params.contamination_flag} --dedup ${params.dedup} --diagno ${params.diagno} --targets ${params.targets_file} --sampleinfopath ${params.sampleinfo_path}
+    if [[ ${params.use_sampleinfo} == true ]]; then
+        detection_report.py --read_size ${params.size_range} --threshold ${params.contamination_flag} --dedup ${params.dedup} --diagno ${params.diagno} --targets ${params.targets_file} --sampleinfopath ${sample_info_path}
     else
         detection_report.py --read_size ${params.size_range} --threshold ${params.contamination_flag} --dedup ${params.dedup} --diagno ${params.diagno} --targets ${params.targets_file}
     fi
@@ -1047,14 +1062,15 @@ process SYNTHETIC_OLIGO_SUMMARY {
 
     input:
     path("*synthetic_oligos_stats.txt")
+    path sample_info_path
 
     output:
     file "synthetic_oligo_summary*.txt"
     
     script:
     """
-    if [[ ${params.sampleinfo} == true ]]; then
-        synthetic_oligos_summary.py --sampleinfopath ${params.sampleinfo_path}
+    if [[ ${params.use_sampleinfo} == true ]]; then
+        synthetic_oligos_summary.py --sampleinfopath ${sample_info_path}
     else
         synthetic_oligos_summary.py
     fi
@@ -1082,19 +1098,30 @@ workflow {
             .set{ read_size_selection_ch }
     } else { exit 1, "Input samplesheet file not specified!" }
 
-    if (params.qualityfilter) {
+    if (params.qualityfilter.toString().toBoolean()) {
         FASTQC_RAW(samples_ch) 
         MERGE_LANES(samples_ch)
         ADAPTER_TRIMMING(MERGE_LANES.out.merged)
         QUAL_TRIMMING_AND_QC(ADAPTER_TRIMMING.out.adapter_trimmed)
-        if (params.rna_source_profile) {
-        RNA_SOURCE_PROFILE(ADAPTER_TRIMMING.out.adapter_trimmed2, params.bowtie_db_dir)
-        RNA_SOURCE_PROFILE_REPORT(RNA_SOURCE_PROFILE.out.rna_source_bowtie_results.collect().ifEmpty([]), params.bowtie_db_dir)
+        if (params.rna_source_profile.toString().toBoolean()) {
+            RNA_SOURCE_PROFILE(ADAPTER_TRIMMING.out.adapter_trimmed2, params.bowtie_db_dir)
+            RNA_SOURCE_PROFILE_REPORT(RNA_SOURCE_PROFILE.out.rna_source_bowtie_results.collect().ifEmpty([]), params.bowtie_db_dir)
         }
-        if (params.synthetic_oligos) {
-        SYNTHETIC_OLIGOS(QUAL_TRIMMING_AND_QC.out.qual_trimmed)
-        SYNTHETIC_OLIGO_SUMMARY(SYNTHETIC_OLIGOS.out.synthetic_oligo_results.collect().ifEmpty([]))
+        if (params.synthetic_oligo_screen.toString().toBoolean()) {
+            SYNTHETIC_OLIGOS(QUAL_TRIMMING_AND_QC.out.qual_trimmed)
+            if (params.use_sampleinfo.toString().toBoolean()) {
+                SYNTHETIC_OLIGO_SUMMARY(
+                    SYNTHETIC_OLIGOS.out.synthetic_oligo_results.collect().ifEmpty([]),
+                    file(params.sampleinfo_path)
+                )
+            } else {
+                SYNTHETIC_OLIGO_SUMMARY(
+                    SYNTHETIC_OLIGOS.out.synthetic_oligo_results.collect().ifEmpty([]),
+                    []
+                )
+            }
         }
+            
         DERIVE_USABLE_READS(QUAL_TRIMMING_AND_QC.out.qual_trimmed, params.bowtie_db_dir)
         
         ch_multiqc_files = Channel.empty()
@@ -1107,25 +1134,61 @@ workflow {
         ch_multiqc_files = ch_multiqc_files.mix(DERIVE_USABLE_READS.out.bowtie_usable_read_results.collect().ifEmpty([]))
         ch_multiqc_files = ch_multiqc_files.mix(ADAPTER_TRIMMING.out.umi_tools_results.collect().ifEmpty([]))
         
-        QCREPORT(ch_multiqc_files.collect())
-        
-        DENOVO_ASSEMBLY(DERIVE_USABLE_READS.out.usable_reads)
+        if (params.use_sampleinfo.toString().toBoolean()) {
+            QCREPORT(
+                ch_multiqc_files.collect(),
+                file(params.samplesheet_path),
+                file(params.sampleinfo_path)
+            )
         } else {
+            QCREPORT(
+                ch_multiqc_files.collect(),
+                [],
+                []
+            )
+        }
+
+        DENOVO_ASSEMBLY(DERIVE_USABLE_READS.out.usable_reads)
+        }
+
+        else {
         // If user does not specify qualityfilter parameter, then only read size selection (using the minlen and maxlen params specified in the nextflow.config file) will be performed on the fastq file specified in the index file
         READPROCESSING(read_size_selection_ch)
         DENOVO_ASSEMBLY(READPROCESSING.out.fastq)
         }
 
-    if (params.virreport_viral_db) {
-        BLASTN_VIRAL_DB_CAP3(DENOVO_ASSEMBLY.out.assembly_for_blastn, params.blastn_viral_db_path)
-        FILTER_BLASTN_VIRAL_DB_CAP3(BLASTN_VIRAL_DB_CAP3.out.blast_results)
-        COVSTATS_VIRAL_DB(FILTER_BLASTN_VIRAL_DB_CAP3.out.viral_db_blast_results, params.blastn_viral_db_path)
-        if (params.detection_reporting_viral_db) {
-        DETECTION_REPORT_VIRAL_DB(COVSTATS_VIRAL_DB.out.viral_db_detections_summary.collect().ifEmpty([]))
+    if (params.run_viral_db_blast.toString().toBoolean()) {
+        if (!params.blastn_viral_db_path) {
+            error "Missing --blastn_viral_db_path. This parameter is required when --run_viral_db_blast is true."
         }
-        TBLASTN_VIRAL_DB(DENOVO_ASSEMBLY.out.assembly_for_tblastn, params.blastn_viral_db_path)
+        ch_blastn_viral_db = Channel.value(
+            tuple(
+                file(params.blastn_viral_db_path).parent,
+                file(params.blastn_viral_db_path).name
+            )
+        )
+        BLASTN_VIRAL_DB_CAP3(DENOVO_ASSEMBLY.out.assembly_for_blastn, ch_blastn_viral_db)
+        FILTER_BLASTN_VIRAL_DB_CAP3(BLASTN_VIRAL_DB_CAP3.out.blast_results)
+        COVSTATS_VIRAL_DB(FILTER_BLASTN_VIRAL_DB_CAP3.out.viral_db_blast_results, ch_blastn_viral_db)
+        if (params.report_viral_db_detections.toString().toBoolean()) {
+            if (params.use_sampleinfo.toString().toBoolean()) {
+                DETECTION_REPORT_VIRAL_DB(
+                    COVSTATS_VIRAL_DB.out.viral_db_detections_summary.collect().ifEmpty([]),
+                    file(params.sampleinfo_path)
+                )
+            } else {
+                DETECTION_REPORT_VIRAL_DB(
+                    COVSTATS_VIRAL_DB.out.viral_db_detections_summary.collect().ifEmpty([]),
+                    []
+                )
+            }
+        }
+        TBLASTN_VIRAL_DB(DENOVO_ASSEMBLY.out.assembly_for_tblastn, ch_blastn_viral_db)
     }
-    if (params.virreport_ncbi) {
+    if (params.run_nt_blast.toString().toBoolean()) {
+        if (!params.blastn_db_path) {
+            error "Missing --blastn_db_path. This parameter is required when --run_nt_blast is true."
+        }
         ch_blastn_db = Channel.value(
             tuple(
                 file(params.blastn_db_path).parent,
@@ -1134,27 +1197,42 @@ workflow {
         )
         BLASTN_NT_CAP3(DENOVO_ASSEMBLY.out.assembly_for_blastn, ch_blastn_db)
         COVSTATS_NT(BLASTN_NT_CAP3.out.viral_ncbi_blast_results, ch_blastn_db)
-        if (params.detection_reporting_nt) {
-        DETECTION_REPORT_NT(COVSTATS_NT.out.viral_ncbi_detections_summary.collect().ifEmpty([]))
+        if (params.report_nt_detections.toString().toBoolean()) {
+        
+            if (params.use_sampleinfo.toString().toBoolean()) {
+                DETECTION_REPORT_NT(COVSTATS_NT.out.viral_ncbi_detections_summary.collect().ifEmpty([]),
+                file(params.sampleinfo_path)
+                )
+            } else {
+                DETECTION_REPORT_NT(COVSTATS_NT.out.viral_ncbi_detections_summary.collect().ifEmpty([]),
+                    [],
+                )
+            }
         }
-        if (params.blastx) {
-        ch_blastp_db = Channel.value(
-            tuple(
-                file(params.blastp_db_path).parent,
-                file(params.blastp_db_path).name
+        if (params.run_blastx.toString().toBoolean()) {
+            if (!params.blastp_db_path) {
+                error "Missing --blastp_db_path. This parameter is required when --run_blastx is true."
+            }
+            ch_blastp_db = Channel.value(
+                tuple(
+                    file(params.blastp_db_path).parent,
+                    file(params.blastp_db_path).name
+                )
             )
-        )
-        BLASTX(BLASTN_NT_CAP3.out.viral_ncbi_blast_results_for_blastx, ch_blastp_db)
+            BLASTX(BLASTN_NT_CAP3.out.viral_ncbi_blast_results_for_blastx, ch_blastp_db)
         }
     }
-    if (params.virusdetect) {
-        if (params.qualityfilter) {
-        VIRUS_DETECT(DERIVE_USABLE_READS.out.usable_reads, params.virusdetect_db_path)
+    if (params.run_virus_detect.toString().toBoolean()) {
+        if (!params.virus_detect_db_path) {
+            error "Missing --virus_detect_db_path. This parameter is required when --run_virus_detect is true."
+        }
+        if (params.qualityfilter.toString().toBoolean()) {
+            VIRUS_DETECT(DERIVE_USABLE_READS.out.usable_reads, params.virus_detect_db_path)
         }
         else {
-        VIRUS_DETECT(READPROCESSING.out.fastq, params.virusdetect_db_path)
+            VIRUS_DETECT(READPROCESSING.out.fastq, params.virus_detect_db_path)
         }
-        VIRUS_IDENTIFY(VIRUS_DETECT.out.virusdetect, params.virusdetect_db_path)
+        VIRUS_IDENTIFY(VIRUS_DETECT.out.virusdetect, params.virus_detect_db_path)
         VIRUS_DETECT_BLASTN_SUMMARY(VIRUS_IDENTIFY.out.virusdetectblastnsummary_flag.collect().ifEmpty([]),
                                     VIRUS_IDENTIFY.out.virusdetectblastnsummaryfiltered_flag.collect().ifEmpty([]))
     }
