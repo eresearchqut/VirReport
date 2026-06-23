@@ -28,34 +28,14 @@ def main():
     dup_pc_dict = {}
     fpkm_dict = {}
 
-    #oligo = str("celmiR39")
-    #fastafile = (sample + "_" + read_size + "_" + oligo + ".fa").replace(" ","_")
-    #single_fasta_entry = open(fastafile, "w")
-    #single_fasta_entry.write(">celmir39\nTCACCGGGTGTAAATCAGCTTG")
-    #single_fasta_entry.close()
-
+    
     fastafile = ("celmiR39.fa")
     single_fasta_entry = open(fastafile, "w")
     single_fasta_entry.write(">celmir39\nTCACCGGGTGTAAATCAGCTTG")
     single_fasta_entry.close()
 
-    # fastafile = ("celmiR54.fa")
-    # single_fasta_entry = open(fastafile, "w")
-    # single_fasta_entry.write(">celmiR54\nTACCCGTAATCTTCATAATCCGAG")
-    # single_fasta_entry.close()
-    
-    # fastafile = ("celmiR238.fa")
-    # single_fasta_entry = open(fastafile, "w")
-    # single_fasta_entry.write(">celmir238\nTTTGTACTCCGATGCCATTCAGA")
-    # single_fasta_entry.close()
-
-    #gene_list = ('celmiR39', 'celmiR54', 'celmiR238')
     index = 'celmiR39'
-    #for index in gene_list:
-    #print("Building a bowtie index")
-    #index = (sample + "_" + read_size + "_" + oligo)
-    #print(index)
-    #buildindex = ["bowtie-build", "-f", fastafile, index]
+    
     buildindex = ["bowtie-build", "-f", index + ".fa", index]
     subprocess.call(buildindex)
     

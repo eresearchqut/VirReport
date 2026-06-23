@@ -91,7 +91,7 @@ The pipeline can perform additional optional steps, which include:
   ```
 
 - Provide a database
-  * By default, the pipeline is set to run homology blast searches against a local plant virus/viroid database (this is set in the nextflow.config file with parameter `--virreport_viral_db = true`. You will need to provide this database to run the pipeline. You can either provide your own or use a curated database provided at https://github.com/maelyg/PVirDB.git. Ensure you use NCBI BLAST+ makeblastdb to create the database. For instance, to set up this database, you would take the following steps:
+  * By default, the pipeline is set to run homology blast searches against a local plant virus/viroid database (this is set in the nextflow.config file with parameter `--run_viral_db_blast = true`. You will need to provide this database to run the pipeline. You can either provide your own or use a curated database provided at https://github.com/maelyg/PVirDB.git. Ensure you use NCBI BLAST+ makeblastdb to create the database. For instance, to set up this database, you would take the following steps:
 
     ```
     git clone https://github.com/maelyg/PVirDB.git
@@ -103,19 +103,19 @@ The pipeline can perform additional optional steps, which include:
     Then specify the full path to the database files including the prefix in the nextflow.config file. For example:
     ```
     params {
-      blast_local_db_path = '/path_to_viral_DB/viral_DB_name'
+      blastn_viral_db_path = '/path_to_viral_DB/viral_DB_name'
     }
     ```  
 
-  * If you also want to run homology searches against public NCBI databases, you need to set the parameter `virreport_ncbi` in the nextflow.config file to `true`:
+  * If you also want to run homology searches against public NCBI databases, you need to set the parameter `run_nt_blast` in the nextflow.config file to `true`:
     ```
     params {
-      virreport_ncbi = true
+      run_nt_blast = true
     }  
     ```
     or add it in your nextflow command:  
     ```
-    nextflow run eresearchqut/VirReport -profile {docker or singularity} --virreport_ncbi
+    nextflow run eresearchqut/VirReport -profile {docker or singularity} --run_nt_blast
     ```  
     Download these locally, following the detailed steps available at https://www.ncbi.nlm.nih.gov/books/NBK569850/. 
     Create a folder where you will store your NCBI databases. It is good practice to include the date of download. For instance:  
@@ -131,16 +131,16 @@ The pipeline can perform additional optional steps, which include:
     tar -xzf taxdb.tar.gz
     ```  
     Make sure the taxdb.btd and the taxdb.bti files are present in the same directory as your blast databases.  
-    Specify the path of your local NCBI blast nt and nr directories in the nextflow.config file.  
+    Specify the path of your local NCBI blast nt/core_nt and nr databases in the nextflow.config file.  
     For instance:
     ```
     params {
-      blast_db_dir = '/work/hia_mt18005_db/blastDB/20220408'
+      blastn_db_path = '/work/hia_mt18005_db/blastDB/20220408/nt'
     }
     ```  
 
-  * If you want to run VirusDetect in parallel, then either set the parameter `--virusdetect` to `true` in your config file or specify it in your nextflow run command.
-    You will need to download the VirusDetect viral database files at http://bioinfo.bti.cornell.edu/ftp/program/VirusDetect/virus_database/v248. And specify the path to the VirusDetect viral database in the nextflow.config file (using the `--virusdetect_db_path` parameter).  For example:
+  * If you want to run VirusDetect in parallel, then either set the parameter `--run_virus_detect` to `true` in your config file or specify it in your nextflow run command.
+    You will need to download the VirusDetect viral database files at http://bioinfo.bti.cornell.edu/ftp/program/VirusDetect/virus_database/v248. And specify the path to the VirusDetect viral database in the nextflow.config file (using the `--virus_detect_db_path` parameter).  For example:
   ```
   virusdetect_db_path = '/home/gauthiem/code/VirusDetect_v1.8/databases/vrl_plant'
   ```
@@ -191,18 +191,21 @@ You will end up with 7 fasta files. You will need to use bowtie to build the req
     --blastx: if set to false, it will skip the blastx step performed when searching against local NCBI NT and NR databases 
       
     --orf_minsize and --orf_circ_minsize: correspond to the minimal open reading frames getorf retains that will be used in the tblastn homology search against the virus database (by default 90 bp) 
-    --detection_reporting_nt and detection_reporting_viral_db: Run cross-sample contamination prediction and derive a summary of the detections (DETECTION_REPORT_NT and/or DETECTION_REPORT_VIRAL_DB) 
+    --report_viral_db_detections and report_nt_detections: Run cross-sample contamination prediction and derive a summary of the detections (DETECTION_REPORT_VIRAL_DB and/or DETECTION_REPORT_NT) 
+
+    --synthetic_oligo_screen: map reads to synthetic oligo and derive counts.
   ```
 
   To enable these options, they can either be included in the nextflow run command: 
   ```
-  nextflow run eresearchqut/VirReport -profile {singularity or docker} --indexfile index_example.csv --detection_reporting_nt --virusdetect
+  nextflow run eresearchqut/VirReport -profile {singularity or docker} --indexfile index_example.csv --run_nt_blast --report_nt_detections --run_virus_detect
   ```
   or the parameter in the nextflow.config file can be udpated. For instance:
   ```
   params {
-    virusdetect = true
-    detection_reporting_nt = true
+    run_virus_detect = true
+    report_nt_detections = true
+    run_nt_blast = true
   }
   ```
 

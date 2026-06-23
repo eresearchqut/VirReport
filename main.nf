@@ -1097,13 +1097,23 @@ workflow {
             .map{ row-> tuple(row.sampleid), file(row.samplepath) }
             .set{ read_size_selection_ch }
     } else { exit 1, "Input samplesheet file not specified!" }
-
+    if (params.use_sampleinfo.toString().toBoolean()) {
+        if (!params.sampleinfo_path) {
+            error "Missing --sampleinfo_path. This parameter is required when --use_sampleinfo is true."
+        }
+        if (!params.samplesheet_path) {
+            error "Missing --samplesheet_path. This parameter is required when --use_sampleinfo is true."
+        }
+    }
     if (params.qualityfilter.toString().toBoolean()) {
         FASTQC_RAW(samples_ch) 
         MERGE_LANES(samples_ch)
         ADAPTER_TRIMMING(MERGE_LANES.out.merged)
         QUAL_TRIMMING_AND_QC(ADAPTER_TRIMMING.out.adapter_trimmed)
         if (params.rna_source_profile.toString().toBoolean()) {
+            if (!params.bowtie_db_dir) {
+                error "Missing --bowtie_db_dir. This parameter is required when --rna_source_profile is true."
+            }
             RNA_SOURCE_PROFILE(ADAPTER_TRIMMING.out.adapter_trimmed2, params.bowtie_db_dir)
             RNA_SOURCE_PROFILE_REPORT(RNA_SOURCE_PROFILE.out.rna_source_bowtie_results.collect().ifEmpty([]), params.bowtie_db_dir)
         }
