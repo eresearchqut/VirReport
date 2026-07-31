@@ -276,19 +276,19 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
             combinedid = str(refid + " " + refspname).replace("sp.","sp").replace(" ","_")
 
             print("Extract sequence from blast database")
-            fastafile = (sample + "_" + read_size + "_" + combinedid + ".fa").replace(" ","_")
+            reference_fasta = (sample + "_" + read_size + "_" + combinedid + ".fa").replace(" ","_")
             
             if mode == "ncbi":
-                single_fasta_entry = open(fastafile, "w")
-                command_line = ["blastdbcmd","-db", blastdbpath, "-entry", refid, \
+                single_fasta_entry = open(reference_fasta, "w")
+                command_line = ["blastdbcmd", "-db", blastdbpath, "-entry", refid, \
                                 "-outfmt","'%f'"]
                 subprocess.call(command_line, stdout=single_fasta_entry)
 
-                filesize = os.path.getsize(fastafile)
+                filesize = os.path.getsize(reference_fasta)
 
                 if filesize == 0:
                     print("Retrieval from blast db failed")
-                    single_fasta_entry = open(fastafile, "w")
+                    single_fasta_entry = open(reference_fasta, "w")
                     p1 = subprocess.Popen(["esearch", "-db", "nucleotide", "-query", refid], stdout=subprocess.PIPE)
                     p2 = subprocess.run(["efetch", "-format", "fasta"], stdin=p1.stdout, stdout=single_fasta_entry)
                     single_fasta_entry.close()
@@ -299,12 +299,20 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
                 #p1 = subprocess.Popen(["grep", "-A1", refid, blastdbpath], stdout=single_fasta_entry)
                 #single_fasta_entry.close()
                 
-                bowtie_index = ["grep", "-A1", refid, blastdbpath]
-                subprocess.call(bowtie_index, stdout=open(fastafile,"w"))
+                #bowtie_index = ["grep", "-A1", refid, blastdbpath]
+                #subprocess.call(bowtie_index, stdout=open(fastafile,"w"))
+                single_fasta_entry = open(reference_fasta, "w")
+                command_line =["blastdbcmd", "-db", blastdbpath, "-entry", refid, "-outfmt", "'%f'"]
+                subprocess.call(command_line, stdout=single_fasta_entry)
+                
+                filesize = os.path.getsize(reference_fasta)
+
+                if filesize == 0:
+                    print("Retrieval from blast db failed")
 
             print("Building a bowtie index")
             index=(sample + "_" + read_size + "_" + combinedid).replace(" ","_")
-            buildindex = ["bowtie-build","-f", fastafile, index]
+            buildindex = ["bowtie-build","-f", reference_fasta, index]
             subprocess.call(buildindex)
 
             print("Aligning original reads")
@@ -387,7 +395,7 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
                 final_read_counts = read_counts
 
             pileup = str(index + ".pileup")
-            derivepileup = ["samtools", "mpileup", "-uf", fastafile, finalbamoutput, "-o", pileup]
+            derivepileup = ["samtools", "mpileup", "-uf", reference_fasta, finalbamoutput, "-o", pileup]
             #subprocess.call(derivepileup, stdout=pileup)
             subprocess.call(derivepileup)
 
@@ -401,7 +409,7 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
 
             # Normalise indels:
             bcfnormout = str(index + "_norm.bcf")
-            bcfnorm = ["bcftools", "norm", "-f", fastafile, vcfout, "-Ob", "-o", bcfnormout]
+            bcfnorm = ["bcftools", "norm", "-f", reference_fasta, vcfout, "-Ob", "-o", bcfnormout]
             subprocess.call(bcfnorm)
             bcfnormoutindex = ["bcftools", "index", bcfnormout]
             subprocess.call(bcfnormoutindex)
@@ -431,7 +439,7 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
             subprocess.call(zerocovcall, stdout=open(zerocovbed,"w"))
 
             maskedfasta = (sample + "_" + read_size + "_" + combinedid + "_masked.fa").replace(" ","_")
-            maskedfastaproc = ["bedtools", "maskfasta", "-fi",  fastafile, "-bed", zerocovbed, "-fo", maskedfasta]
+            maskedfastaproc = ["bedtools", "maskfasta", "-fi",  reference_fasta, "-bed", zerocovbed, "-fo", maskedfasta]
             subprocess.call(maskedfastaproc)
 
             # Derive a consensus fasta file
@@ -466,7 +474,7 @@ def cov_stats(blastdbpath, cpus, dedup, fastqfiltbysize, final_data, rawfastq, r
             # Derive Picard statistics 
             print("Running picard")
             picard_output = (index + "_picard_metrics.txt")
-            picard = ["picard", "CollectWgsMetrics", "-I", str(finalbamoutput), "-O", str(picard_output), "-R", str(fastafile), "-READ_LENGTH","22", "-COUNT_UNPAIRED", "true"]
+            picard = ["picard", "CollectWgsMetrics", "-I", str(finalbamoutput), "-O", str(picard_output), "-R", str(reference_fasta), "-READ_LENGTH","22", "-COUNT_UNPAIRED", "true"]
             subprocess.call(picard)
 
             reflen = ()

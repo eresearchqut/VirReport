@@ -97,7 +97,7 @@ The pipeline can perform additional optional steps, which include:
     git clone https://github.com/maelyg/PVirDB.git
     cd PVirDB
     gunzip PVirDB_v1.fasta.gz
-    makeblastdb -in PVirDB_v1.fasta -parse_seqids -dbtype nucl
+    makeblastdb -in PVirDB_v1.fasta -parse_seqids -dbtype nucl -out PVirDB
     ```
 
     Then specify the full path to the database files including the prefix in the nextflow.config file. For example:
